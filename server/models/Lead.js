@@ -1,0 +1,25 @@
+const mongoose = require('mongoose');
+
+const LeadSchema = new mongoose.Schema({
+  firstName: { type: String, required: true },
+  lastName: { type: String, required: true },
+  phone: { type: String, required: true },
+  email: String,
+  districtId: { type: String },
+  profession: String,
+  investmentCapacity: String,
+  source: String,
+  stage: { type: String, default: 'New Lead' },
+  score: { type: Number, default: 0 },
+  assignedTo: String,
+  notes: String,
+  createdDate: { type: Date, default: Date.now },
+  updatedDate: { type: Date, default: Date.now },
+});
+
+LeadSchema.pre('save', function(next) {
+  this.updatedDate = Date.now();
+  next();
+});
+
+module.exports = mongoose.model('Lead', LeadSchema);

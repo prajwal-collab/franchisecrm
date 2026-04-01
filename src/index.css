@@ -315,3 +315,85 @@ body {
 .badge-warning { background: #fff8eb; color: #f59e0b; }
 .badge-danger { background: #fff1f2; color: #f43f5e; }
 .badge-info { background: #f0f7ff; color: #3b82f6; }
+
+/* Login Page Styles */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-surface);
+  position: relative;
+  overflow: hidden;
+  padding: 24px;
+}
+
+.aurora-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+  background: #ffffff;
+}
+
+.aurora-blob {
+  position: absolute;
+  filter: blur(80px);
+  opacity: 0.6;
+  border-radius: 50%;
+  animation: float 10s infinite ease-in-out;
+}
+
+.aurora-blob-1 { 
+  width: 400px; height: 400px; 
+  background: rgba(255, 107, 0, 0.15); 
+  top: -100px; left: -100px; 
+  animation-delay: 0s; 
+}
+.aurora-blob-2 { 
+  width: 300px; height: 300px; 
+  background: rgba(0, 163, 141, 0.1); 
+  bottom: -50px; right: 10%; 
+  animation-delay: -2s; 
+}
+.aurora-blob-3 { 
+  width: 350px; height: 350px; 
+  background: #eaf0f6; 
+  top: 40%; left: 30%; 
+  animation-delay: -5s; 
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-20px) scale(1.05); }
+}
+
+.login-glass {
+  position: relative;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: var(--shadow-lg);
+}
+
+.glass-input {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: var(--transition);
+  width: 100%;
+}
+
+.glass-input:focus {
+  outline: none;
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px var(--brand-primary-light);
+}

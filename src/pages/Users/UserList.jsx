@@ -85,7 +85,15 @@ export default function UserList() {
                   <span className="badge badge-success" style={{ background: '#eafaf1', color: '#22c55e' }}>Active</span>
                 </td>
                 <td style={{ textAlign: 'right' }}>
-                  <button className="btn btn-secondary btn-sm" onClick={() => alert('Invitation re-sent!')} title="Resend Invite">
+                  <button 
+                    className="btn btn-secondary btn-sm" 
+                    onClick={async () => {
+                      const res = await usersDB.resendInvite(user.id || user._id);
+                      if (res) alert(`Success! Invitation email re-sent to ${user.email}`);
+                      else alert('Failed to resend invitation. Check server logs.');
+                    }} 
+                    title="Resend Invite"
+                  >
                     <Send size={14} />
                   </button>
                 </td>

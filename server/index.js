@@ -140,6 +140,41 @@ app.get('/api/users/sdrs', async (req, res) => {
   res.json(sdrs);
 });
 
+const sendInvitationEmail = async (user) => {
+  const mailOptions = {
+    from: '"EarlyJobs Premium CRM" <' + process.env.SMTP_USER + '>',
+    to: user.email,
+    subject: 'Welcome to EarlyJobs Premium CRM - Invitation to Join',
+    html: `
+      <div style="font-family: 'Inter', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #33475b; line-height: 1.6;">
+        <div style="background-color: #FF6B00; padding: 40px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 800;">EarlyJobs Premium CRM</h1>
+        </div>
+        <div style="padding: 40px; border: 1px solid #eaf0f6; border-top: none; border-radius: 0 0 8px 8px; background-color: #ffffff;">
+          <h2 style="font-size: 20px; font-weight: 700; color: #000; margin-bottom: 24px;">Welcome, ${user.name}!</h2>
+          <p>You have been invited to join the <strong>EarlyJobs Franchise CRM</strong> as an <strong>${user.role}</strong>.</p>
+          <p>Our premium platform allows you to manage leads, track franchise partners, and monitor real-time analytics with world-class efficiency.</p>
+          
+          <div style="margin: 32px 0; padding: 24px; background-color: #f9fafb; border-radius: 8px;">
+            <p style="margin-top: 0; font-weight: 700; font-size: 13px; text-transform: uppercase; color: #7c98b6;">Your Access Credentials</p>
+            <div style="font-size: 14px; margin-bottom: 8px;"><strong>Login Page:</strong> <a href="http://localhost:5173" style="color: #FF6B00;">http://localhost:5173</a></div>
+            <div style="font-size: 14px; margin-bottom: 8px;"><strong>Email:</strong> ${user.email}</div>
+            <div style="font-size: 14px;"><strong>Initial Password:</strong> ${user.password || 'password123'}</div>
+          </div>
+
+          <a href="http://localhost:5173" style="display: block; background-color: #FF6B00; color: white; text-align: center; padding: 14px; text-decoration: none; border-radius: 6px; font-weight: 700; font-size: 16px; margin: 32px 0;">Sign In Now</a>
+
+          <hr style="border: none; border-top: 1px solid #eaf0f6; margin: 32px 0;" />
+          <p style="font-size: 12px; color: #7c98b6; text-align: center;">
+            This is an automated invitation. If you were not expecting this email, please contact your administrator.
+          </p>
+        </div>
+      </div>
+    `
+  };
+  return transporter.sendMail(mailOptions);
+};
+
 let sdrCounter = 0;
 app.get('/api/users/next-sdr', async (req, res) => {
   const sdrs = await User.find({ role: 'SDR' });
@@ -147,6 +182,19 @@ app.get('/api/users/next-sdr', async (req, res) => {
   const sdr = sdrs[sdrCounter % sdrs.length];
   sdrCounter++;
   res.json(sdr);
+});
+
+app.post('/api/users/:id/resend-invite', async (req, res) => {
+  try {
+    const user = await User.findOne({ id: req.params.id });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    await sendInvitationEmail(user);
+    res.json({ success: true, message: 'Invitation email re-sent successfully' });
+  } catch (err) {
+    console.error('Mail resending failed:', err);
+    res.status(500).json({ message: 'Failed to resend invitation email', error: err.message });
+  }
 });
 
 app.post('/api/users', async (req, res) => {
@@ -165,45 +213,11 @@ app.post('/api/users', async (req, res) => {
     });
     await user.save();
 
-    // Send Professional Invitation Email
-    const mailOptions = {
-      from: '"EarlyJobs Premium CRM" <' + process.env.SMTP_USER + '>',
-      to: email,
-      subject: 'Welcome to EarlyJobs Premium CRM - Invitation to Join',
-      html: `
-        <div style="font-family: 'Inter', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #33475b; line-height: 1.6;">
-          <div style="background-color: #FF6B00; padding: 40px; text-align: center; border-radius: 8px 8px 0 0;">
-            <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 800;">EarlyJobs Premium CRM</h1>
-          </div>
-          <div style="padding: 40px; border: 1px solid #eaf0f6; border-top: none; border-radius: 0 0 8px 8px; background-color: #ffffff;">
-            <h2 style="font-size: 20px; font-weight: 700; color: #000; margin-bottom: 24px;">Welcome, ${name}!</h2>
-            <p>You have been invited to join the <strong>EarlyJobs Franchise CRM</strong> as an <strong>${role}</strong>.</p>
-            <p>Our premium platform allows you to manage leads, track franchise partners, and monitor real-time analytics with world-class efficiency.</p>
-            
-            <div style="margin: 32px 0; padding: 24px; background-color: #f9fafb; border-radius: 8px;">
-              <p style="margin-top: 0; font-weight: 700; font-size: 13px; text-transform: uppercase; color: #7c98b6;">Your Access Credentials</p>
-              <div style="font-size: 14px; margin-bottom: 8px;"><strong>Login Page:</strong> <a href="http://localhost:5173" style="color: #FF6B00;">http://localhost:5173</a></div>
-              <div style="font-size: 14px; margin-bottom: 8px;"><strong>Email:</strong> ${email}</div>
-              <div style="font-size: 14px;"><strong>Initial Password:</strong> ${password || 'password123'}</div>
-            </div>
-
-            <a href="http://localhost:5173" style="display: block; background-color: #FF6B00; color: white; text-align: center; padding: 14px; text-decoration: none; border-radius: 6px; font-weight: 700; font-size: 16px; margin: 32px 0;">Sign In Now</a>
-
-            <hr style="border: none; border-top: 1px solid #eaf0f6; margin: 32px 0;" />
-            <p style="font-size: 12px; color: #7c98b6; text-align: center;">
-              This is an automated invitation. If you were not expecting this email, please contact your administrator.
-            </p>
-          </div>
-        </div>
-      `
-    };
-
     try {
-      await transporter.sendMail(mailOptions);
+      await sendInvitationEmail(user);
       res.status(201).json({ ...user.toObject(), inviteSent: true });
     } catch (mailErr) {
       console.error('Mail sending failed:', mailErr);
-      // Still return 201 as user was created, but flag the mail failure
       res.status(201).json({ ...user.toObject(), inviteSent: false, error: 'Invitation email failed to send (Check SMTP config)' });
     }
   } catch (err) {

@@ -131,6 +131,7 @@ export const meetingsDB = {
 export const usersDB = {
   getAll: async () => await smartRequest('/users', 'GET', null, 'users'),
   create: async (data) => await smartRequest('/users', 'POST', data),
+  resendInvite: async (userId) => await smartRequest(`/users/${userId}/resend-invite`, 'POST'),
   authenticate: async (email, password) => {
     try {
       const res = await fetch(`${API_BASE}/auth/login`, {

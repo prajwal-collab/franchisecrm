@@ -54,8 +54,8 @@ export default function LeadList() {
   // Enrich leads
   const enriched = useMemo(() => leads.map(l => ({
     ...l,
-    districtName: districts.find(d => d.id === l.districtId)?.name || '—',
-    assignedToName: users.find(u => u.id === l.assignedTo)?.name || '—',
+    districtName: districts.find(d => (d.id || d._id) === l.districtId)?.name || '—',
+    assignedToName: users.find(u => (u.id || u._id) === l.assignedTo)?.name || '—',
   })), [leads, districts, users]);
 
   // Filter + sort
@@ -87,11 +87,11 @@ export default function LeadList() {
   };
 
   const toggleSelect = (id) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
-  const toggleAll = () => setSelected(selected.length === filtered.length ? [] : filtered.map(l => l.id));
+  const toggleAll = () => setSelected(selected.length === filtered.length ? [] : filtered.map(l => l.id || l._id));
 
   // ---- Export ----
   const handleExport = () => {
-    const data = (selected.length ? filtered.filter(l => selected.includes(l.id)) : filtered)
+    const data = (selected.length ? filtered.filter(l => selected.includes(l.id || l._id)) : filtered)
       .map(l => ({ ...l, createdDate: new Date(l.createdDate).toLocaleDateString('en-IN') }));
     exportToCSV(data, `leads_export_${Date.now()}.csv`, EXPORT_COLS);
   };
@@ -257,39 +257,42 @@ export default function LeadList() {
               {filtered.length === 0 && (
                 <tr><td colSpan={8} style={{ padding: '60px', textAlign: 'center', color: 'var(--text-secondary)' }}>No leads found Matching your criteria.</td></tr>
               )}
-              {filtered.map(lead => (
-                <tr key={lead.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/leads/${lead.id}`)}>
-                  <td onClick={e => { e.stopPropagation(); toggleSelect(lead.id); }}>
-                    {selected.includes(lead.id) ? <CheckSquare size={16} color="var(--brand-primary)" /> : <Square size={16} />}
-                  </td>
-                  <td>
-                    <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{lead.firstName} {lead.lastName}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{lead.source}</div>
-                  </td>
-                  <td>
-                    <div style={{ fontSize: 14 }}>{lead.phone}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{lead.email}</div>
-                  </td>
-                  <td><span className="badge badge-new" style={{ background: '#f0f9ff', color: '#0369a1' }}>{lead.districtName}</span></td>
-                  <td><span className={`badge ${STAGE_BADGE[lead.stage] || ''}`} style={{ fontWeight: 700 }}>{lead.stage}</span></td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ width: 64, height: 6, background: '#eaf0f6', borderRadius: 10, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${lead.score}%`, background: lead.score >= 70 ? '#10b981' : lead.score >= 40 ? '#f59e0b' : '#ef4444' }} />
+              {filtered.map(lead => {
+                const lid = lead.id || lead._id;
+                return (
+                  <tr key={lid} style={{ cursor: 'pointer' }} onClick={() => navigate(`/leads/${lid}`)}>
+                    <td onClick={e => { e.stopPropagation(); toggleSelect(lid); }}>
+                      {selected.includes(lid) ? <CheckSquare size={16} color="var(--brand-primary)" /> : <Square size={16} />}
+                    </td>
+                    <td>
+                      <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{lead.firstName} {lead.lastName}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{lead.source}</div>
+                    </td>
+                    <td>
+                      <div style={{ fontSize: 14 }}>{lead.phone}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{lead.email}</div>
+                    </td>
+                    <td><span className="badge badge-new" style={{ background: '#f0f9ff', color: '#0369a1' }}>{lead.districtName}</span></td>
+                    <td><span className={`badge ${STAGE_BADGE[lead.stage] || ''}`} style={{ fontWeight: 700 }}>{lead.stage}</span></td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 64, height: 6, background: '#eaf0f6', borderRadius: 10, overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${lead.score}%`, background: lead.score >= 70 ? '#10b981' : lead.score >= 40 ? '#f59e0b' : '#ef4444' }} />
+                        </div>
+                        <span style={{ fontSize: 12, fontWeight: 700 }}>{lead.score}</span>
                       </div>
-                      <span style={{ fontSize: 12, fontWeight: 700 }}>{lead.score}</span>
-                    </div>
-                  </td>
-                  <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{new Date(lead.updatedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</td>
-                  <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }} onClick={e => e.stopPropagation()}>
-                      <button className="btn btn-secondary" style={{ padding: 6 }} onClick={() => { setEditLead(lead); setShowForm(true); }}>
-                        <Edit2 size={14} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{new Date(lead.updatedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }} onClick={e => e.stopPropagation()}>
+                        <button className="btn btn-secondary" style={{ padding: 6 }} onClick={() => { setEditLead(lead); setShowForm(true); }}>
+                          <Edit2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

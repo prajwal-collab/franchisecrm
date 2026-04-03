@@ -54,7 +54,7 @@ function AdminDashboard({ leads, districts, franchisees, tasks, users }) {
   const byStage = STAGES.map(s => ({ name: s, count: leads.filter(l => l.stage === s).length }));
   const byDistrict = Object.entries(
     leads.reduce((acc, l) => {
-      const d = districts.find(d => d.id === l.districtId);
+      const d = districts.find(d => (d.id || d._id) === l.districtId);
       const name = d?.name || 'Unknown';
       acc[name] = (acc[name] || 0) + 1; return acc;
     }, {})
@@ -124,7 +124,7 @@ function AdminDashboard({ leads, districts, franchisees, tasks, users }) {
           </div>
           <div style={{ display: 'grid', gap: 12 }}>
             {recentLeads.map(lead => (
-              <div key={lead.id} style={{ padding: '12px', background: '#fcfcfc', border: '1px solid #f0f3f6', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div key={lead.id || lead._id} style={{ padding: '12px', background: '#fcfcfc', border: '1px solid #f0f3f6', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: STAGE_COLORS[lead.stage] }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, fontSize: 14, color: '#33475b' }}>{lead.firstName} {lead.lastName}</div>
@@ -140,8 +140,8 @@ function AdminDashboard({ leads, districts, franchisees, tasks, users }) {
 }
 
 function SDRDashboard({ leads, tasks, currentUser }) {
-  const myLeads = leads.filter(l => l.assignedTo === currentUser.id);
-  const myTasks = tasks.filter(t => t.assignedTo === currentUser.id);
+  const myLeads = leads.filter(l => l.assignedTo === (currentUser.id || currentUser._id));
+  const myTasks = tasks.filter(t => t.assignedTo === (currentUser.id || currentUser._id));
   const now = new Date();
   const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);
 
@@ -177,7 +177,7 @@ function SDRDashboard({ leads, tasks, currentUser }) {
             <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>All clear! No pending tasks.</p>
           )}
           {[...overdue.map(t => ({ ...t, _group: 'overdue' })), ...dueToday.map(t => ({ ...t, _group: 'today' })), ...upcoming.slice(0, 3).map(t => ({ ...t, _group: 'upcoming' }))].map(t => (
-            <div key={t.id} className="task-item" style={{ marginBottom: 8 }}>
+            <div key={t.id || t._id} className="task-item" style={{ marginBottom: 8 }}>
               <div>
                 <div className="task-text">{t.title}</div>
                 <div className="task-meta">
@@ -193,7 +193,7 @@ function SDRDashboard({ leads, tasks, currentUser }) {
         <div className="card">
           <div className="card-header"><h3>My Leads</h3></div>
           {myLeads.slice(0, 8).map(l => (
-            <div key={l.id} className="activity-item">
+            <div key={l.id || l._id} className="activity-item">
               <div className="activity-dot" style={{ background: STAGE_COLORS[l.stage] }} />
               <div className="activity-content">
                 <div className="activity-text">{l.firstName} {l.lastName}</div>

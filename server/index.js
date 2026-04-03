@@ -11,12 +11,14 @@ const District = require('./models/District');
 const Franchisee = require('./models/Franchisee');
 
 const TaskSchema = new mongoose.Schema({
+  id: String, // Compatibility with legacy records
   title: String, leadId: String, franchiseeId: String, meetingId: String, 
   assignedTo: String, dueDate: Date, done: { type: Boolean, default: false }, createdDate: { type: Date, default: Date.now }
 });
 const Task = mongoose.model('Task', TaskSchema);
 
 const MeetingSchema = new mongoose.Schema({
+  id: String, // Compatibility with legacy records
   leadId: String, eventType: String, eventLink: String, googleMeetLink: String, 
   scheduledDateTime: Date, attended: { type: Boolean, default: false }, createdDate: { type: Date, default: Date.now }
 });

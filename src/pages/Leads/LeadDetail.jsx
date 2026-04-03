@@ -28,9 +28,9 @@ export default function LeadDetail() {
   const [aiStrategy, setAiStrategy] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
 
-  const lead = leads.find(l => l.id === id);
-  const district = districts.find(d => d.id === lead?.districtId);
-  const assignedUser = users.find(u => u.id === lead?.assignedTo);
+  const lead = leads.find(l => (l.id || l._id) === id);
+  const district = districts.find(d => (d.id || d._id) === lead?.districtId);
+  const assignedUser = users.find(u => (u.id || u._id) === lead?.assignedTo);
   const leadTasks = tasks.filter(t => t.leadId === id);
   const leadMeetings = meetings.filter(m => m.leadId === id);
 
@@ -45,7 +45,7 @@ export default function LeadDetail() {
   };
 
   const handleStageChange = (newStage) => {
-    updateLead(lead.id, { ...lead, stage: newStage }, lead.stage);
+    updateLead(lead.id || lead._id, { ...lead, stage: newStage }, lead.stage);
   };
 
   return (
@@ -59,7 +59,7 @@ export default function LeadDetail() {
             <h1 className="page-title" style={{ fontSize: 32, fontWeight: 800 }}>{lead.firstName} {lead.lastName}</h1>
             <span className={`badge ${STAGE_BADGE[lead.stage]}`}>{lead.stage}</span>
           </div>
-          <div className="page-subtitle" style={{ color: 'var(--text-muted)', marginTop: 4 }}>ID: {lead.id} • Registered {new Date(lead.createdDate).toLocaleDateString()}</div>
+          <div className="page-subtitle" style={{ color: 'var(--text-muted)', marginTop: 4 }}>ID: {lead.id || lead._id} • Registered {new Date(lead.createdDate).toLocaleDateString()}</div>
         </div>
         <div className="page-header-actions" style={{ display: 'flex', gap: 12 }}>
           {can('edit') && (
@@ -68,7 +68,7 @@ export default function LeadDetail() {
             </button>
           )}
           {can('delete') && (
-            <button className="btn btn-ghost" style={{ color: '#ef4444' }} onClick={() => { if (confirm('Delete lead?')) { deleteLead(lead.id); navigate('/leads'); } }}>
+            <button className="btn btn-ghost" style={{ color: '#ef4444' }} onClick={() => { if (confirm('Delete lead?')) { deleteLead(lead.id || lead._id); navigate('/leads'); } }}>
               <Trash2 size={16} />
             </button>
           )}
@@ -208,12 +208,12 @@ export default function LeadDetail() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                   <h4 style={{ fontSize: 18, fontWeight: 700 }}>Meetings & Events</h4>
                   <button className="btn btn-primary" onClick={() => {
-                     createMeeting({ 
-                       leadId: lead.id, 
-                       eventType: '1:1 Meeting', 
-                       scheduledDateTime: new Date(Date.now() + 172800000).toISOString(),
-                       googleMeetLink: 'https://meet.google.com/new'
-                     });
+                    createMeeting({ 
+                      leadId: lead.id || lead._id, 
+                      eventType: '1:1 Meeting', 
+                      scheduledDateTime: new Date(Date.now() + 172800000).toISOString(),
+                      googleMeetLink: 'https://meet.google.com/new'
+                    });
                   }}>
                     <Video size={18} /> Schedule One-on-One
                   </button>
@@ -243,7 +243,7 @@ export default function LeadDetail() {
                   <h4 style={{ fontSize: 18, fontWeight: 700 }}>Related Tasks</h4>
                   <button className="btn btn-primary" onClick={() => {
                     const title = prompt('Task title:');
-                    if (title) createTask({ title, leadId: lead.id, assignedTo: lead.assignedTo, dueDate: new Date(Date.now() + 86400000).toISOString() });
+                    if (title) createTask({ title, leadId: lead.id || lead._id, assignedTo: lead.assignedTo, dueDate: new Date(Date.now() + 86400000).toISOString() });
                   }}>
                     <Plus size={18} /> New Task
                   </button>
@@ -278,7 +278,7 @@ export default function LeadDetail() {
                 <textarea 
                   className="glass-input" 
                   value={lead.notes} 
-                  onChange={(e) => updateLead(lead.id, { ...lead, notes: e.target.value }, lead.stage)}
+                  onChange={(e) => updateLead(lead.id || lead._id, { ...lead, notes: e.target.value }, lead.stage)}
                   placeholder="Write observations, preferences, or call summaries..."
                   style={{ minHeight: 400, width: '100%', lineHeight: '1.6' }}
                 />

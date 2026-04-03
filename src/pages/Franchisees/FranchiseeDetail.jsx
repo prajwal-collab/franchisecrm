@@ -14,8 +14,8 @@ export default function FranchiseeDetail() {
   const { franchisees, districts, updateFranchisee, toast } = useApp();
   const { can } = useAuth();
 
-  const franchisee = franchisees.find(f => f.id === id);
-  const district = districts.find(d => d.id === franchisee?.districtId);
+  const franchisee = franchisees.find(f => (f.id || f._id) === id);
+  const district = districts.find(d => (d.id || d._id) === franchisee?.districtId);
 
   const [paymentAmount, setPaymentAmount] = useState('');
   const [committedAmount, setCommittedAmount] = useState(franchisee?.committedAmount || 0);
@@ -31,7 +31,7 @@ export default function FranchiseeDetail() {
     }
 
     const newReceived = franchisee.receivedAmount + amount;
-    updateFranchisee(franchisee.id, { 
+    updateFranchisee(franchisee.id || franchisee._id, { 
       receivedAmount: newReceived,
       // Status updated automatically in franchiseesDB.update
     });
@@ -40,7 +40,7 @@ export default function FranchiseeDetail() {
   };
 
   const handleUpdateCommitment = (e) => {
-    updateFranchisee(franchisee.id, { committedAmount: parseFloat(committedAmount) });
+    updateFranchisee(franchisee.id || franchisee._id, { committedAmount: parseFloat(committedAmount) });
   };
 
   const balance = franchisee.committedAmount - franchisee.receivedAmount;
@@ -146,7 +146,7 @@ export default function FranchiseeDetail() {
               className="glass-input" 
               style={{ minHeight: 300, fontSize: 13, width: '100%', lineHeight: '1.6' }}
               value={franchisee.notes}
-              onChange={(e) => updateFranchisee(franchisee.id, { notes: e.target.value })}
+              onChange={(e) => updateFranchisee(franchisee.id || franchisee._id, { notes: e.target.value })}
               placeholder="Internal notes about this franchise partner..."
             />
           </div>

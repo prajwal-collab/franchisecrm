@@ -17,9 +17,9 @@ export default function TaskList() {
 
   const enriched = useMemo(() => tasks.map(t => ({
     ...t,
-    leadName: t.leadId ? leads.find(l => l.id === t.leadId)?.firstName + ' ' + leads.find(l => l.id === t.leadId)?.lastName : null,
-    franchiseeName: t.franchiseeId ? franchisees.find(f => f.id === t.franchiseeId)?.name : null,
-    assigneeName: users.find(u => u.id === t.assignedTo)?.name || 'Unassigned'
+    leadName: t.leadId ? leads.find(l => (l.id || l._id) === t.leadId)?.firstName + ' ' + leads.find(l => (l.id || l._id) === t.leadId)?.lastName : null,
+    franchiseeName: t.franchiseeId ? franchisees.find(f => (f.id || f._id) === t.franchiseeId)?.name : null,
+    assigneeName: users.find(u => (u.id || u._id) === t.assignedTo)?.name || 'Unassigned'
   })), [tasks, leads, franchisees, users]);
 
   const filtered = useMemo(() => {
@@ -116,7 +116,7 @@ export default function TaskList() {
                     textDecoration: task.done ? 'line-through' : 'none',
                     color: task.done ? 'var(--text-muted)' : '#33475b'
                   }}>{task.title}</div>
-                  <button onClick={() => deleteTask(task.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#ef4444' }}>
+                  <button onClick={() => deleteTask(task.id || task._id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#ef4444' }}>
                     <Trash2 size={16} />
                   </button>
                 </div>

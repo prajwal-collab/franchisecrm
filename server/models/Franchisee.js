@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const FranchiseeSchema = new mongoose.Schema({
+  id: String, // Compatibility with legacy records
   name: { type: String, required: true },
   contactPerson: String,
   phone: String,

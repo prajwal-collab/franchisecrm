@@ -42,13 +42,13 @@ export default function Topbar() {
     const leadResults = leads.filter(l =>
       `${l.firstName} ${l.lastName}`.toLowerCase().includes(lq) ||
       l.phone.includes(lq) || l.email?.toLowerCase().includes(lq)
-    ).slice(0, 4).map(l => ({ type: 'Lead', label: `${l.firstName} ${l.lastName}`, sub: l.phone, path: `/leads/${l.id}` }));
+    ).slice(0, 4).map(l => ({ type: 'Lead', label: `${l.firstName} ${l.lastName}`, sub: l.phone, path: `/leads/${l.id || l._id}` }));
     const districtResults = districts.filter(d =>
       d.name.toLowerCase().includes(lq)
     ).slice(0, 3).map(d => ({ type: 'District', label: d.name, sub: d.status, path: '/districts' }));
     const frResults = franchisees.filter(f =>
       f.name.toLowerCase().includes(lq) || f.contactPerson?.toLowerCase().includes(lq)
-    ).slice(0, 3).map(f => ({ type: 'Franchisee', label: f.name, sub: f.contactPerson, path: `/franchisees/${f.id}` }));
+    ).slice(0, 3).map(f => ({ type: 'Franchisee', label: f.name, sub: f.contactPerson, path: `/franchisees/${f.id || f._id}` }));
     const all = [...leadResults, ...districtResults, ...frResults].slice(0, 8);
     setResults(all);
     setShowResults(true);

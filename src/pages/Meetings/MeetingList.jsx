@@ -22,7 +22,7 @@ export default function MeetingList() {
 
   const enriched = useMemo(() => meetings.map(m => ({
     ...m,
-    leadName: leads.find(l => l.id === m.leadId)?.firstName + ' ' + leads.find(l => l.id === m.leadId)?.lastName || 'Unknown'
+    leadName: leads.find(l => (l.id || l._id) === m.leadId)?.firstName + ' ' + leads.find(l => (l.id || l._id) === m.leadId)?.lastName || 'Unknown'
   })), [meetings, leads]);
 
   const filtered = useMemo(() => {
@@ -69,15 +69,15 @@ export default function MeetingList() {
 
       <div className="grid gap-6" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
         {filtered.map(meeting => (
-          <div key={meeting.id} className="glass-card" style={{ padding: 24 }}>
+          <div key={meeting.id || meeting._id} className="glass-card" style={{ padding: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <span className={`badge ${meeting.eventType === 'Webinar' ? 'badge-webinar-reg' : 'badge-1-1'}`}>
                   {meeting.eventType}
                 </span>
-                <span className="text-muted" style={{ fontSize: 11 }}>{meeting.id}</span>
+                <span className="text-muted" style={{ fontSize: 11 }}>{meeting.id || meeting._id}</span>
               </div>
-              <button className="btn btn-ghost btn-sm btn-icon" onClick={() => deleteMeeting(meeting.id)}>
+              <button className="btn btn-ghost btn-sm btn-icon" onClick={() => deleteMeeting(meeting.id || meeting._id)}>
                 <Trash2 size={13} color="var(--brand-danger)" />
               </button>
             </div>
@@ -120,7 +120,7 @@ export default function MeetingList() {
                   onChange={e => setNewMeeting({...newMeeting, leadId: e.target.value})}
                 >
                   <option value="" style={{ background: 'var(--bg-deep)' }}>Select a Lead</option>
-                  {leads.map(l => <option key={l.id} value={l.id} style={{ background: 'var(--bg-deep)' }}>{l.firstName} {l.lastName}</option>)}
+                  {leads.map(l => <option key={l.id || l._id} value={l.id || l._id} style={{ background: 'var(--bg-deep)' }}>{l.firstName} {l.lastName}</option>)}
                 </select>
               </div>
               <div className="form-group" style={{ marginBottom: 16 }}>

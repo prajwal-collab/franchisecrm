@@ -253,18 +253,23 @@ app.post('/api/franchisees/bulk', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`
-  🚀 CRM Backend Ready
-  📡 Port: ${PORT}
-  🔗 API: http://localhost:${PORT}/api
-  `);
-});
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 5000;
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`
+    🚀 CRM Backend Ready
+    📡 Port: ${PORT}
+    🔗 API: http://localhost:${PORT}/api
+    `);
+  });
 
-server.on('error', (e) => {
-  if (e.code === 'EADDRINUSE') {
-    console.error(`❌ Port ${PORT} is already in use. Please kill the existing process or change the PORT in .env`);
-    process.exit(1);
-  }
-});
+  server.on('error', (e) => {
+    if (e.code === 'EADDRINUSE') {
+      console.error(`❌ Port ${PORT} is already in use. Please kill the existing process or change the PORT in .env`);
+      process.exit(1);
+    }
+  });
+}
+
+// Export for Vercel Serverless Function
+module.exports = app;

@@ -121,6 +121,7 @@ export const tasksDB = {
   getAll: async () => await smartRequest('/tasks', 'GET', null, 'tasks'),
   create: async (data) => await smartRequest('/tasks', 'POST', data),
   update: async (id, updates) => await smartRequest(`/tasks/${id}`, 'PUT', updates),
+  delete: async (id) => await smartRequest(`/tasks/${id}`, 'DELETE'),
 };
 
 export const meetingsDB = {

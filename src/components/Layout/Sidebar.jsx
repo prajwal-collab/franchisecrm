@@ -10,8 +10,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 
 const NAV_ITEMS = [
-  { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/leads', icon: Users, label: 'Leads' },
+  { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { path: '/leads', icon: Users, label: 'Leads', badge: true },
   { path: '/districts', icon: MapPin, label: 'Districts' },
   { path: '/franchisees', icon: Building2, label: 'Franchisees' },
   { path: '/meetings', icon: Video, label: 'Webinars / Meetings' },
@@ -31,9 +31,10 @@ export default function Sidebar({ collapsed, onToggle }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, currentUser } = useAuth();
-  const { tasks } = useApp();
+  const { tasks, leads } = useApp();
 
   const pendingTasks = tasks.filter(t => !t.done).length;
+  const newLeads = leads.filter(l => l.stage === 'New Lead').length;
 
   return (
     <div className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
@@ -68,8 +69,11 @@ export default function Sidebar({ collapsed, onToggle }) {
             >
               <Icon className="sidebar-item-icon" size={18} />
               <span className="sidebar-item-text">{item.label}</span>
-              {item.badge && pendingTasks > 0 && (
+              {item.badge && item.path === '/tasks' && pendingTasks > 0 && (
                 <span className="sidebar-badge">{pendingTasks}</span>
+              )}
+              {item.badge && item.path === '/leads' && newLeads > 0 && (
+                <span className="sidebar-badge leads">{newLeads}</span>
               )}
             </button>
           );

@@ -7,15 +7,34 @@ export default function AISettings() {
   const { toast } = useApp();
   const { currentUser } = useAuth();
 
-  const [context, setContext] = useState(localStorage.getItem('ej_ai_context') || '');
-  const [lastUpdated, setLastUpdated] = useState(localStorage.getItem('ej_ai_context_updated') || 'Never');
+  const [context, setContext] = useState('');
+  const [lastUpdated, setLastUpdated] = useState('Never');
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleSave = () => {
-    localStorage.setItem('ej_ai_context', context);
-    const now = new Date().toLocaleString();
-    localStorage.setItem('ej_ai_context_updated', now);
-    setLastUpdated(now);
-    toast('AI Sales Context updated successfully', 'success');
+  useEffect(() => {
+    fetch('/api/settings/ai-context')
+      .then(res => res.json())
+      .then(data => {
+        setContext(data.value || '');
+        setLastUpdated(localStorage.getItem('ej_ai_context_updated') || 'Synced from Server');
+        setIsLoading(false);
+      });
+  }, []);
+
+  const handleSave = async () => {
+    try {
+      await fetch('/api/settings/ai-context', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: context })
+      });
+      const now = new Date().toLocaleString();
+      localStorage.setItem('ej_ai_context_updated', now);
+      setLastUpdated(now);
+      toast('AI Sales Context synced to cloud', 'success');
+    } catch (err) {
+      toast('Failed to sync context', 'danger');
+    }
   };
 
   if (currentUser.role !== 'Admin') {
@@ -70,7 +89,7 @@ export default function AISettings() {
               </div>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>AI Model</div>
-                <div style={{ fontSize: 14, color: '#33475b', fontWeight: 600 }}>GPT-4 Turbo (Optimized)</div>
+                <div style={{ fontSize: 14, color: '#33475b', fontWeight: 600 }}>DeepSeek-V3 (High Intelligence)</div>
               </div>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>System Status</div>

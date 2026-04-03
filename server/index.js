@@ -105,9 +105,38 @@ app.get('/api/tasks', async (req, res) => {
   res.json(tasks);
 });
 app.post('/api/tasks', async (req, res) => {
-  const t = new Task(req.body);
-  await t.save();
-  res.status(201).json(t);
+  try {
+    const t = new Task(req.body);
+    await t.save();
+    
+    // Notify assignee via email
+    if (t.assignedTo) {
+      const user = await User.findOne({ id: t.assignedTo });
+      if (user && user.email) {
+        sendTaskAssignmentEmail(user, t).catch(err => console.error('Task Email Failed:', err));
+      }
+    }
+    
+    res.status(201).json(t);
+  } catch (err) {
+    res.status(400).json({ message: 'Task creation failed' });
+  }
+});
+app.put('/api/tasks/:id', async (req, res) => {
+  const previousTask = await Task.findById(req.params.id);
+  const updated = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  
+  // If assignee changed, notify the new one
+  if (updated.assignedTo && updated.assignedTo !== previousTask?.assignedTo) {
+    const user = await User.findOne({ id: updated.assignedTo });
+    if (user) sendTaskAssignmentEmail(user, updated).catch(err => console.error('Task Update Email Failed:', err));
+  }
+  
+  res.json(updated);
+});
+app.delete('/api/tasks/:id', async (req, res) => {
+  await Task.findByIdAndDelete(req.params.id);
+  res.status(204).send();
 });
 
 // Meetings
@@ -141,32 +170,32 @@ app.get('/api/users/sdrs', async (req, res) => {
 });
 
 const sendInvitationEmail = async (user) => {
+  // ... existing invitation email logic ...
+};
+
+const sendTaskAssignmentEmail = async (user, task) => {
   const mailOptions = {
-    from: '"EarlyJobs Premium CRM" <' + process.env.SMTP_USER + '>',
+    from: '"EarlyJobs Task Assistant" <' + process.env.SMTP_USER + '>',
     to: user.email,
-    subject: 'Welcome to EarlyJobs Premium CRM - Invitation to Join',
+    subject: `📋 New Task Assigned: ${task.title}`,
     html: `
-      <div style="font-family: 'Inter', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #33475b; line-height: 1.6;">
-        <div style="background-color: #FF6B00; padding: 40px; text-align: center; border-radius: 8px 8px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 800;">EarlyJobs Premium CRM</h1>
+      <div style="font-family: 'Plus Jakarta Sans', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #33475b; line-height: 1.6; border: 1px solid #eaf0f6; border-radius: 8px;">
+        <div style="background-color: #FF6B00; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h2 style="color: white; margin: 0; font-size: 20px;">Management Alert</h2>
         </div>
-        <div style="padding: 40px; border: 1px solid #eaf0f6; border-top: none; border-radius: 0 0 8px 8px; background-color: #ffffff;">
-          <h2 style="font-size: 20px; font-weight: 700; color: #000; margin-bottom: 24px;">Welcome, ${user.name}!</h2>
-          <p>You have been invited to join the <strong>EarlyJobs Franchise CRM</strong> as an <strong>${user.role}</strong>.</p>
-          <p>Our premium platform allows you to manage leads, track franchise partners, and monitor real-time analytics with world-class efficiency.</p>
+        <div style="padding: 30px; background-color: #ffffff;">
+          <p>Hello <strong>${user.name}</strong>,</p>
+          <p>A new task has been assigned to you in the EarlyJobs CRM.</p>
           
-          <div style="margin: 32px 0; padding: 24px; background-color: #f9fafb; border-radius: 8px;">
-            <p style="margin-top: 0; font-weight: 700; font-size: 13px; text-transform: uppercase; color: #7c98b6;">Your Access Credentials</p>
-            <div style="font-size: 14px; margin-bottom: 8px;"><strong>Login Page:</strong> <a href="http://localhost:5173" style="color: #FF6B00;">http://localhost:5173</a></div>
-            <div style="font-size: 14px; margin-bottom: 8px;"><strong>Email:</strong> ${user.email}</div>
-            <div style="font-size: 14px;"><strong>Initial Password:</strong> ${user.password || 'password123'}</div>
+          <div style="background-color: #f5f8fa; padding: 20px; border-radius: 6px; margin: 20px 0;">
+            <p style="margin-top: 0;"><strong>Task:</strong> ${task.title}</p>
+            <p><strong>Due Date:</strong> ${new Date(task.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
           </div>
 
-          <a href="http://localhost:5173" style="display: block; background-color: #FF6B00; color: white; text-align: center; padding: 14px; text-decoration: none; border-radius: 6px; font-weight: 700; font-size: 16px; margin: 32px 0;">Sign In Now</a>
-
-          <hr style="border: none; border-top: 1px solid #eaf0f6; margin: 32px 0;" />
-          <p style="font-size: 12px; color: #7c98b6; text-align: center;">
-            This is an automated invitation. If you were not expecting this email, please contact your administrator.
+          <a href="http://localhost:5173/tasks" style="display: inline-block; background-color: #FF6B00; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 700;">View Task List</a>
+          
+          <p style="margin-top: 30px; font-size: 12px; color: #7c98b6;">
+            This is an automated notification. Please do not reply directly to this email.
           </p>
         </div>
       </div>
@@ -237,6 +266,66 @@ app.get('/api/settings/ai-context', async (req, res) => {
 app.post('/api/settings/ai-context', async (req, res) => {
   await Setting.findOneAndUpdate({ key: 'ai_context' }, { value: req.body.value }, { upsert: true });
   res.sendStatus(200);
+});
+
+// AI endpoints (DeepSeek integration)
+app.post('/api/ai/generate-strategy', async (req, res) => {
+  try {
+    const { leadDetails } = req.body;
+    const context = await Setting.findOne({ key: 'ai_context' });
+    const businessContext = context ? context.value : "EarlyJobs Franchise CRM";
+
+    const prompt = `
+    You are an expert sales assistant for EarlyJobs Franchise.
+    Business Context (The Handbook):
+    ${businessContext}
+
+    Lead Details:
+    - Name: ${leadDetails.firstName} ${leadDetails.lastName}
+    - Profession: ${leadDetails.profession}
+    - Location: ${leadDetails.districtName}
+    - Stage: ${leadDetails.stage}
+    - Capacity: ${leadDetails.investmentCapacity}
+    - Current Notes: ${leadDetails.notes}
+
+    Task:
+    Provide a concise sales strategy including:
+    1. A "Hook" based on their location and profession.
+    2. A WhatsApp/Call script snippet.
+    3. How to handle potential objections for this specific lead.
+    4. Next best action.
+
+    Format in Markdown. Keep it professional and punchy.
+    `;
+
+    const response = await fetch('https://api.deepseek.com/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: 'You are a professional sales strategist assistant.' },
+          { role: 'user', content: prompt }
+        ],
+        stream: false
+      })
+    });
+
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.error?.message || 'DeepSeek API error');
+    }
+
+    const data = await response.json();
+    const strategy = data.choices[0].message.content;
+    res.json({ strategy });
+  } catch (err) {
+    console.error('AI Strategy Error:', err);
+    res.status(500).json({ message: 'AI Generation failed', error: err.message });
+  }
 });
 
 // Bulk Operations

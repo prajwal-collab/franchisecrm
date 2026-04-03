@@ -399,3 +399,33 @@ body {
   border-color: var(--brand-primary);
   box-shadow: 0 0 0 3px var(--brand-primary-light);
 }
+ 
+/* Sidebar Badges */
+.sidebar-item { position: relative; }
+.sidebar-badge {
+  margin-left: auto;
+  background: var(--brand-primary);
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(255, 107, 0, 0.2);
+}
+.sidebar-badge.leads {
+  background: #10b981; /* Success Green for Leads */
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+.sidebar.collapsed .sidebar-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  margin: 0;
+  min-width: 8px;
+  height: 8px;
+  padding: 0;
+  font-size: 0;
+  border: 2px solid white;
+}

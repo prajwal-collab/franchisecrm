@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { 
   CheckSquare, Square, Clock, AlertCircle, 
-  Trash2, Plus, Calendar, Filter, User
+  Trash2, Plus, Calendar, Filter, User, X
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
@@ -114,7 +114,7 @@ export default function TaskList() {
                   <div style={{ 
                     fontSize: 15, fontWeight: 600, 
                     textDecoration: task.done ? 'line-through' : 'none',
-                    color: task.done ? 'var(--text-muted)' : 'white'
+                    color: task.done ? 'var(--text-muted)' : '#33475b'
                   }}>{task.title}</div>
                   <button onClick={() => deleteTask(task.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#ef4444' }}>
                     <Trash2 size={16} />
@@ -180,9 +180,14 @@ export default function TaskList() {
                   onChange={e => setNewTask({...newTask, leadId: e.target.value})}
                 >
                   <option value="">None</option>
-                  {leads.map(l => (
-                    <option key={l.id} value={l.id}>{l.firstName} {l.lastName} ({l.district})</option>
-                  ))}
+                  {leads.map(l => {
+                    const dName = districts.find(d => (d.id || d._id) === l.districtId)?.name || 'Unknown';
+                    return (
+                      <option key={l.id || l._id} value={l.id || l._id}>
+                        {l.firstName} {l.lastName} ({dName})
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
               <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '12px' }}>

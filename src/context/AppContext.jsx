@@ -17,16 +17,18 @@ export function AppProvider({ children }) {
 
   const refresh = useCallback(async () => {
     try {
-      const [d, f, t, m] = await Promise.all([
+      const [d, f, t, m, u] = await Promise.all([
         districtsDB.getAll(),
         franchiseesDB.getAll(),
         tasksDB.getAll(),
-        meetingsDB.getAll()
+        meetingsDB.getAll(),
+        usersDB.getAll()
       ]);
       setDistricts(d);
       setFranchisees(f);
       setTasks(t);
       setMeetings(m);
+      setUsers(u);
 
       if (currentUser) {
         const l = await leadsDB.getAll(); 
@@ -159,10 +161,13 @@ export function AppProvider({ children }) {
     return t;
   }, [refresh]);
 
-  const toggleTask = useCallback((id) => {
-    tasksDB.toggle(id);
-    refresh();
-  }, [refresh]);
+  const toggleTask = useCallback(async (id) => {
+    const task = tasks.find(t => (t.id || t._id) === id);
+    if (task) {
+      await tasksDB.update(id, { done: !task.done });
+      refresh();
+    }
+  }, [tasks, refresh]);
 
   const deleteTask = useCallback((id) => {
     tasksDB.delete(id);

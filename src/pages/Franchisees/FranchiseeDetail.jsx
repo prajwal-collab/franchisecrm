@@ -36,7 +36,7 @@ export default function FranchiseeDetail() {
       // Status updated automatically in franchiseesDB.update
     });
     setPaymentAmount('');
-    toast(`Payment of ₹${amount.toLocaleString()} recorded`, 'success');
+    toast(`Payment of ₹${amount.toLocaleString('en-IN')} recorded`, 'success');
   };
 
   const handleUpdateCommitment = (e) => {
@@ -91,16 +91,16 @@ export default function FranchiseeDetail() {
             <div className="kpi-grid mb-8" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
               <div className="glass-card" style={{ padding: 20, background: 'rgba(255,255,255,0.03)' }}>
                 <div className="detail-field-label" style={{ fontSize: 10, color: 'var(--text-muted)' }}>COMMITTED</div>
-                <div style={{ fontSize: 20, fontWeight: 800 }}>₹{franchisee.committedAmount.toLocaleString()}</div>
+                <div style={{ fontSize: 20, fontWeight: 800 }}>₹{franchisee.committedAmount.toLocaleString('en-IN')}</div>
               </div>
               <div className="glass-card" style={{ padding: 20, background: 'rgba(255,255,255,0.03)' }}>
                 <div className="detail-field-label" style={{ fontSize: 10, color: 'var(--text-muted)' }}>RECEIVED</div>
-                <div style={{ fontSize: 20, fontWeight: 800, color: '#10b981' }}>₹{franchisee.receivedAmount.toLocaleString()}</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: '#10b981' }}>₹{franchisee.receivedAmount.toLocaleString('en-IN')}</div>
               </div>
               <div className="glass-card" style={{ padding: 20, background: 'rgba(255,255,255,0.03)' }}>
                 <div className="detail-field-label" style={{ fontSize: 10, color: 'var(--text-muted)' }}>BALANCE</div>
                 <div style={{ fontSize: 20, fontWeight: 800, color: balance > 0 ? '#f59e0b' : '#10b981' }}>
-                  ₹{balance.toLocaleString()}
+                  ₹{balance.toLocaleString('en-IN')}
                 </div>
               </div>
             </div>

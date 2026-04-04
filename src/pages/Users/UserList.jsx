@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, Mail, Shield, Trash2, X, Send } from 'lucide-react';
+import { UserPlus, Mail, Shield, Trash2, X, Send, CheckSquare, Square } from 'lucide-react';
 import { usersDB } from '../../services/db';
+import TableToolbar from '../../components/TableToolbar';
 import { useAuth } from '../../context/AuthContext';
 
 export default function UserList() {
@@ -8,6 +9,7 @@ export default function UserList() {
   const [users, setUsers] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState([]);
   
   const [newUser, setNewUser] = useState({
     name: '',
@@ -57,19 +59,29 @@ export default function UserList() {
       </div>
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <table className="premium-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
+        <TableToolbar selectedCount={selected.length} />
+        <div className="table-responsive">
+          <table className="premium-table">
+            <thead>
+              <tr>
+                <th style={{ width: 48, cursor: 'pointer' }} onClick={() => setSelected(selected.length === users.length && users.length > 0 ? [] : users.map(u => u.id || u._id))}>
+                  {selected.length === users.length && users.length > 0 ? <CheckSquare size={16} color="var(--brand-primary)" /> : <Square size={16} />}
+                </th>
+                <th>Name</th>
+                <th>Email</th>
               <th>Role</th>
               <th>Status</th>
               <th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {users.map(user => (
-              <tr key={user.id || user._id}>
+            {users.map(user => {
+              const uid = user.id || user._id;
+              return (
+              <tr key={uid}>
+                <td onClick={(e) => { e.stopPropagation(); setSelected(prev => prev.includes(uid) ? prev.filter(x => x !== uid) : [...prev, uid]); }}>
+                  {selected.includes(uid) ? <CheckSquare size={16} color="var(--brand-primary)" /> : <Square size={16} />}
+                </td>
                 <td style={{ fontWeight: 700 }}>{user.name}</td>
                 <td style={{ color: 'var(--text-secondary)' }}>{user.email}</td>
                 <td>
@@ -97,10 +109,11 @@ export default function UserList() {
                     <Send size={14} />
                   </button>
                 </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </tr>
+              )})}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {showAdd && (

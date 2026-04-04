@@ -153,26 +153,28 @@ export default function Reports() {
               </ResponsiveContainer>
             </div>
             <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-              <table className="premium-table">
-                <thead>
-                  <tr>
-                    <th>Source</th>
-                    <th style={{ textAlign: 'right' }}>Count</th>
-                    <th style={{ textAlign: 'right' }}>Share</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sourceData.map((s, i) => (
-                    <tr key={s.name}>
-                      <td style={{ fontWeight: 700 }}>{s.name}</td>
-                      <td style={{ textAlign: 'right' }}>{s.value}</td>
-                      <td style={{ textAlign: 'right', color: 'var(--brand-primary)', fontWeight: 700 }}>
-                        {((s.value / leads.length) * 100).toFixed(1)}%
-                      </td>
+              <div className="table-responsive">
+                <table className="premium-table">
+                  <thead>
+                    <tr>
+                      <th>Source</th>
+                      <th style={{ textAlign: 'right' }}>Count</th>
+                      <th style={{ textAlign: 'right' }}>Share</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {sourceData.map((s, i) => (
+                      <tr key={s.name}>
+                        <td style={{ fontWeight: 700 }}>{s.name}</td>
+                        <td style={{ textAlign: 'right' }}>{s.value}</td>
+                        <td style={{ textAlign: 'right', color: 'var(--brand-primary)', fontWeight: 700 }}>
+                          {((s.value / leads.length) * 100).toFixed(1)}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </>
         )}

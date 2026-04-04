@@ -11,6 +11,7 @@ import { districtsDB, exportToCSV, parseCSV, usersDB, downloadTemplate } from '.
 import { STAGES, SOURCES, INVESTMENT_CAPACITIES } from '../../data/initialData';
 import LeadForm from './LeadForm';
 import KanbanView from './KanbanView';
+import TableToolbar from '../../components/TableToolbar';
 
 const STAGE_BADGE = {
   'New Lead': 'badge-new-lead', 'Contacted': 'badge-contacted', 'Interested': 'badge-interested',
@@ -200,43 +201,31 @@ export default function LeadList() {
         </div>
       </div>
 
-      {/* Bulk Actions */}
-      {selected.length > 0 && (
-        <div style={{ 
-          background: 'var(--brand-primary-light)', border: '1px solid var(--brand-primary)', 
-          borderRadius: 8, padding: '12px 24px', marginBottom: 24, 
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          color: 'var(--brand-primary)', fontWeight: 600
-        }}>
-          <span>{selected.length} lead{selected.length > 1 ? 's' : ''} selected</span>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-            <select className="form-input" style={{ width: 160, background: 'white' }} value={bulkStage} onChange={e => setBulkStage(e.target.value)}>
-              <option value="">Bulk Stage Update</option>
-              {STAGES.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-            {bulkStage && (
-              <button className="btn btn-primary" style={{ padding: '8px 16px' }} onClick={() => { bulkUpdateLeads(selected, { stage: bulkStage }); setSelected([]); setBulkStage(''); }}>
-                Apply
-              </button>
-            )}
-            {can('delete') && (
-              <button className="btn btn-secondary" style={{ color: '#ef4444', borderColor: '#fee2e2' }} onClick={() => { if (confirm(`Delete ${selected.length} leads?`)) { bulkDeleteLeads(selected); setSelected([]); } }}>
-                <Trash2 size={16} /> Delete Selected
-              </button>
-            )}
-            <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--brand-primary)' }} onClick={() => setSelected([])}>
-              <X size={18} />
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Views */}
       {view === 'kanban' ? (
         <KanbanView leads={filtered} districts={districts} onLeadClick={id => navigate(`/leads/${id}`)} />
       ) : (
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <table className="premium-table">
+          <TableToolbar 
+            selectedCount={selected.length}
+            onDelete={can('delete') ? () => { if (confirm(`Delete ${selected.length} leads?`)) { bulkDeleteLeads(selected); setSelected([]); } } : undefined}
+          >
+            {selected.length > 0 && (
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <select className="form-input" style={{ width: 160, background: 'white' }} value={bulkStage} onChange={e => setBulkStage(e.target.value)}>
+                  <option value="">Bulk Stage</option>
+                  {STAGES.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+                {bulkStage && (
+                  <button className="btn btn-primary" style={{ padding: '8px 16px' }} onClick={() => { bulkUpdateLeads(selected, { stage: bulkStage }); setSelected([]); setBulkStage(''); }}>
+                    Apply
+                  </button>
+                )}
+              </div>
+            )}
+          </TableToolbar>
+          <div className="table-responsive">
+            <table className="premium-table">
             <thead>
               <tr>
                 <th style={{ width: 48 }}>
@@ -294,7 +283,8 @@ export default function LeadList() {
                 );
               })}
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
       )}
 

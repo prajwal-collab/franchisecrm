@@ -247,7 +247,12 @@ body {
 .kpi-card-label { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
 
 /* Tables */
-.premium-table { width: 100%; border-collapse: collapse; background: white; }
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.premium-table { width: 100%; border-collapse: collapse; background: white; white-space: nowrap; }
 .premium-table th { 
   text-align: left; 
   padding: 12px 20px; 

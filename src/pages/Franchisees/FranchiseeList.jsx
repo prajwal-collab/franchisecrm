@@ -4,11 +4,12 @@ import {
   Building2, Search, Download, Plus, 
   MapPin, Phone, Mail, ChevronUp, ChevronDown,
   Upload, X, CheckCircle2, ChevronRight, AlertCircle,
-  FileText, TrendingUp
+  FileText, TrendingUp, CheckSquare, Square
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { parseCSV, downloadTemplate } from '../../services/db';
+import TableToolbar from '../../components/TableToolbar';
 
 const PAYMENT_BADGE = {
   'Partial': 'badge-warning',
@@ -24,6 +25,7 @@ export default function FranchiseeList() {
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState('name');
   const [sortDir, setSortDir] = useState('asc');
+  const [selected, setSelected] = useState([]);
 
   // Import State
   const [showImport, setShowImport] = useState(false);
@@ -145,10 +147,17 @@ export default function FranchiseeList() {
       </div>
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <table className="premium-table">
-          <thead>
-            <tr>
-              {[['Partner Name', 'name'], ['District', 'districtName'], ['Onboarding', 'onboardingDate'], ['Committed', 'committedAmount'], ['Received', 'receivedAmount'], ['Balance', 'balanceDue'], ['Status', 'paymentStatus']].map(([label, key]) => (
+        <TableToolbar 
+          selectedCount={selected.length} 
+        />
+        <div className="table-responsive">
+          <table className="premium-table">
+            <thead>
+              <tr>
+                <th style={{ width: 48, cursor: 'pointer' }} onClick={() => setSelected(selected.length === filtered.length && filtered.length > 0 ? [] : filtered.map(f => f.id || f._id))}>
+                  {selected.length === filtered.length && filtered.length > 0 ? <CheckSquare size={16} color="var(--brand-primary)" /> : <Square size={16} />}
+                </th>
+                {[['Partner Name', 'name'], ['District', 'districtName'], ['Onboarding', 'onboardingDate'], ['Committed', 'committedAmount'], ['Received', 'receivedAmount'], ['Balance', 'balanceDue'], ['Status', 'paymentStatus']].map(([label, key]) => (
                 <th key={key} style={{ cursor: 'pointer' }} onClick={() => {
                   if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
                   else { setSortKey(key); setSortDir('asc'); }
@@ -162,8 +171,13 @@ export default function FranchiseeList() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map(f => (
-              <tr key={f.id || f._id} onClick={() => navigate(`/franchisees/${f.id || f._id}`)} style={{ cursor: 'pointer' }}>
+            {filtered.map(f => {
+              const fid = f.id || f._id;
+              return (
+              <tr key={fid} onClick={() => navigate(`/franchisees/${fid}`)} style={{ cursor: 'pointer' }}>
+                <td onClick={(e) => { e.stopPropagation(); setSelected(prev => prev.includes(fid) ? prev.filter(x => x !== fid) : [...prev, fid]); }}>
+                  {selected.includes(fid) ? <CheckSquare size={16} color="var(--brand-primary)" /> : <Square size={16} />}
+                </td>
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{ width: 32, height: 32, borderRadius: 6, background: '#fff7ed', color: '#f97316', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -193,16 +207,17 @@ export default function FranchiseeList() {
                   <span className={`badge ${PAYMENT_BADGE[f.paymentStatus]}`}>{f.paymentStatus}</span>
                 </td>
               </tr>
-            ))}
+            )})}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={7} style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                <td colSpan={8} style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
                   No partners found matching your search.
                 </td>
               </tr>
             )}
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
 
       {/* Import Modal */}

@@ -3,8 +3,9 @@ import {
   Search, MapPin, Building2, Calendar, 
   ExternalLink, Plus, Filter, ChevronUp, ChevronDown,
   Upload, Download, X, CheckCircle2, ChevronRight, AlertCircle,
-  FileText
+  FileText, CheckSquare, Square
 } from 'lucide-react';
+import TableToolbar from '../../components/TableToolbar';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { DISTRICT_STATUSES } from '../../data/initialData';
@@ -25,6 +26,7 @@ export default function DistrictList() {
   const [filterStatus, setFilterStatus] = useState('');
   const [sortKey, setSortKey] = useState('name');
   const [sortDir, setSortDir] = useState('asc');
+  const [selected, setSelected] = useState([]);
 
   // Import State
   const [showImport, setShowImport] = useState(false);
@@ -158,10 +160,15 @@ export default function DistrictList() {
       </div>
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <table className="premium-table">
-          <thead>
-            <tr>
-              {[['District Name', 'name'], ['Status', 'status'], ['Sold Date', 'soldDate'], ['Franchisee', 'franchiseeName']].map(([label, key]) => (
+        <TableToolbar selectedCount={selected.length} />
+        <div className="table-responsive">
+          <table className="premium-table">
+            <thead>
+              <tr>
+                <th style={{ width: 48, cursor: 'pointer' }} onClick={() => setSelected(selected.length === filtered.length && filtered.length > 0 ? [] : filtered.map(d => d.id || d._id))}>
+                  {selected.length === filtered.length && filtered.length > 0 ? <CheckSquare size={16} color="var(--brand-primary)" /> : <Square size={16} />}
+                </th>
+                {[['District Name', 'name'], ['Status', 'status'], ['Sold Date', 'soldDate'], ['Franchisee', 'franchiseeName']].map(([label, key]) => (
                 <th key={key} onClick={() => toggleSort(key)} style={{ cursor: 'pointer' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     {label}
@@ -173,8 +180,13 @@ export default function DistrictList() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map(district => (
-              <tr key={district.id || district._id}>
+            {filtered.map(district => {
+              const did = district.id || district._id;
+              return (
+              <tr key={did}>
+                <td onClick={(e) => { e.stopPropagation(); setSelected(prev => prev.includes(did) ? prev.filter(x => x !== did) : [...prev, did]); }}>
+                  {selected.includes(did) ? <CheckSquare size={16} color="var(--brand-primary)" /> : <Square size={16} />}
+                </td>
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{ width: 32, height: 32, borderRadius: 6, background: '#f1f7ff', color: '#007bff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -215,16 +227,17 @@ export default function DistrictList() {
                   </td>
                 )}
               </tr>
-            ))}
+            )})}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                <td colSpan={6} style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
                   No districts found matching your search.
                 </td>
               </tr>
             )}
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
 
       {/* Import Modal */}

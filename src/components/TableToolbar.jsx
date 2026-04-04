@@ -42,39 +42,13 @@ export default function TableToolbar({ selectedCount = 0, onEdit, onDuplicate, o
         <Trash2 size={14} /> Delete
       </button>
 
-      <div style={{ position: 'relative' }}>
-        <button 
-          className="btn btn-secondary" 
-          style={{ padding: '6px 12px', fontSize: 13 }}
-          onClick={() => setShowPrint(!showPrint)}
-          onBlur={() => setTimeout(() => setShowPrint(false), 200)}
-        >
-          <Printer size={14} /> Print <ChevronDown size={14} />
-        </button>
-        {showPrint && (
-          <div className="dropdown-menu" style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, background: 'white', border: '1px solid var(--border-color)', borderRadius: 4, boxShadow: 'var(--shadow-md)', zIndex: 10, minWidth: 120 }}>
-            <div style={{ padding: '8px 12px', fontSize: 13, cursor: 'pointer' }} onClick={() => handleFeature(onPrint, 'Print List')}>Print List</div>
-            <div style={{ padding: '8px 12px', fontSize: 13, cursor: 'pointer' }} onClick={() => handleFeature(null, 'Print Details')}>Print Details</div>
-          </div>
-        )}
-      </div>
+      <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: 13 }} onClick={() => handleFeature(onPrint, 'Print')}>
+        <Printer size={14} /> Print
+      </button>
 
-      <div style={{ position: 'relative' }}>
-        <button 
-          className="btn btn-secondary" 
-          style={{ padding: '6px 12px', fontSize: 13 }}
-          onClick={() => setShowExport(!showExport)}
-          onBlur={() => setTimeout(() => setShowExport(false), 200)}
-        >
-          <Download size={14} /> Export <ChevronDown size={14} />
-        </button>
-        {showExport && (
-          <div className="dropdown-menu" style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, background: 'white', border: '1px solid var(--border-color)', borderRadius: 4, boxShadow: 'var(--shadow-md)', zIndex: 10, minWidth: 120 }}>
-            <div style={{ padding: '8px 12px', fontSize: 13, cursor: 'pointer' }} onClick={() => handleFeature(onExport, 'Export CSV')}>As CSV</div>
-            <div style={{ padding: '8px 12px', fontSize: 13, cursor: 'pointer' }} onClick={() => handleFeature(null, 'Export Excel')}>As Excel</div>
-          </div>
-        )}
-      </div>
+      <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: 13 }} onClick={() => handleFeature(onExport, 'Export')}>
+        <Download size={14} /> Export
+      </button>
       
       {children && (
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, alignItems: 'center' }}>

@@ -198,8 +198,8 @@ export default function FranchiseeList() {
                 <th key={key} style={{ cursor: 'pointer' }} onClick={() => {
                   if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
                   else { setSortKey(key); setSortDir('asc'); }
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                }} className={['committedAmount', 'receivedAmount', 'balanceDue'].includes(key) ? 'text-right' : ''}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: ['committedAmount', 'receivedAmount', 'balanceDue'].includes(key) ? 'flex-end' : 'flex-start' }}>
                     {label}
                     {sortKey === key && (sortDir === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
                   </div>
@@ -235,9 +235,9 @@ export default function FranchiseeList() {
                 <td style={{ color: '#7c98b6', fontSize: 13 }}>
                   {new Date(f.onboardingDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </td>
-                <td style={{ fontWeight: 600, color: '#33475b' }}>₹{f.committedAmount.toLocaleString('en-IN')}</td>
-                <td style={{ color: 'var(--brand-primary)', fontWeight: 700 }}>₹{f.receivedAmount.toLocaleString('en-IN')}</td>
-                <td style={{ fontWeight: 700, color: (f.committedAmount - f.receivedAmount) > 0 ? '#ef4444' : '#22c55e' }}>
+                <td className="text-right" style={{ fontWeight: 600, color: '#33475b' }}>₹{f.committedAmount.toLocaleString('en-IN')}</td>
+                <td className="text-right" style={{ color: 'var(--brand-primary)', fontWeight: 700 }}>₹{f.receivedAmount.toLocaleString('en-IN')}</td>
+                <td className="text-right" style={{ fontWeight: 700, color: (f.committedAmount - f.receivedAmount) > 0 ? '#ef4444' : '#22c55e' }}>
                   ₹{(f.committedAmount - f.receivedAmount).toLocaleString('en-IN')}
                 </td>
                 <td>

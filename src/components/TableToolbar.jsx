@@ -4,54 +4,71 @@ import { useApp } from '../context/AppContext';
 
 export default function TableToolbar({ selectedCount = 0, onEdit, onDuplicate, onDelete, onPrint, onExport, children }) {
   const { toast } = useApp();
-  const [showPrint, setShowPrint] = useState(false);
-  const [showExport, setShowExport] = useState(false);
 
-  // If no specific handler provided, show a default toast
-  const handleFeature = (handler, name) => {
-    if (handler) {
-      handler();
-    } else {
-      toast(`${name} feature coming soon!`);
-    }
-  };
+  if (selectedCount === 0) return null;
 
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
-      padding: '12px 24px', background: 'white', 
-      borderTop: '1px solid var(--border-color)',
-      borderBottom: '1px solid var(--border-color)',
-      opacity: selectedCount > 0 ? 1 : 0.6,
-      pointerEvents: selectedCount > 0 ? 'auto' : 'none',
-      transition: 'all 0.2s'
+    <div className="animate-in" style={{
+      position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
+      display: 'flex', alignItems: 'center', gap: 16,
+      padding: '16px 24px', background: '#111827', 
+      borderRadius: 100, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+      zIndex: 1000,
+      color: 'white'
     }}>
-      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginRight: 8 }}>
-        {selectedCount} selected
-      </span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingRight: 16, borderRight: '1px solid rgba(255,255,255,0.1)' }}>
+        <span style={{ 
+          background: 'var(--brand-primary)', color: 'white', 
+          width: 24, height: 24, borderRadius: '50%', 
+          display: 'flex', alignItems: 'center', justifyContent: 'center', 
+          fontSize: 12, fontWeight: 700 
+        }}>
+          {selectedCount}
+        </span>
+        <span style={{ fontSize: 14, fontWeight: 600 }}>Selected</span>
+      </div>
       
-      <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: 13 }} onClick={() => handleFeature(onEdit, 'Edit')}>
-        <Edit2 size={14} /> Edit
-      </button>
-      
-      <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: 13 }} onClick={() => handleFeature(onDuplicate, 'Duplicate')}>
-        <Copy size={14} /> Duplicate
-      </button>
-      
-      <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: 13, color: '#ef4444' }} onClick={() => handleFeature(onDelete, 'Delete')}>
-        <Trash2 size={14} /> Delete
-      </button>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <button 
+          className="btn-toolbar" 
+          disabled={selectedCount > 1 && onEdit}
+          onClick={() => {
+            if (selectedCount > 1) {
+              toast('Edit only available for single selection', 'warning');
+            } else if (onEdit) {
+              onEdit();
+            } else {
+              toast('Edit feature coming soon!', 'info');
+            }
+          }}
+          title={selectedCount > 1 ? "Select exactly one item to edit" : "Edit"}
+        >
+          <Edit2 size={16} /> <span className="toolbar-label">Edit</span>
+        </button>
+        
+        <button className="btn-toolbar" onClick={() => onDuplicate ? onDuplicate() : toast('Duplicate feature coming soon!')}>
+          <Copy size={16} /> <span className="toolbar-label">Duplicate</span>
+        </button>
+        
+        <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.1)', margin: '0 4px' }} />
 
-      <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: 13 }} onClick={() => handleFeature(onPrint, 'Print')}>
-        <Printer size={14} /> Print
-      </button>
+        <button className="btn-toolbar" onClick={() => onPrint ? onPrint() : toast('Print feature coming soon!')}>
+          <Printer size={16} /> <span className="toolbar-label">Print</span>
+        </button>
 
-      <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: 13 }} onClick={() => handleFeature(onExport, 'Export')}>
-        <Download size={14} /> Export
-      </button>
-      
+        <button className="btn-toolbar" onClick={() => onExport ? onExport() : toast('Export feature coming soon!')}>
+          <Download size={16} /> <span className="toolbar-label">Export CSV</span>
+        </button>
+
+        <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.1)', margin: '0 4px' }} />
+
+        <button className="btn-toolbar btn-toolbar-danger" onClick={() => onDelete ? onDelete() : toast('Delete feature coming soon!')}>
+          <Trash2 size={16} /> <span className="toolbar-label">Delete</span>
+        </button>
+      </div>
+
       {children && (
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, alignItems: 'center' }}>
+        <div style={{ marginLeft: 8, paddingLeft: 16, borderLeft: '1px solid rgba(255,255,255,0.1)', display: 'flex', gap: 12, alignItems: 'center' }}>
           {children}
         </div>
       )}

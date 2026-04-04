@@ -252,23 +252,39 @@ body {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
-.premium-table { width: 100%; border-collapse: collapse; background: white; white-space: nowrap; }
-.premium-table th { 
-  text-align: left; 
-  padding: 12px 20px; 
-  color: #33475b; 
-  font-size: 11px; 
-  font-weight: 700;
-  text-transform: uppercase; 
-  background: #f5f8fa;
-  border-bottom: 1px solid var(--border-color);
+
+.premium-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  white-space: nowrap;
 }
-.premium-table tr td { 
-  padding: 16px 20px; 
-  border-bottom: 1px solid var(--border-color);
+
+.premium-table th {
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
+  color: #7c98b6;
+  letter-spacing: 0.5px;
+  padding: 16px 24px;
+  background: #fdfdfd;
+  border-bottom: 2px solid #eaf0f6;
+  text-align: left;
+}
+
+.premium-table th.text-right,
+.premium-table td.text-right {
+  text-align: right;
+}
+
+.premium-table td {
+  padding: 16px 24px;
   color: #33475b;
+  border-bottom: 1px solid #eaf0f6;
+  vertical-align: middle;
   font-size: 14px;
 }
+
 .premium-table tr:hover td { background: #fdfdfd; }
 
 /* Modal */
@@ -433,4 +449,55 @@ body {
   padding: 0;
   font-size: 0;
   border: 2px solid white;
+}
+/* ---- Floating Toolbar ---- */
+.btn-toolbar {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-toolbar:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.btn-toolbar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-toolbar-danger {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+
+.btn-toolbar-danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fecaca;
+}
+
+.toolbar-label {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .toolbar-label {
+    display: inline;
+  }
+}
+
+.text-right {
+  text-align: right !important;
 }

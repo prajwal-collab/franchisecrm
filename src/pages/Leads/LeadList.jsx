@@ -30,7 +30,7 @@ const EXPORT_COLS = [
 ];
 
 export default function LeadList() {
-  const { leads, districts, users, deleteLead, bulkUpdateLeads, bulkDeleteLeads, importLeads, refresh, toast } = useApp();
+  const { leads, districts, users, createLead, deleteLead, bulkUpdateLeads, bulkDeleteLeads, importLeads, refresh, toast } = useApp();
   const { can } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef();
@@ -208,7 +208,27 @@ export default function LeadList() {
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
           <TableToolbar 
             selectedCount={selected.length}
+            onEdit={() => {
+              if (selected.length === 1) {
+                const l = leads.find(x => (x.id || x._id) === selected[0]);
+                if (l) { setEditLead(l); setShowForm(true); }
+              } else {
+                toast('Please select exactly one lead to edit', 'warning');
+              }
+            }}
+            onDuplicate={can('create') ? () => {
+              selected.forEach(id => {
+                const l = leads.find(x => (x.id || x._id) === id);
+                if (l) {
+                  const { id: _, _id, ...copy } = l;
+                  createLead({ ...copy, firstName: `${l.firstName} (Copy)` });
+                }
+              });
+              setSelected([]);
+            } : undefined}
             onDelete={can('delete') ? () => { if (confirm(`Delete ${selected.length} leads?`)) { bulkDeleteLeads(selected); setSelected([]); } } : undefined}
+            onPrint={() => window.print()}
+            onExport={handleExport}
           >
             {selected.length > 0 && (
               <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>

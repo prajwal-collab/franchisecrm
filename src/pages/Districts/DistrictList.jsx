@@ -9,7 +9,7 @@ import TableToolbar from '../../components/TableToolbar';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { DISTRICT_STATUSES } from '../../data/initialData';
-import { parseCSV, downloadTemplate } from '../../services/db';
+import { parseCSV, downloadTemplate, exportToCSV } from '../../services/db';
 
 const STATUS_BADGE = {
   'Available': 'badge-success',
@@ -160,7 +160,28 @@ export default function DistrictList() {
       </div>
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <TableToolbar selectedCount={selected.length} />
+        <TableToolbar 
+          selectedCount={selected.length}
+          onEdit={() => toast('Please edit districts directly from the table or admin dashboard.', 'info')}
+          onDuplicate={() => {
+            selected.forEach(id => {
+              const d = districts.find(x => (x.id || x._id) === id);
+              if (d) createDistrict({ name: `${d.name} (Copy)`, status: 'Available' });
+            });
+            setSelected([]);
+          }}
+          onDelete={() => toast('Deleting districts is restricted. Please mark status as Blocked.', 'error')}
+          onPrint={() => window.print()}
+          onExport={() => {
+            const data = selected.length ? filtered.filter(d => selected.includes(d.id || d._id)) : filtered;
+            exportToCSV(data, `districts_${Date.now()}.csv`, [
+              { key: 'name', label: 'District Name' },
+              { key: 'status', label: 'Status' },
+              { key: 'soldDate', label: 'Sold Date' },
+              { key: 'franchiseeName', label: 'Franchisee' }
+            ]);
+          }}
+        />
         <div className="table-responsive">
           <table className="premium-table">
             <thead>

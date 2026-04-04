@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
-import { parseCSV, downloadTemplate } from '../../services/db';
+import { parseCSV, downloadTemplate, exportToCSV } from '../../services/db';
 import TableToolbar from '../../components/TableToolbar';
 
 const PAYMENT_BADGE = {
@@ -149,6 +149,43 @@ export default function FranchiseeList() {
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <TableToolbar 
           selectedCount={selected.length} 
+          onEdit={() => {
+            if (selected.length === 1) {
+              navigate(`/franchisees/${selected[0]}`);
+            } else {
+              toast('Please select exactly one partner to edit', 'warning');
+            }
+          }}
+          onDuplicate={() => {
+            selected.forEach(id => {
+              const f = franchisees.find(x => (x.id || x._id) === id);
+              if (f) {
+                const { id: _, _id, ...copy } = f;
+                createFranchisee({ ...copy, name: `${f.name} (Copy)` });
+              }
+            });
+            setSelected([]);
+          }}
+          onDelete={() => {
+            if (confirm(`Delete ${selected.length} partner(s)?`)) {
+              selected.forEach(id => deleteFranchisee(id));
+              setSelected([]);
+            }
+          }}
+          onPrint={() => window.print()}
+          onExport={() => {
+            const dataToExport = selected.length > 0 ? enriched.filter(f => selected.includes(f.id || f._id)) : enriched;
+            exportToCSV(dataToExport, `franchise_partners_${Date.now()}.csv`, [
+              { key: 'name', label: 'Partner Name' },
+              { key: 'contactPerson', label: 'Contact Person' },
+              { key: 'phone', label: 'Phone' },
+              { key: 'districtName', label: 'District' },
+              { key: 'onboardingDate', label: 'Onboarding Date' },
+              { key: 'committedAmount', label: 'Committed (INR)' },
+              { key: 'receivedAmount', label: 'Received (INR)' },
+              { key: 'paymentStatus', label: 'Status' }
+            ]);
+          }}
         />
         <div className="table-responsive">
           <table className="premium-table">

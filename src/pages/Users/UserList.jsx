@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { UserPlus, Mail, Shield, Trash2, X, Send, CheckSquare, Square } from 'lucide-react';
-import { usersDB } from '../../services/db';
+import { usersDB, exportToCSV } from '../../services/db';
 import TableToolbar from '../../components/TableToolbar';
 import { useAuth } from '../../context/AuthContext';
+import { useApp } from '../../context/AppContext';
 
 export default function UserList() {
   const { can } = useAuth();
+  const { toast } = useApp();
   const [users, setUsers] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -59,7 +61,21 @@ export default function UserList() {
       </div>
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <TableToolbar selectedCount={selected.length} />
+        <TableToolbar 
+          selectedCount={selected.length}
+          onEdit={() => toast('Please edit users from the system console.', 'info')}
+          onDuplicate={() => toast('Cloning users is restricted.', 'error')}
+          onDelete={() => toast('Deleting users is restricted. Please deactivate instead.', 'error')}
+          onPrint={() => window.print()}
+          onExport={() => {
+            const data = selected.length ? users.filter(u => selected.includes(u.id || u._id)) : users;
+            exportToCSV(data, `users_${Date.now()}.csv`, [
+              { key: 'name', label: 'Name' },
+              { key: 'email', label: 'Email' },
+              { key: 'role', label: 'Role' }
+            ]);
+          }}
+        />
         <div className="table-responsive">
           <table className="premium-table">
             <thead>

@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
+import LeadForm from '../../pages/Leads/LeadForm';
+import { useApp } from '../../context/AppContext';
 
 export default function Layout({ children }) {
   const [collapsed, setCollapsed] = useState(false);
+  const { isGlobalLeadFormOpen, setIsGlobalLeadFormOpen } = useApp();
 
   return (
     <div className="app-shell">
@@ -14,6 +17,12 @@ export default function Layout({ children }) {
           {children}
         </div>
       </div>
+
+      {isGlobalLeadFormOpen && (
+        <LeadForm 
+          onClose={() => setIsGlobalLeadFormOpen(false)} 
+        />
+      )}
     </div>
   );
 }

@@ -88,7 +88,10 @@ export default function LeadList() {
   };
 
   const toggleSelect = (id) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
-  const toggleAll = () => setSelected(selected.length === filtered.length ? [] : filtered.map(l => l.id || l._id));
+  const toggleAll = () => {
+    const allIds = filtered.map(l => l.id || l._id);
+    setSelected(selected.length === allIds.length ? [] : allIds);
+  };
 
   // ---- Export ----
   const handleExport = () => {
@@ -291,7 +294,9 @@ export default function LeadList() {
                         <span style={{ fontSize: 12, fontWeight: 700 }}>{lead.score}</span>
                       </div>
                     </td>
-                    <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{new Date(lead.updatedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</td>
+                    <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
+                      {lead.updatedDate ? new Date(lead.updatedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '—'}
+                    </td>
                     <td style={{ textAlign: 'right' }}>
                       <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }} onClick={e => e.stopPropagation()}>
                         <button className="btn btn-secondary" style={{ padding: 6 }} onClick={() => { setEditLead(lead); setShowForm(true); }}>

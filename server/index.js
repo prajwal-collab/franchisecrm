@@ -329,7 +329,7 @@ app.post('/api/ai/generate-strategy', async (req, res) => {
       body: JSON.stringify({
         model: 'deepseek-chat',
         messages: [
-          { role: 'system', content: 'You are a professional sales strategist assistant.' },
+          { role: 'system', content: 'You are a highly experienced and empathetic Senior Sales Strategist at EarlyJobs. Your goal is to provide punchy, human-sounding sales playbooks that help Closers win deals. Avoid generic advice; be specific, creative, and professional.' },
           { role: 'user', content: prompt }
         ],
         stream: false
@@ -368,15 +368,28 @@ app.post('/api/ai/chat', async (req, res) => {
       franchisees: franchisees
     };
 
-    const systemPrompt = `You are the EarlyJobs CRM Data Analyst AI. 
-You have direct access to the live CRM data below (in JSON). 
-Answer the user's questions about leads, districts, partners, stats, or pipeline using ONLY this data. 
-If asked something completely outside this data or CRM scope, politely decline.
+    const systemPrompt = `You are the EarlyJobs CRM Insight Assistant. 
+Your goal is to help users manage their franchise pipeline with clear, professional, and human-like insights.
 
-CRM DATA:
+### IDENTITY & TONE:
+- Talk like a helpful, senior CRM analyst at EarlyJobs.
+- Be proactive, intelligent, and professional.
+- Use a friendly but business-focused tone.
+
+### DATA SOURCE:
+- You MUST answer questions using the CRM DATA provided below.
+- If the information is not in the CRM DATA, clearly state that you don't have that specific information yet.
+- NEVER hypothesize or "hallucinate" data (e.g., don't invent leads or districts).
+
+### FORMATTING:
+- Use Markdown for structured data.
+- If listing stats, use tables or bullet points.
+- Highlights important names or numbers in **bold**.
+
+### CRM DATA:
 ${JSON.stringify(crmData)}
 
-Provide a concise, professional response. Use markdown (e.g. tables, bold) to format data nicely if applicable.`;
+Respond directly to the user's latest query based on this context.`;
 
     const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',

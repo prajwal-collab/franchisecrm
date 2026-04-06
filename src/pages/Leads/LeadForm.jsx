@@ -25,7 +25,8 @@ export default function LeadForm({ lead, onClose }) {
     } else {
       // Auto-assign SDR on new lead
       const nextSdr = getNextSDR();
-      setFormData(prev => ({ ...prev, assignedTo: nextSdr?.id || '' }));
+      const sdrId = nextSdr?.id || nextSdr?._id || '';
+      setFormData(prev => ({ ...prev, assignedTo: sdrId }));
     }
   }, [lead]);
 
@@ -62,8 +63,8 @@ export default function LeadForm({ lead, onClose }) {
     
     // Duplicate check
     if (val.length === 13 && formData.districtId) {
-      const dupe = leadsDB.checkDuplicate(val, formData.districtId, lead?.id);
-      setDuplicateWarning(dupe ? { id: dupe.id, name: `${dupe.firstName} ${dupe.lastName}` } : null);
+      const dupe = leadsDB.checkDuplicate(val, formData.districtId, lead?.id || lead?._id);
+      setDuplicateWarning(dupe ? { id: dupe.id || dupe._id, name: `${dupe.firstName} ${dupe.lastName}` } : null);
     }
   };
 
@@ -73,8 +74,8 @@ export default function LeadForm({ lead, onClose }) {
     
     // Duplicate check
     if (formData.phone.length === 13 && dId) {
-      const dupe = leadsDB.checkDuplicate(formData.phone, dId, lead?.id);
-      setDuplicateWarning(dupe ? { id: dupe.id, name: `${dupe.firstName} ${dupe.lastName}` } : null);
+      const dupe = leadsDB.checkDuplicate(formData.phone, dId, lead?.id || lead?._id);
+      setDuplicateWarning(dupe ? { id: dupe.id || dupe._id, name: `${dupe.firstName} ${dupe.lastName}` } : null);
     }
   };
 
@@ -83,7 +84,7 @@ export default function LeadForm({ lead, onClose }) {
     if (!validate()) return;
 
     if (lead) {
-      updateLead(lead.id, formData, lead.stage);
+      updateLead(lead.id || lead._id, formData, lead.stage);
     } else {
       createLead(formData);
     }
@@ -185,7 +186,7 @@ export default function LeadForm({ lead, onClose }) {
               >
                 <option value="">Select District</option>
                 {districts.map(d => (
-                  <option key={d.id} value={d.id} disabled={!lead && (d.status === 'Sold' || d.status === 'Blocked')}>
+                  <option key={d.id || d._id} value={d.id || d._id} disabled={!lead && (d.status === 'Sold' || d.status === 'Blocked')}>
                     {d.name} {d.status !== 'Available' ? `(${d.status})` : ''}
                   </option>
                 ))}
@@ -218,7 +219,7 @@ export default function LeadForm({ lead, onClose }) {
                 onChange={e => setFormData({...formData, assignedTo: e.target.value})} 
                 disabled={currentUser.role === 'SDR'}
               >
-                {useApp().users.filter(u => u.role === 'SDR').map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                {useApp().users.filter(u => u.role === 'SDR').map(u => <option key={u.id || u._id} value={u.id || u._id}>{u.name}</option>)}
               </select>
             </div>
           </div>

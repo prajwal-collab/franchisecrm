@@ -10,6 +10,7 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { DISTRICT_STATUSES } from '../../data/initialData';
 import { parseCSV, downloadTemplate, exportToCSV } from '../../services/db';
+import DistrictForm from './DistrictForm';
 
 const STATUS_BADGE = {
   'Available': 'badge-success',
@@ -30,6 +31,8 @@ export default function DistrictList() {
 
   // Import State
   const [showImport, setShowImport] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [editDistrict, setEditDistrict] = useState(null);
   const [importStep, setImportStep] = useState(1);
   const [importData, setImportData] = useState(null);
   const [importMapping, setImportMapping] = useState({});
@@ -124,8 +127,8 @@ export default function DistrictList() {
                 <Upload size={16} /> Import Districts
               </button>
               <button className="btn btn-primary" onClick={() => {
-                const name = prompt('Enter new district name:');
-                if (name) createDistrict({ name, status: 'Available' });
+                setEditDistrict(null);
+                setShowForm(true);
               }}>
                 <Plus size={18} /> Add District
               </button>
@@ -162,7 +165,15 @@ export default function DistrictList() {
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <TableToolbar 
           selectedCount={selected.length}
-          onEdit={() => toast('Please edit districts directly from the table or admin dashboard.', 'info')}
+          onEdit={() => {
+            if (selected.length === 1) {
+              const d = districts.find(x => (x.id || x._id) === selected[0]);
+              setEditDistrict(d);
+              setShowForm(true);
+            } else {
+              toast('Please select exactly one district to edit', 'info');
+            }
+          }}
           onDuplicate={() => {
             selected.forEach(id => {
               const d = districts.find(x => (x.id || x._id) === id);
@@ -406,6 +417,16 @@ export default function DistrictList() {
             </div>
           </div>
         </div>
+      )}
+      {/* District Form Modal */}
+      {showForm && (
+        <DistrictForm 
+          district={editDistrict} 
+          onClose={() => {
+            setShowForm(false);
+            setEditDistrict(null);
+          }} 
+        />
       )}
     </div>
   );

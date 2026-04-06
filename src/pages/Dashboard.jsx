@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import {
   Users, TrendingUp, MapPin, Building2, CheckSquare,
-  Clock, AlertTriangle, ExternalLink
+  Clock, AlertTriangle, ExternalLink, Plus, PlusCircle
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
@@ -210,7 +210,7 @@ function SDRDashboard({ leads, tasks, currentUser }) {
 }
 
 export default function Dashboard() {
-  const { leads, districts, franchisees, tasks, meetings, users } = useApp();
+  const { leads, districts, franchisees, tasks, meetings, users, setIsGlobalLeadFormOpen } = useApp();
   const { currentUser } = useAuth();
   const [tab, setTab] = useState('Overview');
 
@@ -223,6 +223,11 @@ export default function Dashboard() {
         <div className="page-header-left">
           <h1 style={{ fontSize: 24, fontWeight: 700, color: '#33475b', marginBottom: 4 }}>Welcome back, {currentUser?.name?.split(' ')[0]} 👋</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        </div>
+        <div className="page-header-actions">
+          <button className="btn btn-primary" onClick={() => setIsGlobalLeadFormOpen(true)} style={{ gap: 8 }}>
+            <Plus size={18} /> Create Lead
+          </button>
         </div>
       </div>
 
@@ -264,7 +269,10 @@ export default function Dashboard() {
         <p style={{ opacity: 0.9, fontSize: 14, maxWidth: 600, marginBottom: 24 }}>Welcome to the EarlyJobs Hubspot Premium CRM. Here is how to get started:</p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24 }}>
           <div>
-            <div style={{ fontWeight: 800, marginBottom: 8, fontSize: 16 }}>1. Manage Leads</div>
+            <div style={{ fontWeight: 800, marginBottom: 8, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+              1. Manage Leads 
+              <button className="btn-text" onClick={() => setIsGlobalLeadFormOpen(true)} style={{ color: 'white', border: '1px solid rgba(255,255,255,0.4)', padding: '2px 8px', borderRadius: 4, fontSize: 11 }}>Add Now</button>
+            </div>
             <p style={{ fontSize: 13, opacity: 0.8 }}>Track potential franchisees from 'New Lead' to 'Closed Won'. Use the "Add Lead" button to start a new deal.</p>
           </div>
           <div>

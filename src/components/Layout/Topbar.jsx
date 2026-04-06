@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, Bell, User } from 'lucide-react';
+import { Search, Bell, User, PlusCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 
@@ -24,7 +24,7 @@ const BREADCRUMB_MAP = {
 
 export default function Topbar() {
   const { currentUser } = useAuth();
-  const { leads, districts, franchisees } = useApp();
+  const { leads, districts, franchisees, setIsGlobalLeadFormOpen } = useApp();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
@@ -104,6 +104,16 @@ export default function Topbar() {
           </div>
         )}
       </div>
+
+      {/* Quick Action */}
+      <button 
+        className="btn btn-primary" 
+        onClick={() => setIsGlobalLeadFormOpen(true)}
+        style={{ padding: '8px 16px', gap: 8, fontSize: 13, display: 'flex', alignItems: 'center' }}
+      >
+        <PlusCircle size={16} />
+        {!location.pathname.includes('/leads') && <span>Create Lead</span>}
+      </button>
 
       {/* User Info */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>

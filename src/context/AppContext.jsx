@@ -14,6 +14,7 @@ export function AppProvider({ children }) {
   const [meetings, setMeetings] = useState([]);
   const [users, setUsers] = useState([]);
   const [toasts, setToasts] = useState([]);
+  const [isGlobalLeadFormOpen, setIsGlobalLeadFormOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -215,6 +216,7 @@ export function AppProvider({ children }) {
       createTask, toggleTask, deleteTask, updateTask,
       createMeeting, updateMeeting, deleteMeeting,
       refresh,
+      isGlobalLeadFormOpen, setIsGlobalLeadFormOpen,
     }}>
       {children}
     </AppContext.Provider>

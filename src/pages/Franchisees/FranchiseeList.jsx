@@ -10,6 +10,7 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { parseCSV, downloadTemplate, exportToCSV } from '../../services/db';
 import TableToolbar from '../../components/TableToolbar';
+import FranchiseeForm from './FranchiseeForm';
 
 const PAYMENT_BADGE = {
   'Partial': 'badge-warning',
@@ -33,11 +34,8 @@ export default function FranchiseeList() {
   const [importData, setImportData] = useState(null);
   const [importMapping, setImportMapping] = useState({});
 
-  const [showAdd, setShowAdd] = useState(false);
-  const [newFranchisee, setNewFranchisee] = useState({
-    name: '', contactPerson: '', phone: '', districtId: '', 
-    committedAmount: 0, receivedAmount: 0, onboardingDate: new Date().toISOString().split('T')[0]
-  });
+  const [showForm, setShowForm] = useState(false);
+  const [editFranchisee, setEditFranchisee] = useState(null);
 
   const enriched = useMemo(() => franchisees.map(f => ({
     ...f,
@@ -127,7 +125,10 @@ export default function FranchiseeList() {
               </button>
             </>
           )}
-          <button className="btn btn-primary" onClick={() => setShowAdd(true)}>
+          <button className="btn btn-primary" onClick={() => {
+            setEditFranchisee(null);
+            setShowForm(true);
+          }}>
             <Plus size={18} /> New Partner
           </button>
         </div>
@@ -151,7 +152,9 @@ export default function FranchiseeList() {
           selectedCount={selected.length} 
           onEdit={() => {
             if (selected.length === 1) {
-              navigate(`/franchisees/${selected[0]}`);
+              const f = franchisees.find(x => (x.id || x._id) === selected[0]);
+              setEditFranchisee(f);
+              setShowForm(true);
             } else {
               toast('Please select exactly one partner to edit', 'warning');
             }
@@ -378,62 +381,15 @@ export default function FranchiseeList() {
         </div>
       )}
 
-      {showAdd && (
-        <div className="modal-overlay">
-          <div className="modal-content animate-in" style={{ maxWidth: 600 }}>
-            <div style={{ padding: '24px 32px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0, color: '#33475b' }}>Add New Franchise Partner</h2>
-              <button className="btn btn-secondary" onClick={() => setShowAdd(false)} style={{ padding: 4, minWidth: 'auto', border: 'none' }}><X size={20} /></button>
-            </div>
-            <form style={{ padding: '32px' }} onSubmit={async (e) => {
-              e.preventDefault();
-              await createFranchisee(newFranchisee);
-              setShowAdd(false);
-              setNewFranchisee({ name: '', contactPerson: '', phone: '', districtId: '', committedAmount: 0, receivedAmount: 0, onboardingDate: new Date().toISOString().split('T')[0] });
-            }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
-                <div>
-                  <label className="form-label">Franchise Name</label>
-                  <input className="form-input" required value={newFranchisee.name} onChange={e => setNewFranchisee({...newFranchisee, name: e.target.value})} placeholder="e.g. EarlyJobs Hyderabad" />
-                </div>
-                <div>
-                  <label className="form-label">Contact Person</label>
-                  <input className="form-input" required value={newFranchisee.contactPerson} onChange={e => setNewFranchisee({...newFranchisee, contactPerson: e.target.value})} placeholder="Owner Name" />
-                </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
-                <div>
-                  <label className="form-label">Phone Number</label>
-                  <input className="form-input" required value={newFranchisee.phone} onChange={e => setNewFranchisee({...newFranchisee, phone: e.target.value})} placeholder="91XXXXXXXX" />
-                </div>
-                <div>
-                  <label className="form-label">District Location</label>
-                  <select className="form-input" required value={newFranchisee.districtId} onChange={e => setNewFranchisee({...newFranchisee, districtId: e.target.value})}>
-                    <option value="">Select District</option>
-                    {districts.map(d => <option key={d.id || d._id} value={d.id || d._id}>{d.name}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 32 }}>
-                <div>
-                  <label className="form-label">Committed (₹)</label>
-                  <input type="number" className="form-input" required value={newFranchisee.committedAmount} onChange={e => setNewFranchisee({...newFranchisee, committedAmount: parseFloat(e.target.value)})} />
-                </div>
-                <div>
-                  <label className="form-label">Received (₹)</label>
-                  <input type="number" className="form-input" required value={newFranchisee.receivedAmount} onChange={e => setNewFranchisee({...newFranchisee, receivedAmount: parseFloat(e.target.value)})} />
-                </div>
-              </div>
-              <button 
-                type="submit" 
-                className="btn btn-primary" 
-                style={{ width: '100%', justifyContent: 'center', padding: '14px' }}
-              >
-                Create Partner
-              </button>
-            </form>
-          </div>
-        </div>
+      {/* Franchisee Form Modal */}
+      {showForm && (
+        <FranchiseeForm 
+          franchisee={editFranchisee} 
+          onClose={() => {
+            setShowForm(false);
+            setEditFranchisee(null);
+          }} 
+        />
       )}
     </div>
   );

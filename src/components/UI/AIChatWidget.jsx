@@ -39,13 +39,16 @@ export default function AIChatWidget() {
         })
       });
 
-      if (!response.ok) throw new Error('API Request failed');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'API Request failed');
+      }
       const data = await response.json();
       
       setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
     } catch (err) {
       console.error(err);
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error communicating with DeepSeek.' }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ **AI Error:** ${err.message || 'Connection failed'}. Please check your configuration.` }]);
     } finally {
       setIsLoading(false);
     }

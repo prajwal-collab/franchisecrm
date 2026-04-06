@@ -290,7 +290,7 @@ app.post('/api/settings/ai-context', async (req, res) => {
   res.sendStatus(200);
 });
 
-// AI endpoints (DeepSeek integration)
+// AI endpoints (Gemini integration)
 app.post('/api/ai/generate-strategy', async (req, res) => {
   try {
     const { leadDetails } = req.body;
@@ -320,33 +320,32 @@ app.post('/api/ai/generate-strategy', async (req, res) => {
     Format in Markdown. Keep it professional and punchy.
     `;
 
-    const response = await fetch('https://api.deepseek.com/chat/completions', {
+    const GEMINI_API_KEY = process.env.Gemini_API_KEY;
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: [
-          { role: 'system', content: 'You are a highly experienced and empathetic Senior Sales Strategist at EarlyJobs. Your goal is to provide punchy, human-sounding sales playbooks that help Closers win deals. Avoid generic advice; be specific, creative, and professional.' },
-          { role: 'user', content: prompt }
-        ],
-        stream: false
+        contents: [{
+          parts: [{ text: prompt }]
+        }],
+        system_instruction: {
+          parts: [{ text: 'You are a highly experienced and empathetic Senior Sales Strategist at EarlyJobs. Your goal is to provide punchy, human-sounding sales playbooks that help Closers win deals. Avoid generic advice; be specific, creative, and professional.' }]
+        }
       })
     });
 
     if (!response.ok) {
       const errData = await response.json();
-      throw new Error(errData.error?.message || 'DeepSeek API error');
+      const errorMsg = errData.error?.message || 'Gemini API error';
+      throw new Error(errorMsg);
     }
 
     const data = await response.json();
-    const strategy = data.choices[0].message.content;
+    const strategy = data.candidates[0].content.parts[0].text;
     res.json({ strategy });
   } catch (err) {
     console.error('AI Strategy Error:', err);
-    res.status(500).json({ message: 'AI Generation failed', error: err.message });
+    res.status(500).json({ message: err.message || 'AI Generation failed' });
   }
 });
 
@@ -391,30 +390,33 @@ ${JSON.stringify(crmData)}
 
 Respond directly to the user's latest query based on this context.`;
 
-    const response = await fetch('https://api.deepseek.com/chat/completions', {
+    const GEMINI_API_KEY = process.env.Gemini_API_KEY;
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: [{ role: 'system', content: systemPrompt }, ...messages],
-        stream: false
+        contents: messages.map(m => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }]
+        })),
+        system_instruction: {
+          parts: [{ text: systemPrompt }]
+        }
       })
     });
 
     if (!response.ok) {
       const errData = await response.json();
-      throw new Error(errData.error?.message || 'DeepSeek API error');
+      const errorMsg = errData.error?.message || 'Gemini API error';
+      throw new Error(errorMsg);
     }
 
     const data = await response.json();
-    const reply = data.choices[0].message.content;
+    const reply = data.candidates[0].content.parts[0].text;
     res.json({ reply });
   } catch (err) {
     console.error('AI Chat Error:', err);
-    res.status(500).json({ message: 'AI Chat failed', error: err.message });
+    res.status(500).json({ message: err.message || 'AI Chat failed' });
   }
 });
 

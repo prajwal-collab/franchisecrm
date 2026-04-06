@@ -10,7 +10,10 @@ export async function generateSalesStrategy(lead) {
       body: JSON.stringify({ leadDetails: lead })
     });
     
-    if (!res.ok) throw new Error('AI Generation failed');
+    if (!res.ok) {
+      const errData = await res.json();
+      throw new Error(errData.message || 'AI Generation failed');
+    }
     const data = await res.json();
     return data.strategy;
   } catch (err) {

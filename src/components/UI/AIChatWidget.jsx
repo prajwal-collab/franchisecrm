@@ -119,7 +119,7 @@ export default function AIChatWidget() {
               <div>
                 <div style={{ fontSize: '15px', fontWeight: 700 }}>AI Assistant</div>
                 <div style={{ fontSize: '12px', color: '#9ca3af', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e' }} /> DeepSeek Data
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e' }} /> Gemini Data
                 </div>
               </div>
             </div>

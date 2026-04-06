@@ -24,9 +24,12 @@ export default function LeadForm({ lead, onClose }) {
       setFormData({ ...lead });
     } else {
       // Auto-assign SDR on new lead
-      const nextSdr = getNextSDR();
-      const sdrId = nextSdr?.id || nextSdr?._id || '';
-      setFormData(prev => ({ ...prev, assignedTo: sdrId }));
+      const assignNextSDR = async () => {
+        const nextSdr = await getNextSDR();
+        const sdrId = nextSdr?.id || nextSdr?._id || '';
+        setFormData(prev => ({ ...prev, assignedTo: sdrId }));
+      };
+      assignNextSDR();
     }
   }, [lead]);
 
@@ -44,7 +47,7 @@ export default function LeadForm({ lead, onClose }) {
     if (!formData.districtId) newErrors.districtId = 'District is required';
     
     // District validation: check if Sold or Blocked
-    const district = districts.find(d => d.id === formData.districtId);
+    const district = districts.find(d => (d.id || d._id) === formData.districtId);
     if (!lead && district && (district.status === 'Sold' || district.status === 'Blocked')) {
       newErrors.districtId = `District is already ${district.status.toLowerCase()}`;
     }

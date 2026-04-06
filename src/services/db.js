@@ -81,6 +81,14 @@ export const leadsDB = {
       localStorage.setItem('ej_leads', JSON.stringify([...records, ...existing]));
     }
     return res;
+  },
+  checkDuplicate: (phone, districtId, excludeId) => {
+    const leads = JSON.parse(localStorage.getItem('ej_leads') || '[]');
+    return leads.find(l => 
+      l.phone === phone && 
+      l.districtId === districtId && 
+      (l.id || l._id) !== excludeId
+    );
   }
 };
 

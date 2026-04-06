@@ -55,20 +55,20 @@ export function AppProvider({ children }) {
   }, []);
 
   // ---- Lead operations ----
-  const createLead = useCallback((data) => {
+  const createLead = useCallback(async (data) => {
     const score = calculateLeadScore(data);
-    const lead = leadsDB.create({ ...data, score });
+    const lead = await leadsDB.create({ ...data, score });
     runLeadCreationAutomation(lead);
-    refresh();
+    await refresh();
     toast(`Lead "${data.firstName} ${data.lastName}" created`, 'success');
     return lead;
   }, [refresh, toast]);
 
-  const updateLead = useCallback((id, updates, previousStage) => {
+  const updateLead = useCallback(async (id, updates, previousStage) => {
     if (updates.stage) {
       updates.score = calculateLeadScore({ ...updates });
     }
-    const lead = leadsDB.update(id, updates);
+    const lead = await leadsDB.update(id, updates);
     if (!lead) return null;
 
     // Run automations when stage changes
@@ -80,44 +80,44 @@ export function AppProvider({ children }) {
         toast(`🎉 Franchise closed! Franchisee record created for ${district?.name}`, 'success');
       });
     }
-    refresh();
+    await refresh();
     return lead;
   }, [refresh, toast, users]);
 
-  const deleteLead = useCallback((id) => {
-    leadsDB.delete(id);
-    refresh();
+  const deleteLead = useCallback(async (id) => {
+    await leadsDB.delete(id);
+    await refresh();
     toast('Lead deleted', 'info');
   }, [refresh, toast]);
 
-  const bulkUpdateLeads = useCallback((ids, updates) => {
-    leadsDB.bulkUpdate(ids, updates);
-    refresh();
+  const bulkUpdateLeads = useCallback(async (ids, updates) => {
+    await leadsDB.bulkUpdate(ids, updates);
+    await refresh();
     toast(`${ids.length} leads updated`, 'success');
   }, [refresh, toast]);
 
-  const bulkDeleteLeads = useCallback((ids) => {
-    leadsDB.bulkDelete(ids);
-    refresh();
+  const bulkDeleteLeads = useCallback(async (ids) => {
+    await leadsDB.bulkDelete(ids);
+    await refresh();
     toast(`${ids.length} leads deleted`, 'info');
   }, [refresh, toast]);
 
   const importLeads = useCallback(async (records) => {
     await leadsDB.bulkCreate(records);
-    refresh();
+    await refresh();
     toast(`${records.length} leads imported`, 'success');
   }, [refresh, toast]);
 
   // ---- District operations ----
-  const updateDistrict = useCallback((id, updates) => {
-    districtsDB.update(id, updates);
-    refresh();
+  const updateDistrict = useCallback(async (id, updates) => {
+    await districtsDB.update(id, updates);
+    await refresh();
     toast('District updated', 'success');
   }, [refresh, toast]);
 
-  const createDistrict = useCallback((data) => {
-    const d = districtsDB.create(data);
-    refresh();
+  const createDistrict = useCallback(async (data) => {
+    const d = await districtsDB.create(data);
+    await refresh();
     toast('District created', 'success');
     return d;
   }, [refresh, toast]);
@@ -131,40 +131,40 @@ export function AppProvider({ children }) {
   // ---- Franchisee operations ----
   const updateFranchisee = useCallback(async (id, updates) => {
     const f = await franchiseesDB.update(id, updates);
-    refresh();
+    await refresh();
     toast('Franchisee updated', 'success');
     return f;
   }, [refresh, toast]);
 
   const createFranchisee = useCallback(async (data) => {
     const f = await franchiseesDB.create(data);
-    refresh();
+    await refresh();
     toast('Franchise Partner created', 'success');
     return f;
   }, [refresh, toast]);
 
   const deleteFranchisee = useCallback(async (id) => {
     await franchiseesDB.delete(id);
-    refresh();
+    await refresh();
     toast('Franchisee deleted', 'info');
   }, [refresh, toast]);
 
   const bulkDeleteFranchisees = useCallback(async (ids) => {
     await franchiseesDB.bulkDelete(ids);
-    refresh();
+    await refresh();
     toast(`${ids.length} franchisees deleted`, 'info');
   }, [refresh, toast]);
 
   const importFranchisees = useCallback(async (records) => {
     await franchiseesDB.bulkCreate(records);
-    refresh();
+    await refresh();
     toast(`${records.length} franchisees imported`, 'success');
   }, [refresh, toast]);
 
   // ---- Task operations ----
-  const createTask = useCallback((data) => {
-    const t = tasksDB.create(data);
-    refresh();
+  const createTask = useCallback(async (data) => {
+    const t = await tasksDB.create(data);
+    await refresh();
     return t;
   }, [refresh]);
 
@@ -172,37 +172,37 @@ export function AppProvider({ children }) {
     const task = tasks.find(t => (t.id || t._id) === id);
     if (task) {
       await tasksDB.update(id, { done: !task.done });
-      refresh();
+      await refresh();
     }
   }, [tasks, refresh]);
 
-  const deleteTask = useCallback((id) => {
-    tasksDB.delete(id);
-    refresh();
+  const deleteTask = useCallback(async (id) => {
+    await tasksDB.delete(id);
+    await refresh();
   }, [refresh]);
 
-  const updateTask = useCallback((id, updates) => {
-    tasksDB.update(id, updates);
-    refresh();
+  const updateTask = useCallback(async (id, updates) => {
+    await tasksDB.update(id, updates);
+    await refresh();
   }, [refresh]);
 
   // ---- Meeting operations ----
-  const createMeeting = useCallback((data) => {
-    const m = meetingsDB.create(data);
-    refresh();
+  const createMeeting = useCallback(async (data) => {
+    const m = await meetingsDB.create(data);
+    await refresh();
     toast('Meeting scheduled', 'success');
     return m;
   }, [refresh, toast]);
 
-  const updateMeeting = useCallback((id, updates) => {
-    meetingsDB.update(id, updates);
-    refresh();
+  const updateMeeting = useCallback(async (id, updates) => {
+    await meetingsDB.update(id, updates);
+    await refresh();
     toast('Meeting updated', 'success');
   }, [refresh, toast]);
 
-  const deleteMeeting = useCallback((id) => {
-    meetingsDB.delete(id);
-    refresh();
+  const deleteMeeting = useCallback(async (id) => {
+    await meetingsDB.delete(id);
+    await refresh();
     toast('Meeting deleted', 'info');
   }, [refresh, toast]);
 

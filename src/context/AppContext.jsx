@@ -128,24 +128,30 @@ export function AppProvider({ children }) {
   }, [refresh, toast]);
 
   // ---- Franchisee operations ----
-  const updateFranchisee = useCallback((id, updates) => {
-    const f = franchiseesDB.update(id, updates);
+  const updateFranchisee = useCallback(async (id, updates) => {
+    const f = await franchiseesDB.update(id, updates);
     refresh();
     toast('Franchisee updated', 'success');
     return f;
   }, [refresh, toast]);
 
-  const createFranchisee = useCallback((data) => {
-    const f = franchiseesDB.create(data);
+  const createFranchisee = useCallback(async (data) => {
+    const f = await franchiseesDB.create(data);
     refresh();
     toast('Franchise Partner created', 'success');
     return f;
   }, [refresh, toast]);
 
-  const deleteFranchisee = useCallback((id) => {
-    franchiseesDB.delete(id);
+  const deleteFranchisee = useCallback(async (id) => {
+    await franchiseesDB.delete(id);
     refresh();
     toast('Franchisee deleted', 'info');
+  }, [refresh, toast]);
+
+  const bulkDeleteFranchisees = useCallback(async (ids) => {
+    await franchiseesDB.bulkDelete(ids);
+    refresh();
+    toast(`${ids.length} franchisees deleted`, 'info');
   }, [refresh, toast]);
 
   const importFranchisees = useCallback(async (records) => {
@@ -205,7 +211,7 @@ export function AppProvider({ children }) {
       toasts, toast,
       createLead, updateLead, deleteLead, bulkUpdateLeads, bulkDeleteLeads, importLeads,
       updateDistrict, createDistrict, importDistricts,
-      updateFranchisee, createFranchisee, deleteFranchisee, importFranchisees,
+      updateFranchisee, createFranchisee, deleteFranchisee, bulkDeleteFranchisees, importFranchisees,
       createTask, toggleTask, deleteTask, updateTask,
       createMeeting, updateMeeting, deleteMeeting,
       refresh,

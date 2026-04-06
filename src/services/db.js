@@ -107,6 +107,30 @@ export const districtsDB = {
 export const franchiseesDB = {
   getAll: async () => await smartRequest('/franchisees', 'GET', null, 'franchisees'),
   create: async (data) => await smartRequest('/franchisees', 'POST', data),
+  update: async (id, updates) => {
+    const res = await smartRequest(`/franchisees/${id}`, 'PUT', updates);
+    if (!res) {
+      const stored = JSON.parse(localStorage.getItem('ej_franchisees') || '[]');
+      const idx = stored.findIndex(f => (f.id || f._id) === id);
+      if (idx !== -1) {
+        stored[idx] = { ...stored[idx], ...updates };
+        localStorage.setItem('ej_franchisees', JSON.stringify(stored));
+      }
+    }
+    return res;
+  },
+  delete: async (id) => {
+    await smartRequest(`/franchisees/${id}`, 'DELETE');
+    const stored = JSON.parse(localStorage.getItem('ej_franchisees') || '[]');
+    localStorage.setItem('ej_franchisees', JSON.stringify(stored.filter(f => (f.id || f._id) !== id)));
+  },
+  bulkDelete: async (ids) => {
+    for (const id of ids) {
+      await smartRequest(`/franchisees/${id}`, 'DELETE');
+    }
+    const stored = JSON.parse(localStorage.getItem('ej_franchisees') || '[]');
+    localStorage.setItem('ej_franchisees', JSON.stringify(stored.filter(f => !ids.includes(f.id || f._id))));
+  },
   bulkCreate: async (records) => {
     const res = await smartRequest('/franchisees/bulk', 'POST', records);
     if (!res) {

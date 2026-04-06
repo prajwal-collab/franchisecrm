@@ -101,6 +101,26 @@ app.post('/api/franchisees', async (req, res) => {
   }
 });
 
+app.put('/api/franchisees/:id', async (req, res) => {
+  try {
+    const updated = await Franchisee.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updated) return res.status(404).json({ message: 'Franchisee not found' });
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ message: 'Update failed', error: err.message });
+  }
+});
+
+app.delete('/api/franchisees/:id', async (req, res) => {
+  try {
+    const deleted = await Franchisee.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ message: 'Franchisee not found' });
+    res.status(204).send();
+  } catch (err) {
+    res.status(400).json({ message: 'Deletion failed', error: err.message });
+  }
+});
+
 // Tasks
 app.get('/api/tasks', async (req, res) => {
   const tasks = await Task.find().sort({ dueDate: 1 });

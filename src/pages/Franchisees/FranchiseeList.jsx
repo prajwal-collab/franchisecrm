@@ -18,7 +18,7 @@ const PAYMENT_BADGE = {
 
 export default function FranchiseeList() {
   const navigate = useNavigate();
-  const { franchisees, districts, importFranchisees, createFranchisee, deleteFranchisee, toast } = useApp();
+  const { franchisees, districts, importFranchisees, createFranchisee, deleteFranchisee, bulkDeleteFranchisees, toast } = useApp();
   const { can } = useAuth();
   const fileRef = useRef(null);
 
@@ -156,19 +156,19 @@ export default function FranchiseeList() {
               toast('Please select exactly one partner to edit', 'warning');
             }
           }}
-          onDuplicate={() => {
-            selected.forEach(id => {
+          onDuplicate={async () => {
+            for (const id of selected) {
               const f = franchisees.find(x => (x.id || x._id) === id);
               if (f) {
                 const { id: _, _id, ...copy } = f;
-                createFranchisee({ ...copy, name: `${f.name} (Copy)` });
+                await createFranchisee({ ...copy, name: `${f.name} (Copy)` });
               }
-            });
+            }
             setSelected([]);
           }}
-          onDelete={() => {
+          onDelete={async () => {
             if (confirm(`Delete ${selected.length} partner(s)?`)) {
-              selected.forEach(id => deleteFranchisee(id));
+              await bulkDeleteFranchisees(selected);
               setSelected([]);
             }
           }}

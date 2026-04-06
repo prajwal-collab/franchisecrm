@@ -17,6 +17,7 @@ import FranchiseTool from './pages/FranchiseTool';
 import UserList from './pages/Users/UserList';
 import AISettings from './pages/Settings/AISettings';
 import ToastContainer from './components/UI/ToastContainer';
+import AIChatWidget from './components/UI/AIChatWidget';
 
 function ProtectedApp() {
   const { currentUser } = useAuth();
@@ -39,6 +40,7 @@ function ProtectedApp() {
           <Route path="/ai-settings" element={<AISettings />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <AIChatWidget />
       </Layout>
     </AppProvider>
   );

@@ -7,7 +7,7 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 
 export default function TaskList() {
-  const { tasks, leads, franchisees, toggleTask, deleteTask, createTask, users } = useApp();
+  const { tasks, leads, franchisees, districts, toggleTask, deleteTask, createTask, users } = useApp();
   const { currentUser } = useAuth();
 
   const [filter, setFilter] = useState('pending'); // all, pending, done, overdue

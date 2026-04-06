@@ -18,7 +18,7 @@ const STATUS_BADGE = {
 };
 
 export default function DistrictList() {
-  const { districts, franchisees, updateDistrict, createDistrict, importDistricts } = useApp();
+  const { districts, franchisees, updateDistrict, createDistrict, importDistricts, toast } = useApp();
   const { can } = useAuth();
   const fileRef = useRef(null);
 

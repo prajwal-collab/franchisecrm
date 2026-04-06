@@ -330,6 +330,61 @@ app.post('/api/ai/generate-strategy', async (req, res) => {
   }
 });
 
+app.post('/api/ai/chat', async (req, res) => {
+  try {
+    const { messages } = req.body;
+    
+    // Fetch CRM summaries context to inject into LLM
+    const leads = await Lead.find({}, 'firstName lastName stage source profession investmentCapacity updatedDate').lean();
+    const districts = await District.find({}, 'name status').lean();
+    const franchisees = await Franchisee.find({}, 'name districtId committedAmount receivedAmount paymentStatus').lean();
+
+    const crmData = {
+      leadsTotal: leads.length,
+      franchiseesTotal: franchisees.length,
+      districtsTotal: districts.length,
+      leads: leads,
+      districts: districts,
+      franchisees: franchisees
+    };
+
+    const systemPrompt = `You are the EarlyJobs CRM Data Analyst AI. 
+You have direct access to the live CRM data below (in JSON). 
+Answer the user's questions about leads, districts, partners, stats, or pipeline using ONLY this data. 
+If asked something completely outside this data or CRM scope, politely decline.
+
+CRM DATA:
+${JSON.stringify(crmData)}
+
+Provide a concise, professional response. Use markdown (e.g. tables, bold) to format data nicely if applicable.`;
+
+    const response = await fetch('https://api.deepseek.com/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [{ role: 'system', content: systemPrompt }, ...messages],
+        stream: false
+      })
+    });
+
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.error?.message || 'DeepSeek API error');
+    }
+
+    const data = await response.json();
+    const reply = data.choices[0].message.content;
+    res.json({ reply });
+  } catch (err) {
+    console.error('AI Chat Error:', err);
+    res.status(500).json({ message: 'AI Chat failed', error: err.message });
+  }
+});
+
 // Bulk Operations
 app.post('/api/leads/bulk', async (req, res) => {
   try {

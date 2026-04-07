@@ -6,7 +6,7 @@ import { STAGES, SOURCES, INVESTMENT_CAPACITIES } from '../../data/initialData';
 import { leadsDB, getNextSDR } from '../../services/db';
 
 export default function LeadForm({ lead, onClose }) {
-  const { districts, createLead, updateLead, toast } = useApp();
+  const { districts, users, createLead, updateLead, toast } = useApp();
   const { currentUser } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -221,7 +221,7 @@ export default function LeadForm({ lead, onClose }) {
                 value={formData.assignedTo} 
                 onChange={e => setFormData({...formData, assignedTo: e.target.value})} 
               >
-                {useApp().users.filter(u => u.role === 'SDR').map(u => <option key={u.id || u._id} value={u.id || u._id}>{u.name}</option>)}
+                {users.map(u => <option key={u.id || u._id} value={u.id || u._id}>{u.name} ({u.role})</option>)}
               </select>
             </div>
           </div>

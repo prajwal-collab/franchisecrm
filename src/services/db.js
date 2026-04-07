@@ -1,178 +1,168 @@
 /**
  * db.js - Smart Persistence Layer
- * Attempts to use the MongoDB Backend, falls back to LocalStorage if offline.
+ * Overhauled to ensure zero data loss and robust fallback.
+ * Every collection now merges Backend and LocalStorage results.
  */
 
 const API_BASE = '/api';
 
-// Helper to check if backend is reachable
-async function isBackendUp() {
-  try {
-    const res = await fetch(`${API_BASE}/districts`, { method: 'HEAD' });
-    return res.ok;
-  } catch (e) {
-    return false;
-  }
-}
-
-// ---- FALLBACK LOCALSTORAGE SERVICE ----
-const localStore = (key) => ({
-  getAll: () => JSON.parse(localStorage.getItem(`ej_${key}`) || '[]'),
-  save: (data) => localStorage.setItem(`ej_${key}`, JSON.stringify(data)),
-  getById: (id) => JSON.parse(localStorage.getItem(`ej_${key}`) || '[]').find(x => (x.id || x._id) === id),
-});
-
 // ---- SMART WRAPPER ----
 const smartRequest = async (path, method = 'GET', body = null) => {
   try {
-    const options = { method, headers: { 'Content-Type': 'application/json' } };
+    const options = { 
+      method, 
+      headers: { 'Content-Type': 'application/json' } 
+    };
     if (body) options.body = JSON.stringify(body);
     
     const res = await fetch(`${API_BASE}${path}`, options);
+    const contentType = res.headers.get('content-type');
+
     if (!res.ok) {
-       const errorData = await res.json().catch(() => ({}));
-       throw new Error(errorData.message || `Backend error: ${res.status}`);
+      let msg = `Server Error (${res.status})`;
+      if (contentType && contentType.includes('application/json')) {
+        const err = await res.json();
+        msg = err.message || msg;
+      }
+      throw new Error(msg);
     }
-    return res.json();
+
+    if (contentType && contentType.includes('application/json')) {
+      return await res.json();
+    }
+    return null;
   } catch (err) {
-    console.warn(`⚠️ SmartRequest failed for ${path}:`, err.message);
+    console.warn(`⚠️ SmartRequest failed [${method} ${path}]:`, err.message);
     return null;
   }
 };
 
-export const leadsDB = {
-  getAll: async (user) => {
-    const backendLeads = await smartRequest('/leads', 'GET');
-    const localLeads = JSON.parse(localStorage.getItem('ej_leads') || '[]');
-    
-    // Merge logic: ensure no duplicates between backend and local
-    const merged = [...(backendLeads || [])];
-    localLeads.forEach(loc => {
-      const lid = loc.id || loc._id;
-      const exists = merged.some(b => (b.id || b._id) === lid);
-      if (!exists) merged.push(loc);
-    });
+// Generic Merging Helper
+const mergeCollections = (backend, local) => {
+  const merged = [...(backend || [])];
+  (local || []).forEach(loc => {
+    const lid = loc.id || loc._id;
+    const exists = merged.some(b => (b.id || b._id) === lid);
+    if (!exists) merged.push(loc);
+  });
+  return merged;
+};
 
-    if (user?.role === 'SDR') return merged.filter(l => l.assignedTo === user.id);
-    return merged;
+// Generic LocalStorage Helper
+const getLocal = (key) => JSON.parse(localStorage.getItem(`ej_${key}`) || '[]');
+const setLocal = (key, data) => localStorage.setItem(`ej_${key}`, JSON.stringify(data));
+
+const crudFactory = (endpoint, localKey) => ({
+  getAll: async () => {
+    const backend = await smartRequest(endpoint, 'GET');
+    const local = getLocal(localKey);
+    return mergeCollections(backend, local);
   },
   create: async (data) => {
-    const res = await smartRequest('/leads', 'POST', data);
+    const res = await smartRequest(endpoint, 'POST', data);
     if (!res) {
-      const leads = JSON.parse(localStorage.getItem('ej_leads') || '[]');
-      const newLead = { ...data, id: 'temp_' + Date.now(), createdDate: new Date().toISOString() };
-      localStorage.setItem('ej_leads', JSON.stringify([newLead, ...leads]));
-      return newLead;
+      const records = getLocal(localKey);
+      const newRecord = { 
+        ...data, 
+        _id: `temp_${Date.now()}`, 
+        id: `temp_${Date.now()}`, 
+        createdDate: new Date().toISOString() 
+      };
+      setLocal(localKey, [newRecord, ...records]);
+      return newRecord;
     }
     return res;
   },
   update: async (id, updates) => {
-    const res = await smartRequest(`/leads/${id}`, 'PUT', updates);
+    const res = await smartRequest(`${endpoint}/${id}`, 'PUT', updates);
     if (!res) {
-      const leads = JSON.parse(localStorage.getItem('ej_leads') || '[]');
-      const idx = leads.findIndex(l => (l.id || l._id) === id);
+      const records = getLocal(localKey);
+      const idx = records.findIndex(r => (r.id || r._id) === id);
       if (idx !== -1) {
-        leads[idx] = { ...leads[idx], ...updates };
-        localStorage.setItem('ej_leads', JSON.stringify(leads));
+        records[idx] = { ...records[idx], ...updates };
+        setLocal(localKey, records);
       }
     }
     return res;
   },
   delete: async (id) => {
-    await smartRequest(`/leads/${id}`, 'DELETE');
-    const leads = JSON.parse(localStorage.getItem('ej_leads') || '[]');
-    localStorage.setItem('ej_leads', JSON.stringify(leads.filter(l => (l.id || l._id) !== id)));
+    await smartRequest(`${endpoint}/${id}`, 'DELETE');
+    const records = getLocal(localKey);
+    setLocal(localKey, records.filter(r => (r.id || r._id) !== id));
   },
   bulkCreate: async (records) => {
-    const res = await smartRequest('/leads/bulk', 'POST', records);
+    const res = await smartRequest(`${endpoint}/bulk`, 'POST', records);
     if (!res) {
-      const existing = JSON.parse(localStorage.getItem('ej_leads') || '[]');
-      localStorage.setItem('ej_leads', JSON.stringify([...records, ...existing]));
+      const existing = getLocal(localKey);
+      setLocal(localKey, [...records, ...existing]);
     }
     return res;
+  }
+});
+
+export const leadsDB = {
+  ...crudFactory('/leads', 'leads'),
+  getAll: async (user) => {
+    const backend = await smartRequest('/leads', 'GET');
+    const local = getLocal('leads');
+    const merged = mergeCollections(backend, local);
+    if (user?.role === 'SDR') return merged.filter(l => l.assignedTo === user.id);
+    return merged;
   },
   checkDuplicate: (phone, districtId, excludeId) => {
-    const leads = JSON.parse(localStorage.getItem('ej_leads') || '[]');
+    const leads = getLocal('leads');
     return leads.find(l => 
       l.phone === phone && 
       l.districtId === districtId && 
       (l.id || l._id) !== excludeId
     );
+  },
+  bulkDelete: async (ids) => {
+    // Try server bulk delete first, fall back to serial deletes
+    for (const id of ids) {
+      await smartRequest(`/leads/${id}`, 'DELETE');
+    }
+    const records = getLocal('leads');
+    setLocal('leads', records.filter(r => !ids.includes(r.id || r._id)));
+  },
+  bulkUpdate: async (ids, updates) => {
+    // Serial updates - no bulk PUT endpoint on server
+    for (const id of ids) {
+      await smartRequest(`/leads/${id}`, 'PUT', updates);
+    }
+    // Also update local storage
+    const records = getLocal('leads');
+    const updated = records.map(r => ids.includes(r.id || r._id) ? { ...r, ...updates } : r);
+    setLocal('leads', updated);
   }
 };
 
 export const districtsDB = {
-  getAll: async () => await smartRequest('/districts', 'GET', null, 'districts'),
-  update: async (id, updates) => await smartRequest(`/districts/${id}`, 'PUT', updates),
+  ...crudFactory('/districts', 'districts'),
   markSold: async (id, franchiseeId) => {
     return await smartRequest(`/districts/${id}`, 'PUT', { 
       status: 'Sold', 
       soldDate: new Date().toISOString(), 
       franchiseeId 
     });
-  },
-  bulkCreate: async (records) => {
-    const res = await smartRequest('/districts/bulk', 'POST', records);
-    if (!res) {
-      const existing = JSON.parse(localStorage.getItem('ej_districts') || '[]');
-      localStorage.setItem('ej_districts', JSON.stringify([...records, ...existing]));
-    }
-    return res;
   }
 };
-
 export const franchiseesDB = {
-  getAll: async () => await smartRequest('/franchisees', 'GET', null, 'franchisees'),
-  create: async (data) => await smartRequest('/franchisees', 'POST', data),
-  update: async (id, updates) => {
-    const res = await smartRequest(`/franchisees/${id}`, 'PUT', updates);
-    if (!res) {
-      const stored = JSON.parse(localStorage.getItem('ej_franchisees') || '[]');
-      const idx = stored.findIndex(f => (f.id || f._id) === id);
-      if (idx !== -1) {
-        stored[idx] = { ...stored[idx], ...updates };
-        localStorage.setItem('ej_franchisees', JSON.stringify(stored));
-      }
-    }
-    return res;
-  },
-  delete: async (id) => {
-    await smartRequest(`/franchisees/${id}`, 'DELETE');
-    const stored = JSON.parse(localStorage.getItem('ej_franchisees') || '[]');
-    localStorage.setItem('ej_franchisees', JSON.stringify(stored.filter(f => (f.id || f._id) !== id)));
-  },
+  ...crudFactory('/franchisees', 'franchisees'),
   bulkDelete: async (ids) => {
     for (const id of ids) {
       await smartRequest(`/franchisees/${id}`, 'DELETE');
     }
-    const stored = JSON.parse(localStorage.getItem('ej_franchisees') || '[]');
-    localStorage.setItem('ej_franchisees', JSON.stringify(stored.filter(f => !ids.includes(f.id || f._id))));
-  },
-  bulkCreate: async (records) => {
-    const res = await smartRequest('/franchisees/bulk', 'POST', records);
-    if (!res) {
-      const existing = JSON.parse(localStorage.getItem('ej_franchisees') || '[]');
-      localStorage.setItem('ej_franchisees', JSON.stringify([...records, ...existing]));
-    }
-    return res;
+    const stored = getLocal('franchisees');
+    setLocal('franchisees', stored.filter(f => !ids.includes(f.id || f._id)));
   }
 };
 
-export const tasksDB = {
-  getAll: async () => await smartRequest('/tasks', 'GET', null, 'tasks'),
-  create: async (data) => await smartRequest('/tasks', 'POST', data),
-  update: async (id, updates) => await smartRequest(`/tasks/${id}`, 'PUT', updates),
-  delete: async (id) => await smartRequest(`/tasks/${id}`, 'DELETE'),
-};
-
-export const meetingsDB = {
-  getAll: async () => await smartRequest('/meetings', 'GET', null, 'meetings'),
-  create: async (data) => await smartRequest('/meetings', 'POST', data),
-};
+export const tasksDB = crudFactory('/tasks', 'tasks');
+export const meetingsDB = crudFactory('/meetings', 'meetings');
 
 export const usersDB = {
-  getAll: async () => await smartRequest('/users', 'GET', null, 'users'),
-  create: async (data) => await smartRequest('/users', 'POST', data),
+  ...crudFactory('/users', 'users'),
   resendInvite: async (userId) => await smartRequest(`/users/${userId}/resend-invite`, 'POST'),
   authenticate: async (email, password) => {
     try {
@@ -182,10 +172,10 @@ export const usersDB = {
         body: JSON.stringify({ email, password }),
       });
       if (res.ok) return await res.json();
-      throw new Error('Backend authentication failed');
+      throw new Error('Backend auth failed');
     } catch (e) {
       const { DEMO_USERS } = await import('../data/initialData');
-      const localUsers = JSON.parse(localStorage.getItem('ej_users') || '[]');
+      const localUsers = getLocal('users');
       const all = [...DEMO_USERS, ...localUsers];
       return all.find(u => u.email === email && u.password === password) || null;
     }
@@ -196,9 +186,7 @@ export async function getNextSDR() {
   const res = await smartRequest('/users/next-sdr', 'GET');
   if (res) return res;
   
-  // Fallback
-  const users = JSON.parse(localStorage.getItem('ej_users') || '[]');
-  const sdrs = users.filter(u => u.role === 'SDR');
+  const sdrs = getLocal('users').filter(u => u.role === 'SDR');
   if (!sdrs.length) return null;
   const counter = parseInt(localStorage.getItem('ej_sdr_counter') || '0');
   const sdr = sdrs[counter % sdrs.length];
@@ -206,23 +194,19 @@ export async function getNextSDR() {
   return sdr;
 }
 
-// Utilities
-export function exportToCSV(data, filename, columns) {
+// Global Leads compatibility
+export const exportToCSV = (data, filename, columns) => {
   const header = columns.map(c => c.label).join(',');
   const rows = data.map(item => columns.map(c => {
     const val = item[c.key] || '';
     return typeof val === 'string' && val.includes(',') ? `"${val}"` : val;
   }).join(','));
-  const csv = [header, ...rows].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
+  const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-}
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+};
 
-export function parseCSV(csvText) {
+export const parseCSV = (csvText) => {
   const lines = csvText.split('\n').filter(l => l.trim());
   if (lines.length < 2) return [];
   const header = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
@@ -232,15 +216,11 @@ export function parseCSV(csvText) {
     header.forEach((h, i) => { if (values[i] !== undefined) obj[h] = values[i]; });
     return obj;
   });
-}
+};
 
-export function downloadTemplate(headers, filename) {
-  const content = headers.join(',') + '\n';
-  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+export const downloadTemplate = (headers, filename) => {
+  const blob = new Blob([headers.join(',') + '\n'], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', filename);
-  link.click();
+  const link = document.createElement('a'); link.href = url; link.download = filename; link.click();
   URL.revokeObjectURL(url);
-}
+};

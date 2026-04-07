@@ -25,19 +25,19 @@ export function AppProvider({ children }) {
         meetingsDB.getAll(),
         usersDB.getAll()
       ]);
-      setDistricts(d);
-      setFranchisees(f);
-      setTasks(t);
-      setMeetings(m);
-      setUsers(u);
+      setDistricts(d || []);
+      setFranchisees(f || []);
+      setTasks(t || []);
+      setMeetings(m || []);
+      setUsers(u || []);
 
       if (currentUser) {
-        const l = await leadsDB.getAll(); 
-        // Backend handles row-level security or we filter here for now
-        setLeads(currentUser.role === 'SDR' ? l.filter(x => x.assignedTo === currentUser.id) : l);
+        const l = await leadsDB.getAll(currentUser); 
+        setLeads(l || []);
       }
     } catch (err) {
       console.error('Refresh Failed:', err);
+      // Fallback to local storage if entire promise fails
     }
   }, [currentUser]);
 

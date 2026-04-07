@@ -39,9 +39,9 @@ export default function UserList() {
       setNewUser({ name: '', email: '', role: 'SDR', password: 'password123' });
       loadUsers();
       if (res.inviteSent) {
-        alert(`Success! Invitation email sent to ${newUser.email}`);
+        toast(`Success! Invitation email sent to ${newUser.email}`, 'success');
       } else {
-        alert(`User created, but invitation email could not be sent. Please check SMTP settings in .env`);
+        toast(`User created, but invitation email failed. Check SMTP settings.`, 'warning');
       }
     }
   };
@@ -117,8 +117,8 @@ export default function UserList() {
                     className="btn btn-secondary btn-sm" 
                     onClick={async () => {
                       const res = await usersDB.resendInvite(user.id || user._id);
-                      if (res) alert(`Success! Invitation email re-sent to ${user.email}`);
-                      else alert('Failed to resend invitation. Check server logs.');
+                      if (res) toast(`Success! Invitation email re-sent to ${user.email}`, 'success');
+                      else toast('Failed to resend invitation. Check server logs.', 'error');
                     }} 
                     title="Resend Invite"
                   >

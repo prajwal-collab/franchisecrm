@@ -7,7 +7,9 @@
 const API_BASE = '/api';
 
 // ---- SMART WRAPPER ----
+let errorMessage = '';
 const smartRequest = async (path, method = 'GET', body = null) => {
+  errorMessage = '';
   try {
     const options = { 
       method, 
@@ -24,6 +26,7 @@ const smartRequest = async (path, method = 'GET', body = null) => {
         const err = await res.json();
         msg = err.message || msg;
       }
+      errorMessage = msg; // Store for catch block
       throw new Error(msg);
     }
 
@@ -32,7 +35,8 @@ const smartRequest = async (path, method = 'GET', body = null) => {
     }
     return null;
   } catch (err) {
-    console.warn(`⚠️ SmartRequest failed [${method} ${path}]:`, err.message);
+    console.error(`❌ SmartRequest failed [${method} ${path}]:`, err.message);
+    if (errorMessage) console.error('Details:', errorMessage);
     return null;
   }
 };

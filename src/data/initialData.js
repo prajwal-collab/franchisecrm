@@ -27,7 +27,7 @@ export const ROLES = {
 
 // ---- Demo Users ----
 export const DEMO_USERS = [
-  { id: 'u1', name: 'Arjun Sharma',    email: 'admin@earlyjobs.co.in',  role: 'Admin',  password: 'admin123',  avatar: 'AS' },
+  { id: 'u1', name: 'Arjun Sharma',    email: 'prajwal@earlyjobs.in',   role: 'Admin',  password: 'admin123',  avatar: 'AS' },
   { id: 'u2', name: 'Priya Mehta',     email: 'closer@earlyjobs.co.in', role: 'Closer', password: 'closer123', avatar: 'PM' },
   { id: 'u3', name: 'Rahul Verma',     email: 'sdr1@earlyjobs.co.in',   role: 'SDR',    password: 'sdr123',    avatar: 'RV' },
   { id: 'u4', name: 'Sneha Patel',     email: 'sdr2@earlyjobs.co.in',   role: 'SDR',    password: 'sdr456',    avatar: 'SP' },

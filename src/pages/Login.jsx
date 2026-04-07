@@ -3,31 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff, Loader } from 'lucide-react';
 
-const DEMO_ACCOUNTS = [
-  { role: 'Admin', email: 'admin@earlyjobs.co.in', password: 'admin123', desc: 'Full control & all data' },
-  { role: 'Closer', email: 'closer@earlyjobs.co.in', password: 'closer123', desc: 'Manage leads & franchisees' },
-  { role: 'SDR', email: 'sdr1@earlyjobs.co.in', password: 'sdr123', desc: 'Own leads & tasks only' },
-  { role: 'Viewer', email: 'viewer@earlyjobs.co.in', password: 'viewer123', desc: 'Read-only access' },
-];
-
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('admin@earlyjobs.co.in');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [selectedRole, setSelectedRole] = useState('Admin');
-
-
-
-  const handleDemoSelect = (acc) => {
-    setSelectedRole(acc.role);
-    setEmail(acc.email);
-    setPassword(acc.password);
-    setError('');
-  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -69,28 +52,6 @@ export default function Login() {
           <div className="login-logo-text">
             <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.02em', background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>EarlyJobs CRM</h1>
             <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Franchise Management System</span>
-          </div>
-        </div>
-
-        {/* Quick role selector */}
-        <div style={{ marginBottom: 32 }}>
-          <label className="form-label" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 12, display: 'block' }}>Quick Access</label>
-          <div className="role-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
-            {DEMO_ACCOUNTS.map(acc => (
-              <div
-                key={acc.role}
-                className={`role-card ${selectedRole === acc.role ? 'selected' : ''}`}
-                onClick={() => handleDemoSelect(acc)}
-                style={{ 
-                  padding: '12px', background: selectedRole === acc.role ? 'rgba(255,107,0,0.1)' : 'rgba(255,255,255,0.02)', 
-                  border: `1px solid ${selectedRole === acc.role ? 'var(--brand-primary)' : 'var(--glass-border)'}`,
-                  borderRadius: 12, cursor: 'pointer', transition: 'all 0.3s'
-                }}
-              >
-                <div className="role-card-name" style={{ fontSize: 13, fontWeight: 700, color: selectedRole === acc.role ? 'var(--brand-primary)' : 'white' }}>{acc.role}</div>
-                <div className="role-card-desc" style={{ fontSize: 10, color: 'var(--text-muted)' }}>{acc.desc}</div>
-              </div>
-            ))}
           </div>
         </div>
 

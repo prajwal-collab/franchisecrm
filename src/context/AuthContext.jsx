@@ -25,22 +25,6 @@ export function AuthProvider({ children }) {
     return null;
   }, []);
 
-  // Quick login by role (for demo)
-  const loginAs = useCallback(async (role) => {
-    try {
-      const users = await usersDB.getAll();
-      const user = users.find(u => u.role === role);
-      if (user) {
-        sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
-        setCurrentUser(user);
-        return user;
-      }
-    } catch (err) {
-      console.error('LoginAs Error:', err);
-    }
-    return null;
-  }, []);
-
   const logout = useCallback(() => {
     sessionStorage.removeItem(SESSION_KEY);
     setCurrentUser(null);
@@ -60,7 +44,7 @@ export function AuthProvider({ children }) {
   }, [currentUser]);
 
   return (
-    <AuthContext.Provider value={{ currentUser, login, loginAs, logout, can }}>
+    <AuthContext.Provider value={{ currentUser, login, logout, can }}>
       {children}
     </AuthContext.Provider>
   );

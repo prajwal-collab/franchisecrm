@@ -326,8 +326,8 @@ app.post('/api/ai/generate-strategy', async (req, res) => {
     Format in Markdown. Keep it professional and punchy.
     `;
 
-    const GEMINI_API_KEY = process.env.Gemini_API_KEY;
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const GEMINI_API_KEY = (process.env.Gemini_API_KEY || '').trim();
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -396,8 +396,9 @@ ${JSON.stringify(crmData)}
 
 Respond directly to the user's latest query based on this context.`;
 
-    const GEMINI_API_KEY = process.env.Gemini_API_KEY;
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const GEMINI_API_KEY = (process.env.Gemini_API_KEY || '').trim();
+    console.log('Gemini API Key Loaded:', GEMINI_API_KEY ? 'Yes' : 'No');
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -413,6 +414,7 @@ Respond directly to the user's latest query based on this context.`;
 
     if (!response.ok) {
       const errData = await response.json();
+      console.error('Gemini API Error Detail:', JSON.stringify(errData, null, 2));
       const errorMsg = errData.error?.message || 'Gemini API error';
       throw new Error(errorMsg);
     }

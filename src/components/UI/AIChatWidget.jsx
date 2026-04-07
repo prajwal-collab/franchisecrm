@@ -40,10 +40,22 @@ export default function AIChatWidget() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'API Request failed');
+        let errorMsg = 'API Request failed';
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.message || errorMsg;
+        } catch (pErr) {
+          errorMsg = `Server Error (${response.status}): The assistant is temporarily unavailable.`;
+        }
+        throw new Error(errorMsg);
       }
-      const data = await response.json();
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (pErr) {
+        throw new Error('Invalid response from server');
+      }
       
       setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
     } catch (err) {

@@ -87,10 +87,22 @@ export default function LeadList() {
     else { setSortKey(key); setSortDir('asc'); }
   };
 
-  const toggleSelect = (id) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
+  const toggleSelect = (id) => {
+    if (!id) return;
+    setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
+  };
+
   const toggleAll = () => {
-    const allIds = filtered.map(l => l.id || l._id);
-    setSelected(selected.length === allIds.length ? [] : allIds);
+    const allIds = filtered.map(l => l.id || l._id).filter(Boolean);
+    const areAllInFilteredSelected = allIds.every(id => selected.includes(id));
+    
+    if (areAllInFilteredSelected && allIds.length > 0) {
+      // Unselect only those in the current filtered view
+      setSelected(prev => prev.filter(id => !allIds.includes(id)));
+    } else {
+      // Select all in current filtered view
+      setSelected(prev => [...new Set([...prev, ...allIds])]);
+    }
   };
 
   // ---- Export ----
@@ -253,7 +265,7 @@ export default function LeadList() {
               <tr>
                 <th style={{ width: 48 }}>
                   <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={toggleAll}>
-                    {selected.length === filtered.length && filtered.length > 0 ? <CheckSquare size={16} color="var(--brand-primary)" /> : <Square size={16} />}
+                    {filtered.length > 0 && filtered.every(l => selected.includes(l.id || l._id)) ? <CheckSquare size={16} color="var(--brand-primary)" /> : <Square size={16} />}
                   </div>
                 </th>
                 <th onClick={() => toggleSort('firstName')} style={{ cursor: 'pointer' }}>Name</th>
@@ -270,7 +282,8 @@ export default function LeadList() {
                 <tr><td colSpan={8} style={{ padding: '60px', textAlign: 'center', color: 'var(--text-secondary)' }}>No leads found Matching your criteria.</td></tr>
               )}
               {filtered.map(lead => {
-                const lid = lead.id || lead._id;
+                const lid = lead._id || lead.id;
+                if (!lid) return null; // Safety check
                 return (
                   <tr key={lid} style={{ cursor: 'pointer' }} onClick={() => navigate(`/leads/${lid}`)}>
                     <td onClick={e => { e.stopPropagation(); toggleSelect(lid); }}>

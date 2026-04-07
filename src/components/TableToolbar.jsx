@@ -8,24 +8,28 @@ export default function TableToolbar({ selectedCount = 0, onEdit, onDuplicate, o
   if (selectedCount === 0) return null;
 
   return (
-    <div className="animate-in" style={{
-      position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
+    <div className="animate-in table-toolbar-container" style={{
+      position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)',
       display: 'flex', alignItems: 'center', gap: 16,
-      padding: '16px 24px', background: '#111827', 
-      borderRadius: 100, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-      zIndex: 1000,
-      color: 'white'
+      padding: '10px 24px', background: '#111827', 
+      borderRadius: '100px', 
+      border: '1px solid rgba(255, 255, 255, 0.15)',
+      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
+      zIndex: 10000,
+      color: 'white',
+      maxWidth: 'min(90vw, 800px)',
+      width: 'max-content'
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingRight: 16, borderRight: '1px solid rgba(255,255,255,0.1)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingRight: 12, borderRight: '1px solid rgba(255,255,255,0.1)' }}>
         <span style={{ 
           background: 'var(--brand-primary)', color: 'white', 
-          width: 24, height: 24, borderRadius: '50%', 
+          width: 22, height: 22, borderRadius: '50%', 
           display: 'flex', alignItems: 'center', justifyContent: 'center', 
-          fontSize: 12, fontWeight: 700 
+          fontSize: 11, fontWeight: 700 
         }}>
           {selectedCount}
         </span>
-        <span style={{ fontSize: 14, fontWeight: 600 }}>Selected</span>
+        <span style={{ fontSize: 13, fontWeight: 600 }} className="toolbar-main-label">Selected</span>
       </div>
       
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>

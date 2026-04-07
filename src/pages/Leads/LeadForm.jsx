@@ -46,10 +46,10 @@ export default function LeadForm({ lead, onClose }) {
 
     if (!formData.districtId) newErrors.districtId = 'District is required';
     
-    // District validation: check if Sold or Blocked
     const district = districts.find(d => (d.id || d._id) === formData.districtId);
     if (!lead && district && (district.status === 'Sold' || district.status === 'Blocked')) {
-      newErrors.districtId = `District is already ${district.status.toLowerCase()}`;
+      // Just a warning in console or we can add a non-blocking UI warning if needed
+      console.warn(`Note: Selected district is ${district.status}`);
     }
 
     setErrors(newErrors);
@@ -189,7 +189,7 @@ export default function LeadForm({ lead, onClose }) {
               >
                 <option value="">Select District</option>
                 {districts.map(d => (
-                  <option key={d.id || d._id} value={d.id || d._id} disabled={!lead && (d.status === 'Sold' || d.status === 'Blocked')}>
+                  <option key={d.id || d._id} value={d.id || d._id}>
                     {d.name} {d.status !== 'Available' ? `(${d.status})` : ''}
                   </option>
                 ))}
@@ -220,7 +220,6 @@ export default function LeadForm({ lead, onClose }) {
                 className="form-input" 
                 value={formData.assignedTo} 
                 onChange={e => setFormData({...formData, assignedTo: e.target.value})} 
-                disabled={currentUser.role === 'SDR'}
               >
                 {useApp().users.filter(u => u.role === 'SDR').map(u => <option key={u.id || u._id} value={u.id || u._id}>{u.name}</option>)}
               </select>

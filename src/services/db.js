@@ -23,29 +23,38 @@ const localStore = (key) => ({
 });
 
 // ---- SMART WRAPPER ----
-const smartRequest = async (path, method = 'GET', body = null, localKey = null) => {
+const smartRequest = async (path, method = 'GET', body = null) => {
   try {
     const options = { method, headers: { 'Content-Type': 'application/json' } };
     if (body) options.body = JSON.stringify(body);
     
     const res = await fetch(`${API_BASE}${path}`, options);
-    if (!res.ok) throw new Error('Backend failed');
+    if (!res.ok) {
+       const errorData = await res.json().catch(() => ({}));
+       throw new Error(errorData.message || `Backend error: ${res.status}`);
+    }
     return res.json();
   } catch (err) {
-    console.warn(`⚠️ Backend redirected to LocalStorage for ${path}`);
-    if (localKey && method === 'GET') {
-      return JSON.parse(localStorage.getItem(`ej_${localKey}`) || '[]');
-    }
-    // For writes, just perform on local for now
+    console.warn(`⚠️ SmartRequest failed for ${path}:`, err.message);
     return null;
   }
 };
 
 export const leadsDB = {
   getAll: async (user) => {
-    let leads = await smartRequest('/leads', 'GET', null, 'leads');
-    if (user?.role === 'SDR') return leads.filter(l => l.assignedTo === user.id);
-    return leads;
+    const backendLeads = await smartRequest('/leads', 'GET');
+    const localLeads = JSON.parse(localStorage.getItem('ej_leads') || '[]');
+    
+    // Merge logic: ensure no duplicates between backend and local
+    const merged = [...(backendLeads || [])];
+    localLeads.forEach(loc => {
+      const lid = loc.id || loc._id;
+      const exists = merged.some(b => (b.id || b._id) === lid);
+      if (!exists) merged.push(loc);
+    });
+
+    if (user?.role === 'SDR') return merged.filter(l => l.assignedTo === user.id);
+    return merged;
   },
   create: async (data) => {
     const res = await smartRequest('/leads', 'POST', data);

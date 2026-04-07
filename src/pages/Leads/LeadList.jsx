@@ -136,7 +136,7 @@ export default function LeadList() {
     const sdrs = users.filter(u => u.role === 'SDR');
 
     const records = importData.map((row, i) => {
-      const rec = {};
+      const rec = { id: `imp_${Date.now()}_${i}` };
       Object.entries(importMapping).forEach(([csvCol, field]) => { if (field) rec[field] = row[csvCol]; });
       // Normalize phone
       if (rec.phone) {

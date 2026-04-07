@@ -103,9 +103,13 @@ export function AppProvider({ children }) {
   }, [refresh, toast]);
 
   const importLeads = useCallback(async (records) => {
-    await leadsDB.bulkCreate(records);
+    const res = await leadsDB.bulkCreate(records);
     await refresh();
-    toast(`${records.length} leads imported`, 'success');
+    if (res) {
+      toast(`${records.length} leads imported successfully to server`, 'success');
+    } else {
+      toast(`${records.length} leads imported to local storage (Backend save failed)`, 'warning');
+    }
   }, [refresh, toast]);
 
   // ---- District operations ----

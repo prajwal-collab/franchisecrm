@@ -8,6 +8,8 @@ const API_BASE = '/api';
 
 // ---- SMART WRAPPER ----
 let errorMessage = '';
+export const getLastError = () => errorMessage;
+
 const smartRequest = async (path, method = 'GET', body = null) => {
   errorMessage = '';
   try {
@@ -149,6 +151,13 @@ export const districtsDB = {
       soldDate: new Date().toISOString(), 
       franchiseeId 
     });
+  },
+  bulkDelete: async (ids) => {
+    for (const id of ids) {
+      await smartRequest(`/districts/${id}`, 'DELETE');
+    }
+    const stored = getLocal('districts');
+    setLocal('districts', stored.filter(d => !ids.includes(d.id || d._id)));
   }
 };
 export const franchiseesDB = {

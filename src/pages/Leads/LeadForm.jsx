@@ -207,6 +207,21 @@ export default function LeadForm({ lead, onClose }) {
             </div>
           </div>
 
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+            <div className="form-group">
+              <label className="form-label">Investment Capacity</label>
+              <select className="form-input" value={formData.investmentCapacity} onChange={e => setFormData({...formData, investmentCapacity: e.target.value})}>
+                {INVESTMENT_CAPACITIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Lead Source</label>
+              <select className="form-input" value={formData.source} onChange={e => setFormData({...formData, source: e.target.value})}>
+                {SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 32 }}>
             <div className="form-group">
               <label className="form-label">Pipeline Stage</label>

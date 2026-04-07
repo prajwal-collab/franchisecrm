@@ -4,7 +4,7 @@ import {
   Building2, Search, Download, Plus, 
   MapPin, Phone, Mail, ChevronUp, ChevronDown,
   Upload, X, CheckCircle2, ChevronRight, AlertCircle,
-  FileText, TrendingUp, CheckSquare, Square
+  FileText, TrendingUp, CheckSquare, Square, Edit2, Trash2
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
@@ -208,6 +208,7 @@ export default function FranchiseeList() {
                   </div>
                 </th>
               ))}
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -245,6 +246,30 @@ export default function FranchiseeList() {
                 </td>
                 <td>
                   <span className={`badge ${PAYMENT_BADGE[f.paymentStatus]}`}>{f.paymentStatus}</span>
+                </td>
+                <td>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    {can('edit') && (
+                      <button className="btn btn-ghost" style={{ padding: 6, minWidth: 'auto', color: 'var(--brand-primary)' }} onClick={(e) => {
+                        e.stopPropagation();
+                        setEditFranchisee(f);
+                        setShowForm(true);
+                      }}>
+                        <Edit2 size={16} />
+                      </button>
+                    )}
+                    
+                    {can('delete') && (
+                      <button className="btn btn-ghost" style={{ padding: 6, minWidth: 'auto', color: '#ef4444' }} onClick={async (e) => {
+                        e.stopPropagation();
+                        if (confirm('Delete this partner?')) {
+                          await deleteFranchisee(fid);
+                        }
+                      }}>
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             )})}

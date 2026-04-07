@@ -312,9 +312,20 @@ export default function LeadList() {
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }} onClick={e => e.stopPropagation()}>
-                        <button className="btn btn-secondary" style={{ padding: 6 }} onClick={() => { setEditLead(lead); setShowForm(true); }}>
-                          <Edit2 size={14} />
-                        </button>
+                        {can('edit') && (
+                          <button className="btn btn-secondary" style={{ padding: 6, color: 'var(--brand-primary)' }} onClick={() => { setEditLead(lead); setShowForm(true); }}>
+                            <Edit2 size={14} />
+                          </button>
+                        )}
+                        {can('delete') && (
+                          <button className="btn btn-secondary" style={{ padding: 6, color: '#ef4444' }} onClick={async () => {
+                            if (confirm('Delete this lead?')) {
+                              await deleteLead(lid);
+                            }
+                          }}>
+                            <Trash2 size={14} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

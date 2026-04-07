@@ -3,7 +3,7 @@ import {
   Search, MapPin, Building2, Calendar, 
   ExternalLink, Plus, Filter, ChevronUp, ChevronDown,
   Upload, Download, X, CheckCircle2, ChevronRight, AlertCircle,
-  FileText, CheckSquare, Square
+  FileText, CheckSquare, Square, Edit2, Trash2
 } from 'lucide-react';
 import TableToolbar from '../../components/TableToolbar';
 import { useApp } from '../../context/AppContext';
@@ -19,7 +19,7 @@ const STATUS_BADGE = {
 };
 
 export default function DistrictList() {
-  const { districts, franchisees, updateDistrict, createDistrict, importDistricts, toast } = useApp();
+  const { districts, franchisees, updateDistrict, createDistrict, importDistricts, deleteDistrict, bulkDeleteDistricts, toast } = useApp();
   const { can } = useAuth();
   const fileRef = useRef(null);
 
@@ -181,7 +181,12 @@ export default function DistrictList() {
             });
             setSelected([]);
           }}
-          onDelete={() => toast('Deleting districts is restricted. Please mark status as Blocked.', 'error')}
+          onDelete={async () => {
+            if (confirm(`Delete ${selected.length} district(s)?`)) {
+              await bulkDeleteDistricts(selected);
+              setSelected([]);
+            }
+          }}
           onPrint={() => window.print()}
           onExport={() => {
             const data = selected.length ? filtered.filter(d => selected.includes(d.id || d._id)) : filtered;
@@ -208,7 +213,7 @@ export default function DistrictList() {
                   </div>
                 </th>
               ))}
-              {can('Admin') && <th>Management</th>}
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -246,18 +251,41 @@ export default function DistrictList() {
                     </div>
                   ) : <span style={{ opacity: 0.4 }}>Unallocated</span>}
                 </td>
-                {can('Admin') && (
                   <td>
-                    <select 
-                      className="form-input" 
-                      style={{ width: '130px', fontSize: 12, padding: '4px 8px' }}
-                      value={district.status}
-                      onChange={(e) => handleStatusChange(district.id || district._id, e.target.value)}
-                    >
-                      {DISTRICT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      {can('Admin') && (
+                        <select 
+                          className="form-input" 
+                          style={{ width: '110px', fontSize: 12, padding: '4px 8px' }}
+                          value={district.status}
+                          onChange={(e) => handleStatusChange(district.id || district._id, e.target.value)}
+                        >
+                          {DISTRICT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      )}
+                      
+                      {can('edit') && (
+                        <button className="btn btn-ghost" style={{ padding: 6, minWidth: 'auto', color: 'var(--brand-primary)' }} onClick={(e) => {
+                          e.stopPropagation();
+                          setEditDistrict(district);
+                          setShowForm(true);
+                        }}>
+                          <Edit2 size={16} />
+                        </button>
+                      )}
+                      
+                      {can('delete') && (
+                        <button className="btn btn-ghost" style={{ padding: 6, minWidth: 'auto', color: '#ef4444' }} onClick={async (e) => {
+                          e.stopPropagation();
+                          if (confirm('Delete this district?')) {
+                            await deleteDistrict(did);
+                          }
+                        }}>
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
                   </td>
-                )}
               </tr>
             )})}
             {filtered.length === 0 && (

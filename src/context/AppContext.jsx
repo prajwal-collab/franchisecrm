@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { leadsDB, districtsDB, franchiseesDB, tasksDB, meetingsDB, usersDB } from '../services/db';
+import { leadsDB, districtsDB, franchiseesDB, tasksDB, meetingsDB, usersDB, getLastError } from '../services/db';
 import { runStageAutomation, runLeadCreationAutomation, simulateAdminEmail, calculateLeadScore } from '../services/automations';
 import { useAuth } from './AuthContext';
 
@@ -65,9 +65,13 @@ export function AppProvider({ children }) {
   }, [refresh, toast]);
 
   const updateLead = useCallback(async (id, updates, previousStage) => {
-    if (updates.stage) {
-      updates.score = calculateLeadScore({ ...updates });
+    // If anything changes that affects score, recalculate with the full merged data
+    const existingLead = leads.find(l => (l.id || l._id) === id) || {};
+    
+    if (updates.stage !== undefined || updates.investmentCapacity !== undefined || updates.phone !== undefined || updates.email !== undefined) {
+      updates.score = calculateLeadScore({ ...existingLead, ...updates });
     }
+    
     const lead = await leadsDB.update(id, updates);
     if (!lead) return null;
 
@@ -108,7 +112,8 @@ export function AppProvider({ children }) {
     if (res) {
       toast(`${records.length} leads imported successfully to server`, 'success');
     } else {
-      toast(`${records.length} leads imported to local storage (Backend save failed)`, 'warning');
+      const err = getLastError();
+      toast(`Import failed: ${err || 'Server Error'}. Saved locally.`, 'warning');
     }
   }, [refresh, toast]);
 
@@ -126,10 +131,44 @@ export function AppProvider({ children }) {
     return d;
   }, [refresh, toast]);
 
+  const deleteDistrict = useCallback(async (id) => {
+    const isTied = franchisees.some(f => f.districtId === id);
+    if (isTied) {
+      toast('Cannot delete district: A Franchise partner is currently assigned to it.', 'error');
+      return false;
+    }
+    await districtsDB.delete(id);
+    await refresh();
+    toast('District deleted', 'info');
+    return true;
+  }, [refresh, toast, franchisees]);
+
+  const bulkDeleteDistricts = useCallback(async (ids) => {
+    const tied = ids.filter(id => franchisees.some(f => f.districtId === id));
+    if (tied.length > 0) {
+      toast(`Cannot delete ${tied.length} district(s): They have active Franchise partners assigned.`, 'error');
+      return false;
+    }
+    if (!districtsDB.bulkDelete) {
+      // fallback if bulkDelete not available
+      for (const id of ids) await districtsDB.delete(id);
+    } else {
+      await districtsDB.bulkDelete(ids);
+    }
+    await refresh();
+    toast(`${ids.length} districts deleted`, 'info');
+    return true;
+  }, [refresh, toast, franchisees, districts]);
+
   const importDistricts = useCallback(async (records) => {
-    await districtsDB.bulkCreate(records);
-    refresh();
-    toast(`${records.length} districts imported`, 'success');
+    const res = await districtsDB.bulkCreate(records);
+    await refresh();
+    if (res) {
+      toast(`${records.length} districts imported`, 'success');
+    } else {
+      const err = getLastError();
+      toast(`Import failed: ${err || 'Server Offline'}. Saved locally.`, 'warning');
+    }
   }, [refresh, toast]);
 
   // ---- Franchisee operations ----
@@ -160,9 +199,14 @@ export function AppProvider({ children }) {
   }, [refresh, toast]);
 
   const importFranchisees = useCallback(async (records) => {
-    await franchiseesDB.bulkCreate(records);
+    const res = await franchiseesDB.bulkCreate(records);
     await refresh();
-    toast(`${records.length} franchisees imported`, 'success');
+    if (res) {
+      toast(`${records.length} franchisees imported`, 'success');
+    } else {
+      const err = getLastError();
+      toast(`Import failed: ${err || 'Server Offline'}. Saved locally.`, 'warning');
+    }
   }, [refresh, toast]);
 
   // ---- Task operations ----
@@ -215,7 +259,7 @@ export function AppProvider({ children }) {
       leads, districts, franchisees, tasks, meetings, users,
       toasts, toast,
       createLead, updateLead, deleteLead, bulkUpdateLeads, bulkDeleteLeads, importLeads,
-      updateDistrict, createDistrict, importDistricts,
+      updateDistrict, createDistrict, deleteDistrict, bulkDeleteDistricts, importDistricts,
       updateFranchisee, createFranchisee, deleteFranchisee, bulkDeleteFranchisees, importFranchisees,
       createTask, toggleTask, deleteTask, updateTask,
       createMeeting, updateMeeting, deleteMeeting,

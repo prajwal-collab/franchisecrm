@@ -125,10 +125,7 @@ export const leadsDB = {
     );
   },
   bulkDelete: async (ids) => {
-    // Try server bulk delete first, fall back to serial deletes
-    for (const id of ids) {
-      await smartRequest(`/leads/${id}`, 'DELETE');
-    }
+    await smartRequest('/leads/bulk-delete', 'POST', ids);
     const records = getLocal('leads');
     setLocal('leads', records.filter(r => !ids.includes(r.id || r._id)));
   },
@@ -154,9 +151,7 @@ export const districtsDB = {
     });
   },
   bulkDelete: async (ids) => {
-    for (const id of ids) {
-      await smartRequest(`/districts/${id}`, 'DELETE');
-    }
+    await smartRequest('/districts/bulk-delete', 'POST', ids);
     const stored = getLocal('districts');
     setLocal('districts', stored.filter(d => !ids.includes(d.id || d._id)));
   }
@@ -164,9 +159,7 @@ export const districtsDB = {
 export const franchiseesDB = {
   ...crudFactory('/franchisees', 'franchisees'),
   bulkDelete: async (ids) => {
-    for (const id of ids) {
-      await smartRequest(`/franchisees/${id}`, 'DELETE');
-    }
+    await smartRequest('/franchisees/bulk-delete', 'POST', ids);
     const stored = getLocal('franchisees');
     setLocal('franchisees', stored.filter(f => !ids.includes(f.id || f._id)));
   }

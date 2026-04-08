@@ -80,13 +80,23 @@ app.post('/api/leads', async (req, res) => {
 });
 
 app.put('/api/leads/:id', async (req, res) => {
-  const updated = await Lead.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  res.json(updated);
+  try {
+    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
+    const updated = await Lead.findOneAndUpdate(query, req.body, { new: true });
+    res.json(updated);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 app.delete('/api/leads/:id', async (req, res) => {
-  await Lead.findByIdAndDelete(req.params.id);
-  res.status(204).send();
+  try {
+    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
+    await Lead.findOneAndDelete(query);
+    res.status(204).send();
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 // Districts
@@ -115,13 +125,23 @@ app.post('/api/districts', async (req, res) => {
 });
 
 app.put('/api/districts/:id', async (req, res) => {
-  const updated = await District.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  res.json(updated);
+  try {
+    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
+    const updated = await District.findOneAndUpdate(query, req.body, { new: true });
+    res.json(updated);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 app.delete('/api/districts/:id', async (req, res) => {
-  await District.findByIdAndDelete(req.params.id);
-  res.status(204).send();
+  try {
+    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
+    await District.findOneAndDelete(query);
+    res.status(204).send();
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 // Franchisees
@@ -151,7 +171,8 @@ app.post('/api/franchisees', async (req, res) => {
 
 app.put('/api/franchisees/:id', async (req, res) => {
   try {
-    const updated = await Franchisee.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
+    const updated = await Franchisee.findOneAndUpdate(query, req.body, { new: true });
     if (!updated) return res.status(404).json({ message: 'Franchisee not found' });
     res.json(updated);
   } catch (err) {
@@ -161,7 +182,8 @@ app.put('/api/franchisees/:id', async (req, res) => {
 
 app.delete('/api/franchisees/:id', async (req, res) => {
   try {
-    const deleted = await Franchisee.findByIdAndDelete(req.params.id);
+    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
+    const deleted = await Franchisee.findOneAndDelete(query);
     if (!deleted) return res.status(404).json({ message: 'Franchisee not found' });
     res.status(204).send();
   } catch (err) {

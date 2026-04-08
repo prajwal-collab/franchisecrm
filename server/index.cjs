@@ -51,39 +51,21 @@ app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 app.use(morgan('dev'));
 
-// MongoDB Connection Singleton for Serverless
-let isConnected = false;
-const connectDB = async () => {
-  if (isConnected) return;
-  try {
-    if (!process.env.MONGODB_URI) {
-      throw new Error('MONGODB_URI is not defined in environment variables');
-    }
-    const db = await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 5000,
-      connectTimeoutMS: 10000,
-    });
-    isConnected = db.connections[0].readyState;
-    console.log('✅ Connected to MongoDB Atlas');
-  } catch (err) {
-    console.error('❌ MongoDB Connection Error:', err.message);
-    throw err;
-  }
-};
+const { connectDB, getIsConnected } = require('./db.cjs');
 
-// Standard connect for local/long-running
-if (process.env.NODE_ENV !== 'production') {
-  connectDB().catch(err => console.error('Initial Connection Failed:', err));
-}
-
-// Global middleware to ensure DB connection on every request (crucial for Vercel)
+// MongoDB Connection Middleware
 app.use(async (req, res, next) => {
   if (req.path.startsWith('/api')) {
     try {
       await connectDB();
       next();
     } catch (err) {
-      res.status(500).json({ error: 'Database connection failed', details: err.message });
+      console.error('Database connection middleware failed:', err.message);
+      res.status(500).json({ 
+        message: 'Database connection failed', 
+        details: err.message,
+        hint: 'Verify MONGODB_URI in Vercel settings and Atlas IP whitelist.'
+      });
     }
   } else {
     next();
@@ -93,11 +75,10 @@ app.use(async (req, res, next) => {
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
-    database: isConnected ? 'Connected' : 'Disconnected',
+    database: getIsConnected() ? 'Connected' : 'Disconnected',
     env: {
       has_uri: !!process.env.MONGODB_URI,
-      uri_prefix: process.env.MONGODB_URI ? process.env.MONGODB_URI.substring(0, 15) + '...' : 'NONE',
-      node_env: process.env.NODE_ENV || 'development'
+      node_env: process.env.NODE_ENV || 'production'
     }
   });
 });

@@ -51,6 +51,23 @@ export default function LeadList() {
   const [importStep, setImportStep] = useState(1); // 1=upload 2=map 3=confirm
   const [bulkStage, setBulkStage] = useState('');
   const [showBulkMenu, setShowBulkMenu] = useState(false);
+  const [editingNote, setEditingNote] = useState(null);
+  const [tempNote, setTempNote] = useState('');
+
+  // Handle note edit start
+  useEffect(() => {
+    if (editingNote) {
+      const item = leads.find(l => (l.id || l._id) === editingNote);
+      setTempNote(item?.notes || '');
+    }
+  }, [editingNote, leads]);
+
+  const handleNoteSave = async (id, type) => {
+    if (editingNote === id) {
+      if (type === 'lead') await updateLead(id, { notes: tempNote });
+      setEditingNote(null);
+    }
+  };
 
   // Enrich leads
   const enriched = useMemo(() => leads.map(l => ({
@@ -273,6 +290,7 @@ export default function LeadList() {
                 <th onClick={() => toggleSort('districtName')} style={{ cursor: 'pointer' }}>District</th>
                 <th onClick={() => toggleSort('stage')} style={{ cursor: 'pointer' }}>Stage</th>
                 <th onClick={() => toggleSort('score')} style={{ cursor: 'pointer' }}>Score</th>
+                <th onClick={() => toggleSort('notes')} style={{ cursor: 'pointer' }}>Notes</th>
                 <th onClick={() => toggleSort('updatedDate')} style={{ cursor: 'pointer' }}>Last Updated</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
@@ -306,6 +324,36 @@ export default function LeadList() {
                         </div>
                         <span style={{ fontSize: 12, fontWeight: 700 }}>{lead.score}</span>
                       </div>
+                    </td>
+                    <td onClick={e => e.stopPropagation()} onDoubleClick={() => setEditingNote(lid)}>
+                      {editingNote === lid ? (
+                        <textarea
+                          autoFocus
+                          className="form-input"
+                          style={{ fontSize: 13, minWidth: 200, minHeight: 60, padding: '4px 8px' }}
+                          value={tempNote}
+                          onChange={e => setTempNote(e.target.value)}
+                          onBlur={() => handleNoteSave(lid, 'lead')}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleNoteSave(lid, 'lead');
+                            }
+                            if (e.key === 'Escape') setEditingNote(null);
+                          }}
+                        />
+                      ) : (
+                        <div style={{ 
+                          fontSize: 13, 
+                          color: lead.notes ? '#33475b' : '#cbd6e2', 
+                          maxWidth: 200, 
+                          overflow: 'hidden', 
+                          textOverflow: 'ellipsis', 
+                          whiteSpace: 'nowrap' 
+                        }} title={lead.notes || 'Double-click to add note'}>
+                          {lead.notes || '—'}
+                        </div>
+                      )}
                     </td>
                     <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
                       {lead.updatedDate ? new Date(lead.updatedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '—'}

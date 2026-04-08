@@ -36,6 +36,23 @@ export default function FranchiseeList() {
 
   const [showForm, setShowForm] = useState(false);
   const [editFranchisee, setEditFranchisee] = useState(null);
+  const [editingNote, setEditingNote] = useState(null);
+  const [tempNote, setTempNote] = useState('');
+
+  // Handle note edit start
+  useEffect(() => {
+    if (editingNote) {
+      const item = franchisees.find(f => (f.id || f._id) === editingNote);
+      setTempNote(item?.notes || '');
+    }
+  }, [editingNote, franchisees]);
+
+  const handleNoteSave = async (id) => {
+    if (editingNote === id) {
+      await updateFranchisee(id, { notes: tempNote });
+      setEditingNote(null);
+    }
+  };
 
   const enriched = useMemo(() => franchisees.map(f => ({
     ...f,
@@ -208,7 +225,11 @@ export default function FranchiseeList() {
                   </div>
                 </th>
               ))}
-              <th>Actions</th>
+               <th onClick={() => {
+                 if (sortKey === 'notes') setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+                 else { setSortKey('notes'); setSortDir('asc'); }
+               }} style={{ cursor: 'pointer' }}>Notes</th>
+               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -247,6 +268,36 @@ export default function FranchiseeList() {
                 <td>
                   <span className={`badge ${PAYMENT_BADGE[f.paymentStatus]}`}>{f.paymentStatus}</span>
                 </td>
+                <td onClick={e => e.stopPropagation()} onDoubleClick={() => setEditingNote(fid)}>
+                  {editingNote === fid ? (
+                    <textarea
+                      autoFocus
+                      className="form-input"
+                      style={{ fontSize: 13, minWidth: 200, minHeight: 60, padding: '4px 8px' }}
+                      value={tempNote}
+                      onChange={e => setTempNote(e.target.value)}
+                      onBlur={() => handleNoteSave(fid)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleNoteSave(fid);
+                        }
+                        if (e.key === 'Escape') setEditingNote(null);
+                      }}
+                    />
+                  ) : (
+                    <div style={{ 
+                      fontSize: 13, 
+                      color: f.notes ? '#33475b' : '#cbd6e2', 
+                      maxWidth: 200, 
+                      overflow: 'hidden', 
+                      textOverflow: 'ellipsis', 
+                      whiteSpace: 'nowrap' 
+                    }} title={f.notes || 'Double-click to add note'}>
+                      {f.notes || '—'}
+                    </div>
+                  )}
+                 </td>
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     {can('edit') && (

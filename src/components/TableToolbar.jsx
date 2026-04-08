@@ -9,7 +9,7 @@ export default function TableToolbar({ selectedCount = 0, onEdit, onDuplicate, o
 
   return (
     <div className="animate-in table-toolbar-container" style={{
-      position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)',
+      position: 'fixed', bottom: 40, left: '50%', transform: 'translateX(-50%)',
       display: 'flex', alignItems: 'center', gap: 16,
       padding: '10px 24px', background: '#111827', 
       borderRadius: '100px', 

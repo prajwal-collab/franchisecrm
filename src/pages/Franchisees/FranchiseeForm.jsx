@@ -13,7 +13,8 @@ export default function FranchiseeForm({ franchisee, onClose }) {
     committedAmount: 0,
     receivedAmount: 0,
     paymentStatus: 'Partial',
-    onboardingDate: new Date().toISOString().split('T')[0]
+    onboardingDate: new Date().toISOString().split('T')[0],
+    notes: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -28,7 +29,8 @@ export default function FranchiseeForm({ franchisee, onClose }) {
         committedAmount: franchisee.committedAmount || 0,
         receivedAmount: franchisee.receivedAmount || 0,
         paymentStatus: franchisee.paymentStatus || 'Partial',
-        onboardingDate: franchisee.onboardingDate ? franchisee.onboardingDate.split('T')[0] : new Date().toISOString().split('T')[0]
+        onboardingDate: franchisee.onboardingDate ? franchisee.onboardingDate.split('T')[0] : new Date().toISOString().split('T')[0],
+        notes: franchisee.notes || ''
       });
     }
   }, [franchisee]);
@@ -185,6 +187,17 @@ export default function FranchiseeForm({ franchisee, onClose }) {
                 )}
               </div>
             </div>
+          </div>
+          
+          <div className="form-group" style={{ marginBottom: 24 }}>
+            <label className="form-label">Notes / Remarks</label>
+            <textarea 
+              className="form-input" 
+              style={{ minHeight: 80, resize: 'vertical' }}
+              value={formData.notes} 
+              onChange={e => setFormData({...formData, notes: e.target.value})} 
+              placeholder="Internal partner notes..." 
+            />
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, borderTop: '1px solid var(--border-color)', paddingTop: 24 }}>

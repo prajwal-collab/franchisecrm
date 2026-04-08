@@ -36,6 +36,23 @@ export default function DistrictList() {
   const [importStep, setImportStep] = useState(1);
   const [importData, setImportData] = useState(null);
   const [importMapping, setImportMapping] = useState({});
+  const [editingNote, setEditingNote] = useState(null);
+  const [tempNote, setTempNote] = useState('');
+
+  // Handle note edit start
+  useEffect(() => {
+    if (editingNote) {
+      const item = districts.find(d => (d.id || d._id) === editingNote);
+      setTempNote(item?.notes || '');
+    }
+  }, [editingNote, districts]);
+
+  const handleNoteSave = async (id) => {
+    if (editingNote === id) {
+      await updateDistrict(id, { notes: tempNote });
+      setEditingNote(null);
+    }
+  };
 
   const filtered = useMemo(() => {
     let r = districts.map(d => ({
@@ -213,6 +230,7 @@ export default function DistrictList() {
                   </div>
                 </th>
               ))}
+              <th onClick={() => toggleSort('notes')} style={{ cursor: 'pointer' }}>Notes</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -250,6 +268,36 @@ export default function DistrictList() {
                       {district.franchiseeName}
                     </div>
                   ) : <span style={{ opacity: 0.4 }}>Unallocated</span>}
+                </td>
+                <td onClick={e => e.stopPropagation()} onDoubleClick={() => setEditingNote(did)}>
+                  {editingNote === did ? (
+                    <textarea
+                      autoFocus
+                      className="form-input"
+                      style={{ fontSize: 13, minWidth: 200, minHeight: 60, padding: '4px 8px' }}
+                      value={tempNote}
+                      onChange={e => setTempNote(e.target.value)}
+                      onBlur={() => handleNoteSave(did)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleNoteSave(did);
+                        }
+                        if (e.key === 'Escape') setEditingNote(null);
+                      }}
+                    />
+                  ) : (
+                    <div style={{ 
+                      fontSize: 13, 
+                      color: district.notes ? '#33475b' : '#cbd6e2', 
+                      maxWidth: 200, 
+                      overflow: 'hidden', 
+                      textOverflow: 'ellipsis', 
+                      whiteSpace: 'nowrap' 
+                    }} title={district.notes || 'Double-click to add note'}>
+                      {district.notes || '—'}
+                    </div>
+                  )}
                 </td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

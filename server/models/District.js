@@ -6,6 +6,7 @@ const DistrictSchema = new mongoose.Schema({
   status: { type: String, enum: ['Available', 'Sold', 'Blocked'], default: 'Available' },
   soldDate: Date,
   franchiseeId: String,
+  notes: String,
   createdDate: { type: Date, default: Date.now },
 });
 

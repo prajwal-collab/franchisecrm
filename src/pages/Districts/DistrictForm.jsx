@@ -11,6 +11,7 @@ export default function DistrictForm({ district, onClose }) {
     status: 'Available',
     soldDate: '',
     franchiseeId: '',
+    notes: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -22,6 +23,7 @@ export default function DistrictForm({ district, onClose }) {
         status: district.status || 'Available',
         soldDate: district.soldDate ? district.soldDate.split('T')[0] : '',
         franchiseeId: district.franchiseeId || '',
+        notes: district.notes || '',
       });
     }
   }, [district]);

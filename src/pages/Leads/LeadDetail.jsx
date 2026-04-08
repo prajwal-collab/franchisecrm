@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ChevronLeft, Edit2, Trash2, Calendar, Phone, Mail, 
   MapPin, User, Briefcase, Wallet, History, MessageSquare,
-  Plus, Video, CheckCircle, Clock
+  Plus, Video, CheckCircle, Clock, RefreshCw
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';

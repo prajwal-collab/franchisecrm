@@ -82,13 +82,28 @@ app.delete('/api/leads/:id', async (req, res) => {
 
 // Districts
 app.get('/api/districts', async (req, res) => {
-  const districts = await District.find().sort({ name: 1 });
+  const districts = await District.find().sort({ name: 1 }).lean();
   res.json(districts);
+});
+
+app.post('/api/districts', async (req, res) => {
+  try {
+    const d = new District(req.body);
+    await d.save();
+    res.status(201).json(d);
+  } catch (err) {
+    res.status(400).json({ message: 'District creation failed', error: err.message });
+  }
 });
 
 app.put('/api/districts/:id', async (req, res) => {
   const updated = await District.findByIdAndUpdate(req.params.id, req.body, { new: true });
   res.json(updated);
+});
+
+app.delete('/api/districts/:id', async (req, res) => {
+  await District.findByIdAndDelete(req.params.id);
+  res.status(204).send();
 });
 
 // Franchisees
@@ -169,7 +184,7 @@ app.delete('/api/tasks/:id', async (req, res) => {
 
 // Meetings
 app.get('/api/meetings', async (req, res) => {
-  const meetings = await Meeting.find().sort({ scheduledDateTime: 1 });
+  const meetings = await Meeting.find().sort({ scheduledDateTime: 1 }).lean();
   res.json(meetings);
 });
 
@@ -177,6 +192,16 @@ app.post('/api/meetings', async (req, res) => {
   const m = new Meeting(req.body);
   await m.save();
   res.status(201).json(m);
+});
+
+app.put('/api/meetings/:id', async (req, res) => {
+  const updated = await Meeting.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  res.json(updated);
+});
+
+app.delete('/api/meetings/:id', async (req, res) => {
+  await Meeting.findByIdAndDelete(req.params.id);
+  res.status(204).send();
 });
 
 // Auth & Users
@@ -371,7 +396,7 @@ app.post('/api/ai/generate-strategy', async (req, res) => {
     `;
 
     const GEMINI_API_KEY = (process.env.Gemini_API_KEY || '').trim();
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -449,7 +474,7 @@ Respond directly to the user's latest query based on this context.`;
       });
     }
     console.log('Gemini API Key Loaded:', GEMINI_API_KEY ? 'Yes' : 'No');
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -465,7 +490,7 @@ Respond directly to the user's latest query based on this context.`;
 
     if (!response.ok) {
       const errData = await response.json();
-      console.error('Gemini API Error Detail:', JSON.stringify(errData, null, 2));
+      console.error('Gemini API Error Detail (Status ' + response.status + '):', JSON.stringify(errData, null, 2));
       const errorMsg = errData.error?.message || 'Gemini API error';
       throw new Error(errorMsg);
     }

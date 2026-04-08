@@ -1,10 +1,11 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Building2, Search, Download, Plus, 
+  Building2, Search, Download, Plus, Filter,
   MapPin, Phone, Mail, ChevronUp, ChevronDown,
   Upload, X, CheckCircle2, ChevronRight, AlertCircle,
-  FileText, TrendingUp, CheckSquare, Square, Edit2, Trash2
+  FileText, TrendingUp, CheckSquare, Square, Edit2, Trash2,
+  DollarSign, Wallet, Inbox, Users
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
@@ -132,26 +133,41 @@ export default function FranchiseeList() {
 
   return (
     <div className="animate-in">
-      <div className="page-header" style={{ marginBottom: 40 }}>
-        <div className="page-header-left">
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: '#33475b', margin: 0 }}>Franchise Partners</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Manage active franchise owners and monitor their financial commitment</p>
+      <div className="page-header" style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Franchise Partners</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Manage your active franchise network and payment tracking</p>
         </div>
-        <div className="page-header-actions" style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 12 }}>
           {can('import') && (
-            <>
-              <button className="btn btn-secondary" onClick={() => setShowImport(true)}>
-                <Upload size={16} /> Import Legacy Data
-              </button>
-            </>
+            <button className="btn btn-secondary" onClick={() => setShowImport(true)}>
+              <Upload size={16} /> Import Partners
+            </button>
           )}
-          <button className="btn btn-primary" onClick={() => {
-            setEditFranchisee(null);
-            setShowForm(true);
-          }}>
-            <Plus size={18} /> New Partner
+          <button className="btn btn-primary" onClick={() => { setEditFranchisee(null); setShowForm(true); }}>
+            <Plus size={18} /> Add Partner
           </button>
         </div>
+      </div>
+
+      {/* Stats Summary Bar */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+        {[
+          { label: 'Total Partners', val: (franchisees || []).length, icon: <Users size={18} />, color: '#6366f1', bg: '#eef2ff' },
+          { label: 'Total Committed', val: '₹' + ((franchisees || []).reduce((sum, f) => sum + (f.committedAmount || 0), 0) / 100000).toFixed(1) + 'L', icon: <DollarSign size={18} />, color: '#10b981', bg: '#ecfdf5' },
+          { label: 'Total Received', val: '₹' + ((franchisees || []).reduce((sum, f) => sum + (f.receivedAmount || 0), 0) / 100000).toFixed(1) + 'L', icon: <Wallet size={18} />, color: '#f59e0b', bg: '#fffbeb' },
+          { label: 'Collection %', val: (franchisees || []).reduce((sum, f) => sum + (f.committedAmount || 0), 0) ? Math.round(((franchisees || []).reduce((sum, f) => sum + (f.receivedAmount || 0), 0) / (franchisees || []).reduce((sum, f) => sum + (f.committedAmount || 0), 0)) * 100) + '%' : '0%', icon: <TrendingUp size={18} />, color: '#ec4899', bg: '#fdf2f8' }
+        ].map((s, i) => (
+          <div key={i} className="card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 10, background: s.bg, color: s.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {s.icon}
+            </div>
+            <div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 500 }}>{s.label}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)' }}>{s.val}</div>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="card" style={{ padding: '16px 24px', marginBottom: 24, display: 'flex', gap: 16, alignItems: 'center', background: '#fcfcfc', border: '1px solid #eaf0f6' }}>
@@ -327,15 +343,21 @@ export default function FranchiseeList() {
                 </td>
               </tr>
             )})}
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={8} style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  No partners found matching your search.
-                </td>
-              </tr>
-            )}
           </tbody>
           </table>
+          
+          {filtered.length === 0 && (
+            <div style={{ padding: '80px 40px', textAlign: 'center' }}>
+              <div style={{ width: 64, height: 64, background: '#f5f8fa', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <Inbox size={32} color="#cbd6e2" />
+              </div>
+              <h3 style={{ fontSize: 18, color: '#33475b', fontWeight: 700, margin: '0 0 8px' }}>No partners found</h3>
+              <p style={{ color: '#7c98b6', fontSize: 14, maxWidth: 320, margin: '0 auto' }}>We couldn't find any franchise partners matching your current filters or search query.</p>
+              <button className="btn btn-secondary btn-sm" style={{ marginTop: 20 }} onClick={() => { setSearch(''); }}>
+                Clear all filters
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

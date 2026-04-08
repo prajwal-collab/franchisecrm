@@ -3,7 +3,8 @@ import {
   Search, MapPin, Building2, Calendar, 
   ExternalLink, Plus, Filter, ChevronUp, ChevronDown,
   Upload, Download, X, CheckCircle2, ChevronRight, AlertCircle,
-  FileText, CheckSquare, Square, Edit2, Trash2
+  FileText, CheckSquare, Square, Edit2, Trash2,
+  Map, PieChart, Inbox
 } from 'lucide-react';
 import TableToolbar from '../../components/TableToolbar';
 import { useApp } from '../../context/AppContext';
@@ -133,9 +134,9 @@ export default function DistrictList() {
 
   return (
     <div className="animate-in">
-      <div className="page-header" style={{ marginBottom: 40 }}>
+      <div className="page-header" style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div className="page-header-left">
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: '#33475b', margin: 0 }}>Districts & Territories</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Districts & Territories</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Manage available areas and analyze franchise performance by region</p>
         </div>
         <div className="page-header-actions" style={{ display: 'flex', gap: 12 }}>
@@ -153,6 +154,26 @@ export default function DistrictList() {
             </>
           )}
         </div>
+      </div>
+
+      {/* Stats Summary Bar */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+        {[
+          { label: 'Total Districts', val: (districts || []).length, icon: <Map size={18} />, color: '#6366f1', bg: '#eef2ff' },
+          { label: 'Available', val: (districts || []).filter(d => d.status === 'Available').length, icon: <CheckCircle2 size={18} />, color: '#10b981', bg: '#ecfdf5' },
+          { label: 'Sold/Blocked', val: (districts || []).filter(d => d.status !== 'Available').length, icon: <PieChart size={18} />, color: '#f59e0b', bg: '#fffbeb' },
+          { label: 'Coverage', val: (districts || []).length ? Math.round(((districts || []).filter(d => d.status === 'Sold').length / (districts || []).length) * 100) + '%' : '0%', icon: <AlertCircle size={18} />, color: '#ec4899', bg: '#fdf2f8' }
+        ].map((s, i) => (
+          <div key={i} className="card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 10, background: s.bg, color: s.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {s.icon}
+            </div>
+            <div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 500 }}>{s.label}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)' }}>{s.val}</div>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="card" style={{ padding: '16px 24px', marginBottom: 24, display: 'flex', gap: 16, alignItems: 'center', background: '#fcfcfc', border: '1px solid #eaf0f6' }}>

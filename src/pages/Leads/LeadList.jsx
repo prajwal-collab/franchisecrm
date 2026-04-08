@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   Plus, Download, Upload, Search, Filter, Trash2,
   Edit2, ChevronUp, ChevronDown, RefreshCw, LayoutGrid,
-  List, CheckSquare, Square, AlertTriangle, X, Zap
+  List, CheckSquare, Square, AlertTriangle, X, Zap,
+  TrendingUp, Users, Target, PieChart, Inbox
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
@@ -185,25 +186,43 @@ export default function LeadList() {
 
   return (
     <div className="animate-in">
-      {/* Header */}
-      <div className="page-header" style={{ marginBottom: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+      <div className="page-header" style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>Leads</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Manage your pipeline and track interactions with potential partners.</p>
+          <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Leads Management</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Track and qualify incoming franchise inquiries</p>
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
-          <button className="btn btn-secondary" onClick={() => setShowImport(true)}>
-            <Upload size={16} /> Import
-          </button>
-          <button className="btn btn-secondary" onClick={handleExport}>
-            <Download size={16} /> Export
-          </button>
+          {can('import') && (
+            <button className="btn btn-secondary" onClick={() => setShowImport(true)}>
+              <Upload size={16} /> Import Leads
+            </button>
+          )}
           {can('create') && (
             <button className="btn btn-primary" onClick={() => { setEditLead(null); setShowForm(true); }}>
-              <Plus size={18} /> Create Lead
+              <Plus size={18} /> Add New Lead
             </button>
           )}
         </div>
+      </div>
+
+      {/* Stats Summary Bar */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+        {[
+          { label: 'Total Leads', val: (leads || []).length, icon: <Users size={18} />, color: '#6366f1', bg: '#eef2ff' },
+          { label: 'High Potential', val: (leads || []).filter(l => (l.score || 0) >= 70).length, icon: <Target size={18} />, color: '#10b981', bg: '#ecfdf5' },
+          { label: 'Hot Leads', val: (leads || []).filter(l => l.stage === 'Closed Won').length, icon: <TrendingUp size={18} />, color: '#f59e0b', bg: '#fffbeb' },
+          { label: 'Conversion', val: (leads || []).length ? Math.round(((leads || []).filter(l => l.stage === 'Closed Won').length / (leads || []).length) * 100) + '%' : '0%', icon: <PieChart size={18} />, color: '#ec4899', bg: '#fdf2f8' }
+        ].map((s, i) => (
+          <div key={i} className="card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 10, background: s.bg, color: s.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {s.icon}
+            </div>
+            <div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 500 }}>{s.label}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)' }}>{s.val}</div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Filters & Search */}

@@ -211,7 +211,7 @@ export default function FranchiseeList() {
             setSelected([]);
           }}
           onDelete={async () => {
-            if (confirm(`Delete ${selected.length} partner(s)?`)) {
+            if (window.confirm(`Delete ${selected.length} partner(s)?`)) {
               await bulkDeleteFranchisees(selected);
               setSelected([]);
             }
@@ -395,6 +395,12 @@ export default function FranchiseeList() {
 
               {importStep === 1 && (
                 <div style={{ textAlign: 'center' }}>
+                  <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 6, padding: '12px 16px', marginBottom: 24, display: 'flex', gap: 12, alignItems: 'flex-start', textAlign: 'left' }}>
+                    <AlertCircle size={18} color="#d97706" style={{ flexShrink: 0, marginTop: 2 }} />
+                    <div style={{ fontSize: 13, color: '#92400e', lineHeight: 1.5 }}>
+                      <strong>Data Interdependency Warning:</strong> To properly connect Franchise Partners with their respective territories, the <code style={{ background: '#fef3c7', padding: '2px 4px', borderRadius: 4, fontWeight: 700 }}>District ID</code> in your CSV must exactly match an existing District ID in the CRM.
+                    </div>
+                  </div>
                   <div 
                     style={{ border: '2px dashed #cbd6e2', borderRadius: 12, padding: '64px 32px', cursor: 'pointer', background: '#f9fafb' }} 
                     onClick={() => fileRef.current.click()}

@@ -64,6 +64,15 @@ app.get('/api/leads', async (req, res) => {
   res.json(leads);
 });
 
+app.post('/api/leads/bulk', async (req, res) => {
+  try {
+    const leads = await Lead.insertMany(req.body);
+    res.status(201).json(leads);
+  } catch (err) {
+    res.status(400).json({ message: 'Bulk lead import failed', error: err.message });
+  }
+});
+
 app.post('/api/leads', async (req, res) => {
   const lead = new Lead(req.body);
   await lead.save();
@@ -84,6 +93,15 @@ app.delete('/api/leads/:id', async (req, res) => {
 app.get('/api/districts', async (req, res) => {
   const districts = await District.find().sort({ name: 1 }).lean();
   res.json(districts);
+});
+
+app.post('/api/districts/bulk', async (req, res) => {
+  try {
+    const districts = await District.insertMany(req.body);
+    res.status(201).json(districts);
+  } catch (err) {
+    res.status(400).json({ message: 'Bulk district import failed', error: err.message });
+  }
 });
 
 app.post('/api/districts', async (req, res) => {
@@ -110,6 +128,15 @@ app.delete('/api/districts/:id', async (req, res) => {
 app.get('/api/franchisees', async (req, res) => {
   const franchisees = await Franchisee.find().sort({ onboardingDate: -1 });
   res.json(franchisees);
+});
+
+app.post('/api/franchisees/bulk', async (req, res) => {
+  try {
+    const franchisees = await Franchisee.insertMany(req.body);
+    res.status(201).json(franchisees);
+  } catch (err) {
+    res.status(400).json({ message: 'Bulk franchisee import failed', error: err.message });
+  }
 });
 
 app.post('/api/franchisees', async (req, res) => {

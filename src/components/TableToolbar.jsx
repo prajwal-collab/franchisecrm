@@ -32,9 +32,11 @@ export default function TableToolbar({ selectedCount = 0, onView, onEdit, onDupl
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         {onView && (
           <button 
+            type="button"
             className="btn-toolbar" 
             disabled={selectedCount > 1}
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault(); e.stopPropagation();
               if (selectedCount > 1) {
                 toast('Detailed view only available for single selection', 'warning');
               } else {
@@ -49,9 +51,11 @@ export default function TableToolbar({ selectedCount = 0, onView, onEdit, onDupl
         
         {onEdit && (
           <button 
+            type="button"
             className="btn-toolbar" 
             disabled={selectedCount > 1}
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault(); e.stopPropagation();
               if (selectedCount > 1) {
                 toast('Edit only available for single selection', 'warning');
               } else {
@@ -64,23 +68,23 @@ export default function TableToolbar({ selectedCount = 0, onView, onEdit, onDupl
           </button>
         )}
         
-        <button className="btn-toolbar" onClick={() => onDuplicate ? onDuplicate() : toast('Duplicate feature coming soon!')}>
+        <button type="button" className="btn-toolbar" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDuplicate ? onDuplicate() : toast('Duplicate feature coming soon!'); }}>
           <Copy size={16} /> <span className="toolbar-label">Duplicate</span>
         </button>
         
         <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.1)', margin: '0 4px' }} />
 
-        <button className="btn-toolbar" onClick={() => onPrint ? onPrint() : toast('Print feature coming soon!')}>
+        <button type="button" className="btn-toolbar" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPrint ? onPrint() : toast('Print feature coming soon!'); }}>
           <Printer size={16} /> <span className="toolbar-label">Print</span>
         </button>
 
-        <button className="btn-toolbar" onClick={() => onExport ? onExport() : toast('Export feature coming soon!')}>
+        <button type="button" className="btn-toolbar" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onExport ? onExport() : toast('Export feature coming soon!'); }}>
           <Download size={16} /> <span className="toolbar-label">Export CSV</span>
         </button>
 
         <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.1)', margin: '0 4px' }} />
 
-        <button className="btn-toolbar btn-toolbar-danger" onClick={() => onDelete ? onDelete() : toast('Delete feature coming soon!')}>
+        <button type="button" className="btn-toolbar btn-toolbar-danger" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete ? onDelete() : toast('Delete feature coming soon!'); }}>
           <Trash2 size={16} /> <span className="toolbar-label">Delete</span>
         </button>
       </div>

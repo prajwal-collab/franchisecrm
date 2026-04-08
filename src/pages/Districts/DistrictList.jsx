@@ -226,7 +226,7 @@ export default function DistrictList() {
             setSelected([]);
           }}
           onDelete={async () => {
-            if (confirm(`Delete ${selected.length} district(s)?`)) {
+            if (window.confirm(`Delete ${selected.length} district(s)?`)) {
               await bulkDeleteDistricts(selected);
               setSelected([]);
             }
@@ -404,6 +404,12 @@ export default function DistrictList() {
 
               {importStep === 1 && (
                 <div style={{ textAlign: 'center' }}>
+                  <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, padding: '12px 16px', marginBottom: 24, display: 'flex', gap: 12, alignItems: 'flex-start', textAlign: 'left' }}>
+                    <AlertCircle size={18} color="#16a34a" style={{ flexShrink: 0, marginTop: 2 }} />
+                    <div style={{ fontSize: 13, color: '#14532d', lineHeight: 1.5 }}>
+                      <strong>Foundation Data:</strong> Districts act as the core mapping foundation of the CRM. When you import these 25 territories, ensure you use the exact <code style={{ background: '#bbf7d0', padding: '2px 4px', borderRadius: 4, color: '#166534', fontWeight: 700 }}>Name</code> references when subsequently importing your Leads or Franchise Partners to guarantee they automatically link together.
+                    </div>
+                  </div>
                   <div 
                     style={{ border: '2px dashed #cbd6e2', borderRadius: 12, padding: '64px 32px', cursor: 'pointer', background: '#f9fafb' }} 
                     onClick={() => fileRef.current.click()}

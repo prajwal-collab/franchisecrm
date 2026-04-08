@@ -51,10 +51,50 @@ app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 app.use(morgan('dev'));
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('✅ Connected to MongoDB Atlas'))
-  .catch(err => console.error('❌ MongoDB Connection Error:', err));
+// MongoDB Connection Singleton for Serverless
+let isConnected = false;
+const connectDB = async () => {
+  if (isConnected) return;
+  try {
+    const db = await mongoose.connect(process.env.MONGODB_URI);
+    isConnected = db.connections[0].readyState;
+    console.log('✅ Connected to MongoDB Atlas');
+  } catch (err) {
+    console.error('❌ MongoDB Connection Error:', err);
+    throw err;
+  }
+};
+
+// Standard connect for local/long-running
+if (process.env.NODE_ENV !== 'production') {
+  connectDB().catch(err => console.error('Initial Connection Failed:', err));
+}
+
+// Global middleware to ensure DB connection on every request (crucial for Vercel)
+app.use(async (req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    try {
+      await connectDB();
+      next();
+    } catch (err) {
+      res.status(500).json({ error: 'Database connection failed', details: err.message });
+    }
+  } else {
+    next();
+  }
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    database: isConnected ? 'Connected' : 'Disconnected',
+    env: {
+      has_uri: !!process.env.MONGODB_URI,
+      uri_prefix: process.env.MONGODB_URI ? process.env.MONGODB_URI.substring(0, 15) + '...' : 'NONE',
+      node_env: process.env.NODE_ENV || 'development'
+    }
+  });
+});
 
 // --- API ROUTES ---
 

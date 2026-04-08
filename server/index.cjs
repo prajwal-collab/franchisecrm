@@ -405,9 +405,9 @@ app.post('/api/ai/chat', async (req, res) => {
     const { messages } = req.body;
     
     // Fetch CRM summaries context to inject into LLM
-    const leads = await Lead.find({}, 'firstName lastName stage source profession investmentCapacity updatedDate').lean();
-    const districts = await District.find({}, 'name status').lean();
-    const franchisees = await Franchisee.find({}, 'name districtId committedAmount receivedAmount paymentStatus').lean();
+    const leads = await Lead.find({}, 'firstName lastName stage source profession investmentCapacity notes updatedDate').lean();
+    const districts = await District.find({}, 'name status notes').lean();
+    const franchisees = await Franchisee.find({}, 'name districtId committedAmount receivedAmount paymentStatus notes').lean();
 
     const crmData = {
       leadsTotal: leads.length,
@@ -422,14 +422,14 @@ app.post('/api/ai/chat', async (req, res) => {
 Your goal is to help users manage their franchise pipeline with clear, professional, and human-like insights.
 
 ### IDENTITY & TONE:
-- Talk like a helpful, senior CRM analyst at EarlyJobs.
-- Be proactive, intelligent, and professional.
-- Use a friendly but business-focused tone.
+- You are a High-Performance Sales Director and CRM Strategist at EarlyJobs.
+- Your tone is executive, data-driven, and highly encouraging but realistic.
+- Use professional sales terminology (e.g., Conversion Rate, Pipeline Velocity, LTV).
 
 ### DATA SOURCE:
-- You MUST answer questions using the CRM DATA provided below.
-- If the information is not in the CRM DATA, clearly state that you don't have that specific information yet.
-- NEVER hypothesize or "hallucinate" data (e.g., don't invent leads or districts).
+- You have FULL visibility into the EarlyJobs CRM database provided below.
+- Analyze the "Notes" field carefully—it often contains the "ground truth" about a lead's interest or a franchisee's concerns.
+- If data is missing, recommend specific questions the user should ask the lead to fill the gaps.
 
 ### FORMATTING:
 - Use Markdown for structured data.
@@ -442,6 +442,12 @@ ${JSON.stringify(crmData)}
 Respond directly to the user's latest query based on this context.`;
 
     const GEMINI_API_KEY = (process.env.Gemini_API_KEY || '').trim();
+    if (!GEMINI_API_KEY) {
+      return res.status(400).json({ 
+        message: 'Gemini API Key is missing. Please add Gemini_API_KEY to your .env file.',
+        suggestion: 'You can get a key from https://aistudio.google.com/app/apikey' 
+      });
+    }
     console.log('Gemini API Key Loaded:', GEMINI_API_KEY ? 'Yes' : 'No');
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',

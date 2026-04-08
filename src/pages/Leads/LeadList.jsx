@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus, Download, Upload, Search, Filter, Trash2,
@@ -30,7 +30,7 @@ const EXPORT_COLS = [
 ];
 
 export default function LeadList() {
-  const { leads, districts, users, createLead, deleteLead, bulkUpdateLeads, bulkDeleteLeads, importLeads, refresh, toast } = useApp();
+  const { leads, districts, users, createLead, updateLead, deleteLead, bulkUpdateLeads, bulkDeleteLeads, importLeads, refresh, toast } = useApp();
   const { can } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef();
@@ -311,12 +311,12 @@ export default function LeadList() {
                       {selected.includes(lid) ? <CheckSquare size={16} color="var(--brand-primary)" /> : <Square size={16} />}
                     </td>
                     <td>
-                      <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{lead.firstName} {lead.lastName}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{lead.source}</div>
+                      <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{lead?.firstName} {lead?.lastName}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{lead?.source}</div>
                     </td>
                     <td>
-                      <div style={{ fontSize: 14 }}>{lead.phone}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{lead.email}</div>
+                      <div style={{ fontSize: 14 }}>{lead?.phone}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{lead?.email}</div>
                     </td>
                     <td><span className="badge badge-new" style={{ background: '#f0f9ff', color: '#0369a1' }}>{lead.districtName}</span></td>
                     <td><span className={`badge ${STAGE_BADGE[lead.stage] || ''}`} style={{ fontWeight: 700 }}>{lead.stage}</span></td>

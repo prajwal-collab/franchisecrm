@@ -19,7 +19,7 @@ const PAYMENT_BADGE = {
 
 export default function FranchiseeList() {
   const navigate = useNavigate();
-  const { franchisees, districts, importFranchisees, createFranchisee, deleteFranchisee, bulkDeleteFranchisees, toast } = useApp();
+  const { franchisees, districts, updateFranchisee, importFranchisees, createFranchisee, deleteFranchisee, bulkDeleteFranchisees, toast } = useApp();
   const { can } = useAuth();
   const fileRef = useRef(null);
 

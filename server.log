@@ -4,3 +4,14 @@
     🔗 API: http://localhost:5000/api
     
 ✅ Connected to MongoDB Atlas
+[0mGET /api/districts [32m200[0m 103.054 ms - 73845[0m
+[0mGET /api/districts [32m200[0m 76.693 ms - 73845[0m
+[0mGET /api/districts [32m200[0m 75.343 ms - 73845[0m
+[0mGET /api/districts [32m200[0m 86.842 ms - 74727[0m
+[0mGET /api/districts [32m200[0m 78.483 ms - 74727[0m
+[0mGET /api/franchisees [32m200[0m 28.560 ms - 2[0m
+[0mGET /api/tasks [32m200[0m 34.417 ms - 195[0m
+[0mGET /api/districts [32m200[0m 84.459 ms - 74727[0m
+[0mGET /api/users [32m200[0m 219.990 ms - 782[0m
+[0mGET /api/meetings [32m200[0m 249.942 ms - 2[0m
+[0mGET /api/districts [32m200[0m 80.343 ms - 74727[0m

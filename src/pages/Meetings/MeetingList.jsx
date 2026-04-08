@@ -93,7 +93,7 @@ export default function MeetingList() {
             </div>
 
             {meeting.googleMeetLink && (
-              <a href={meeting.googleMeetLink} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ width: '100%' }}>
+              <a href={meeting.googleMeetLink.startsWith('http') ? meeting.googleMeetLink : `https://${meeting.googleMeetLink}`} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ width: '100%' }}>
                 <Video size={14} /> Join Call
               </a>
             )}

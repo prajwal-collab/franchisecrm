@@ -227,7 +227,7 @@ export default function LeadDetail() {
                         <div className="text-muted" style={{ fontSize: 12 }}>{new Date(meeting.scheduledDateTime).toLocaleString()}</div>
                       </div>
                       {meeting.googleMeetLink && (
-                        <a href={meeting.googleMeetLink} target="_blank" rel="noopener noreferrer" className="btn btn-ghost" style={{ padding: '8px 16px' }}>
+                        <a href={meeting.googleMeetLink.startsWith('http') ? meeting.googleMeetLink : `https://${meeting.googleMeetLink}`} target="_blank" rel="noopener noreferrer" className="btn btn-ghost" style={{ padding: '8px 16px' }}>
                           Join Now
                         </a>
                       )}

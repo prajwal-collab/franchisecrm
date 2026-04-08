@@ -35,7 +35,7 @@ export default function AIChatWidget() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [...messages.filter(m => m.role !== 'system'), userMessage]
+          messages: [...messages.filter((m, index) => !(index === 0 && m.role === 'assistant')), userMessage]
         })
       });
 

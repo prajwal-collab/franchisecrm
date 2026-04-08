@@ -157,28 +157,46 @@ export default function LeadList() {
   const handleImportConfirm = () => {
     const sdrs = users.filter(u => u.role === 'SDR');
 
-    const records = importData.map((row, i) => {
-      const rec = { id: `imp_${Date.now()}_${i}` };
-      Object.entries(importMapping).forEach(([csvCol, field]) => { if (field) rec[field] = row[csvCol]; });
-      // Normalize phone
-      if (rec.phone) {
-        const digits = rec.phone.toString().replace(/\D/g, '');
-        if (digits.length === 10) rec.phone = `+91${digits}`;
-        else if (digits.length === 12 && digits.startsWith('91')) rec.phone = `+${digits}`;
-      }
-      // Resolve district
-      if (rec.districtName) {
-        const d = districts.find(d => d.name.toLowerCase() === rec.districtName.toLowerCase());
-        rec.districtId = d?._id || d?.id || null;
-      }
-      // Default stage
-      if (!rec.stage || !STAGES.includes(rec.stage)) rec.stage = 'New Lead';
-      // Auto assign SDR
-      if (!rec.assignedTo && sdrs.length) {
-        rec.assignedTo = sdrs[i % sdrs.length].id || sdrs[i % sdrs.length]._id;
-      }
-      return rec;
-    });
+    const records = importData
+      .map((row, i) => {
+        const rec = {};
+        Object.entries(importMapping).forEach(([csvCol, field]) => {
+          if (field && row[csvCol] !== undefined) rec[field] = String(row[csvCol]).trim();
+        });
+        // Skip completely empty rows
+        if (!rec.firstName && !rec.lastName && !rec.phone) return null;
+
+        // Defaults
+        if (!rec.firstName) rec.firstName = 'Unknown';
+        if (!rec.lastName) rec.lastName = '';
+        if (!rec.phone) rec.phone = '';
+
+        // Normalize phone
+        if (rec.phone) {
+          const digits = rec.phone.replace(/\D/g, '');
+          if (digits.length === 10) rec.phone = `+91${digits}`;
+          else if (digits.length === 12 && digits.startsWith('91')) rec.phone = `+${digits}`;
+        }
+        // Resolve districtId from name (optional)
+        if (rec.districtName) {
+          const d = districts.find(dist => dist.name.toLowerCase() === rec.districtName.toLowerCase());
+          if (d) rec.districtId = d._id || d.id;
+          delete rec.districtName;
+        }
+        // Default stage
+        if (!rec.stage || !STAGES.includes(rec.stage)) rec.stage = 'New Lead';
+        // Auto assign SDR
+        if (!rec.assignedTo && sdrs.length) {
+          rec.assignedTo = sdrs[i % sdrs.length].id || sdrs[i % sdrs.length]._id;
+        }
+        return rec;
+      })
+      .filter(Boolean); // remove null rows
+
+    if (!records.length) {
+      toast('No valid rows found. Make sure First Name or Phone columns are mapped.', 'error');
+      return;
+    }
     importLeads(records);
     setShowImport(false);
     setImportData(null);

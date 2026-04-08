@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const DistrictSchema = new mongoose.Schema({
   id: String, // Compatibility with legacy records
-  name: { type: String, required: true, unique: true },
+  name: { type: String, unique: true, sparse: true, default: '' },
   state: { type: String, default: '' },
   status: { type: String, enum: ['Available', 'Sold', 'Blocked'], default: 'Available' },
   soldDate: Date,

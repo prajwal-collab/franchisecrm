@@ -122,7 +122,7 @@ export default function DistrictList() {
       .map(row => {
         const obj = {};
         Object.entries(importMapping).forEach(([fileCol, dbCol]) => {
-          if (dbCol && row[fileCol]) obj[dbCol] = row[fileCol];
+          if (dbCol && row[fileCol] !== undefined) obj[dbCol] = String(row[fileCol]).trim();
         });
         // Build enriched notes from state/price/inquiry if present
         const extras = [];
@@ -132,7 +132,7 @@ export default function DistrictList() {
         if (extras.length && !obj.notes) obj.notes = extras.join(' | ');
         return { ...obj, status: obj.status || 'Available' };
       })
-      .filter(obj => obj.name); // Skip rows without a name
+      .filter(obj => obj.name && obj.name.trim() !== ''); // Skip rows without a name
     if (!finalized.length) { toast('No valid districts found. Make sure the Name column is mapped.', 'error'); return; }
     await importDistricts(finalized);
     setShowImport(false);

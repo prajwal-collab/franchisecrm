@@ -2,9 +2,9 @@ const mongoose = require('mongoose');
 
 const LeadSchema = new mongoose.Schema({
   id: String, // For legacy data compatibility
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
-  phone: { type: String, required: true },
+  firstName: { type: String, default: '' },
+  lastName: { type: String, default: '' },
+  phone: { type: String, default: '' },
   email: String,
   districtId: { type: String },
   profession: String,

@@ -69,7 +69,13 @@ app.post('/api/leads/bulk', async (req, res) => {
     const leads = await Lead.insertMany(req.body, { ordered: false });
     res.status(201).json(leads);
   } catch (err) {
-    if (err.code === 11000) return res.status(201).json(req.body); // Ignore dups in bulk
+    // MongoBulkWriteError: partial inserts succeeded — return what was actually inserted
+    if (err.name === 'MongoBulkWriteError' || err.code === 11000) {
+      const inserted = err.insertedDocs || [];
+      console.log(`Leads bulk: ${inserted.length} inserted, ${(err.writeErrors || []).length} skipped (duplicates/errors)`);
+      return res.status(201).json(inserted);
+    }
+    console.error('Bulk leads import error:', err.message);
     res.status(400).json({ message: 'Bulk lead import failed', error: err.message });
   }
 });
@@ -111,7 +117,13 @@ app.post('/api/districts/bulk', async (req, res) => {
     const districts = await District.insertMany(req.body, { ordered: false });
     res.status(201).json(districts);
   } catch (err) {
-    if (err.code === 11000) return res.status(201).json(req.body);
+    // MongoBulkWriteError: partial inserts succeeded — return what was actually inserted
+    if (err.name === 'MongoBulkWriteError' || err.code === 11000) {
+      const inserted = err.insertedDocs || [];
+      console.log(`Districts bulk: ${inserted.length} inserted, ${(err.writeErrors || []).length} skipped (duplicates/errors)`);
+      return res.status(201).json(inserted);
+    }
+    console.error('Bulk districts import error:', err.message);
     res.status(400).json({ message: 'Bulk district import failed', error: err.message });
   }
 });
@@ -157,7 +169,13 @@ app.post('/api/franchisees/bulk', async (req, res) => {
     const franchisees = await Franchisee.insertMany(req.body, { ordered: false });
     res.status(201).json(franchisees);
   } catch (err) {
-    if (err.code === 11000) return res.status(201).json(req.body);
+    // MongoBulkWriteError: partial inserts succeeded — return what was actually inserted
+    if (err.name === 'MongoBulkWriteError' || err.code === 11000) {
+      const inserted = err.insertedDocs || [];
+      console.log(`Franchisees bulk: ${inserted.length} inserted, ${(err.writeErrors || []).length} skipped (duplicates/errors)`);
+      return res.status(201).json(inserted);
+    }
+    console.error('Bulk franchisees import error:', err.message);
     res.status(400).json({ message: 'Bulk franchisee import failed', error: err.message });
   }
 });

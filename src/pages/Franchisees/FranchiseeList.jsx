@@ -109,21 +109,27 @@ export default function FranchiseeList() {
   };
 
   const handleImportConfirm = async () => {
-    const finalized = importData.map(row => {
-      const obj = {};
-      Object.entries(importMapping).forEach(([fileCol, dbCol]) => {
-        if (dbCol) {
-          let val = row[fileCol];
-          if (dbCol.includes('Amount')) val = parseFloat(val || 0);
-          obj[dbCol] = val;
-        }
-      });
-      return { 
-        ...obj, 
-        onboardingDate: new Date().toISOString(),
-        paymentStatus: (obj.receivedAmount >= obj.committedAmount) ? 'Paid Full' : 'Partial'
-      };
-    }).filter(obj => obj.name); // Skip rows that don't have a valid franchise name
+    const finalized = importData
+      .map(row => {
+        const obj = {};
+        Object.entries(importMapping).forEach(([fileCol, dbCol]) => {
+          if (dbCol) {
+            let val = row[fileCol] !== undefined ? String(row[fileCol]).trim() : '';
+            if (dbCol.includes('Amount')) val = parseFloat(val) || 0;
+            obj[dbCol] = val;
+          }
+        });
+        // Skip rows without a name
+        if (!obj.name || obj.name === '') return null;
+        return { 
+          ...obj,
+          committedAmount: obj.committedAmount || 0,
+          receivedAmount: obj.receivedAmount || 0,
+          onboardingDate: new Date().toISOString(),
+          paymentStatus: ((obj.receivedAmount || 0) >= (obj.committedAmount || 0) && (obj.committedAmount || 0) > 0) ? 'Paid Full' : 'Partial'
+        };
+      })
+      .filter(Boolean);
     if (!finalized.length) { toast('No valid partners found. Ensure Franchise Name is mapped.', 'error'); return; }
     await importFranchisees(finalized);
     setShowImport(false);

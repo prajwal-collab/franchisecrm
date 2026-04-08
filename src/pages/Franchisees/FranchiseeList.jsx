@@ -186,6 +186,11 @@ export default function FranchiseeList() {
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <TableToolbar 
           selectedCount={selected.length} 
+          onView={() => {
+            if (selected.length === 1) {
+              navigate(`/franchisees/${selected[0]}`);
+            }
+          }}
           onEdit={() => {
             if (selected.length === 1) {
               const f = franchisees.find(x => (x.id || x._id) === selected[0]);

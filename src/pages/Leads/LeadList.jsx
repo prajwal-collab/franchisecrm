@@ -51,6 +51,7 @@ export default function LeadList() {
   const [importMapping, setImportMapping] = useState({});
   const [importStep, setImportStep] = useState(1); // 1=upload 2=map 3=confirm
   const [bulkStage, setBulkStage] = useState('');
+  const [bulkAssignee, setBulkAssignee] = useState('');
   const [showBulkMenu, setShowBulkMenu] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
   const [tempNote, setTempNote] = useState('');
@@ -262,6 +263,11 @@ export default function LeadList() {
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
           <TableToolbar 
             selectedCount={selected.length}
+            onView={() => {
+              if (selected.length === 1) {
+                navigate(`/leads/${selected[0]}`);
+              }
+            }}
             onEdit={() => {
               if (selected.length === 1) {
                 const l = leads.find(x => (x.id || x._id) === selected[0]);
@@ -286,12 +292,24 @@ export default function LeadList() {
           >
             {selected.length > 0 && (
               <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                <select className="form-input" style={{ width: 160, background: 'white' }} value={bulkStage} onChange={e => setBulkStage(e.target.value)}>
-                  <option value="">Bulk Stage</option>
-                  {STAGES.map(s => <option key={s} value={s}>{s}</option>)}
+                <select className="form-input" style={{ width: 140, background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }} value={bulkStage} onChange={e => setBulkStage(e.target.value)}>
+                  <option value="" style={{ color: 'black' }}>Bulk Stage</option>
+                  {STAGES.map(s => <option key={s} value={s} style={{ color: 'black' }}>{s}</option>)}
                 </select>
                 {bulkStage && (
-                  <button className="btn btn-primary" style={{ padding: '8px 16px' }} onClick={() => { bulkUpdateLeads(selected, { stage: bulkStage }); setSelected([]); setBulkStage(''); }}>
+                  <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => { bulkUpdateLeads(selected, { stage: bulkStage }); setSelected([]); setBulkStage(''); }}>
+                    Apply
+                  </button>
+                )}
+
+                <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.1)' }} />
+
+                <select className="form-input" style={{ width: 140, background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }} value={bulkAssignee} onChange={e => setBulkAssignee(e.target.value)}>
+                  <option value="" style={{ color: 'black' }}>Bulk Assign</option>
+                  {users.filter(u => u.role === 'SDR').map(u => <option key={u.id || u._id} value={u.id || u._id} style={{ color: 'black' }}>{u.name}</option>)}
+                </select>
+                {bulkAssignee && (
+                  <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => { bulkUpdateLeads(selected, { assignedTo: bulkAssignee }); setSelected([]); setBulkAssignee(''); }}>
                     Apply
                   </button>
                 )}

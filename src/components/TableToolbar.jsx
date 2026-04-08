@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Copy, Edit2, Trash2, Printer, Download, ChevronDown } from 'lucide-react';
+import { Copy, Edit2, Trash2, Printer, Download, ChevronDown, Eye } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
-export default function TableToolbar({ selectedCount = 0, onEdit, onDuplicate, onDelete, onPrint, onExport, children }) {
+export default function TableToolbar({ selectedCount = 0, onView, onEdit, onDuplicate, onDelete, onPrint, onExport, children }) {
   const { toast } = useApp();
 
   if (selectedCount === 0) return null;
@@ -33,22 +33,39 @@ export default function TableToolbar({ selectedCount = 0, onEdit, onDuplicate, o
       </div>
       
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <button 
-          className="btn-toolbar" 
-          disabled={selectedCount > 1 && onEdit}
-          onClick={() => {
-            if (selectedCount > 1) {
-              toast('Edit only available for single selection', 'warning');
-            } else if (onEdit) {
-              onEdit();
-            } else {
-              toast('Edit feature coming soon!', 'info');
-            }
-          }}
-          title={selectedCount > 1 ? "Select exactly one item to edit" : "Edit"}
-        >
-          <Edit2 size={16} /> <span className="toolbar-label">Edit</span>
-        </button>
+        {onView && (
+          <button 
+            className="btn-toolbar" 
+            disabled={selectedCount > 1}
+            onClick={() => {
+              if (selectedCount > 1) {
+                toast('Detailed view only available for single selection', 'warning');
+              } else {
+                onView();
+              }
+            }}
+            title={selectedCount > 1 ? "Select exactly one item to view" : "View Details"}
+          >
+            <Eye size={16} /> <span className="toolbar-label">View</span>
+          </button>
+        )}
+        
+        {onEdit && (
+          <button 
+            className="btn-toolbar" 
+            disabled={selectedCount > 1}
+            onClick={() => {
+              if (selectedCount > 1) {
+                toast('Edit only available for single selection', 'warning');
+              } else {
+                onEdit();
+              }
+            }}
+            title={selectedCount > 1 ? "Select exactly one item to edit" : "Edit"}
+          >
+            <Edit2 size={16} /> <span className="toolbar-label">Edit</span>
+          </button>
+        )}
         
         <button className="btn-toolbar" onClick={() => onDuplicate ? onDuplicate() : toast('Duplicate feature coming soon!')}>
           <Copy size={16} /> <span className="toolbar-label">Duplicate</span>

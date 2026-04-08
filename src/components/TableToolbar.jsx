@@ -9,16 +9,13 @@ export default function TableToolbar({ selectedCount = 0, onView, onEdit, onDupl
 
   return (
     <div className="animate-in table-toolbar-container" style={{
-      position: 'fixed', bottom: 40, left: '50%', transform: 'translateX(-50%)',
-      display: 'flex', alignItems: 'center', gap: 16,
-      padding: '10px 24px', background: '#111827', 
-      borderRadius: '100px', 
-      border: '1px solid rgba(255, 255, 255, 0.15)',
-      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
-      zIndex: 10000,
+      display: 'flex', alignItems: 'center', gap: 20,
+      padding: '12px 24px', background: '#111827', 
+      borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+      zIndex: 100,
       color: 'white',
-      maxWidth: 'min(90vw, 800px)',
-      width: 'max-content'
+      width: '100%',
+      minHeight: 56
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingRight: 12, borderRight: '1px solid rgba(255,255,255,0.1)' }}>
         <span style={{ 

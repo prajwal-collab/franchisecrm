@@ -98,7 +98,6 @@ export default function FranchiseeList() {
           if (lcol.includes('name')) mapping[col] = 'name';
           else if (lcol.includes('person') || lcol.includes('contact')) mapping[col] = 'contactPerson';
           else if (lcol.includes('phone')) mapping[col] = 'phone';
-          else if (lcol.includes('district')) mapping[col] = 'districtId';
           else if (lcol.includes('committed')) mapping[col] = 'committedAmount';
           else if (lcol.includes('received')) mapping[col] = 'receivedAmount';
         });
@@ -124,7 +123,8 @@ export default function FranchiseeList() {
         onboardingDate: new Date().toISOString(),
         paymentStatus: (obj.receivedAmount >= obj.committedAmount) ? 'Paid Full' : 'Partial'
       };
-    });
+    }).filter(obj => obj.name); // Skip rows that don't have a valid franchise name
+    if (!finalized.length) { toast('No valid partners found. Ensure Franchise Name is mapped.', 'error'); return; }
     await importFranchisees(finalized);
     setShowImport(false);
     setImportStep(1);
@@ -455,7 +455,6 @@ export default function FranchiseeList() {
                           <option value="name">Franchise Name</option>
                           <option value="contactPerson">Contact Person</option>
                           <option value="phone">Phone Number</option>
-                          <option value="districtId">District ID</option>
                           <option value="committedAmount">Committed (₹)</option>
                           <option value="receivedAmount">Received (₹)</option>
                         </select>

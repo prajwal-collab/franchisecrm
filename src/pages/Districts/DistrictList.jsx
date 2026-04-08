@@ -107,7 +107,6 @@ export default function DistrictList() {
         else if (lcol === 'status') mapping[col] = 'status';
         else if (lcol === 'state') mapping[col] = 'state';
         else if (lcol.includes('sold') || lcol.includes('date')) mapping[col] = 'soldDate';
-        else if (lcol.includes('franchisee')) mapping[col] = 'franchiseeId';
         else if (lcol === 'price' || lcol.includes('price')) mapping[col] = 'price';
         else if (lcol.includes('inquiry') || lcol.includes('count')) mapping[col] = 'inquiryCount';
         else if (lcol === 'notes') mapping[col] = 'notes';
@@ -488,7 +487,6 @@ export default function DistrictList() {
                           <option value="name">District Name</option>
                           <option value="status">Status</option>
                           <option value="soldDate">Sold Date</option>
-                          <option value="franchiseeId">Franchisee ID</option>
                         </select>
                       </div>
                     ))}

@@ -112,15 +112,23 @@ export default function FranchiseeList() {
     const finalized = importData
       .map(row => {
         const obj = {};
+        let hasData = false;
         Object.entries(importMapping).forEach(([fileCol, dbCol]) => {
-          if (dbCol) {
-            let val = row[fileCol] !== undefined ? String(row[fileCol]).trim() : '';
-            if (dbCol.includes('Amount')) val = parseFloat(val) || 0;
-            obj[dbCol] = val;
+          if (dbCol && row[fileCol] !== undefined && row[fileCol] !== null) {
+            let val = String(row[fileCol]).trim();
+            if (val) {
+              if (dbCol.includes('Amount')) val = parseFloat(val) || 0;
+              obj[dbCol] = val;
+              hasData = true;
+            }
           }
         });
-        // Skip rows without a name
-        if (!obj.name || obj.name === '') return null;
+
+        if (!hasData) return null;
+
+        // Ensure name exists
+        if (!obj.name) obj.name = `Partner ${Math.floor(Math.random() * 10000)}`;
+
         return { 
           ...obj,
           committedAmount: obj.committedAmount || 0,
@@ -130,7 +138,11 @@ export default function FranchiseeList() {
         };
       })
       .filter(Boolean);
-    if (!finalized.length) { toast('No valid partners found. Ensure Franchise Name is mapped.', 'error'); return; }
+
+    if (!finalized.length) {
+      toast('No data found in selected columns. Please check your mapping.', 'error');
+      return;
+    }
     await importFranchisees(finalized);
     setShowImport(false);
     setImportStep(1);

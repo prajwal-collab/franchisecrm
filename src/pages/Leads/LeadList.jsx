@@ -160,18 +160,27 @@ export default function LeadList() {
     const records = importData
       .map((row, i) => {
         const rec = {};
+        let hasData = false;
         Object.entries(importMapping).forEach(([csvCol, field]) => {
-          if (field && row[csvCol] !== undefined) rec[field] = String(row[csvCol]).trim();
+          if (field && row[csvCol] !== undefined && row[csvCol] !== null) {
+            const val = String(row[csvCol]).trim();
+            if (val) {
+              rec[field] = val;
+              hasData = true;
+            }
+          }
         });
-        // Skip completely empty rows
-        if (!rec.firstName && !rec.lastName && !rec.phone) return null;
 
-        // Defaults
-        if (!rec.firstName) rec.firstName = 'Unknown';
+        // Skip genuinely empty rows (no data after mapping)
+        if (!hasData) return null;
+
+        // Fallbacks for required-ish fields to prevent UI breakage
+        if (!rec.firstName && !rec.lastName) rec.firstName = 'Imported';
+        if (!rec.firstName) rec.firstName = '';
         if (!rec.lastName) rec.lastName = '';
         if (!rec.phone) rec.phone = '';
 
-        // Normalize phone
+        // Normalize phone safely
         if (rec.phone) {
           const digits = rec.phone.replace(/\D/g, '');
           if (digits.length === 10) rec.phone = `+91${digits}`;
@@ -181,7 +190,7 @@ export default function LeadList() {
         if (rec.districtName) {
           const d = districts.find(dist => dist.name.toLowerCase() === rec.districtName.toLowerCase());
           if (d) rec.districtId = d._id || d.id;
-          delete rec.districtName;
+          // Keep districtName if we want to show it in table fallback, but model uses id
         }
         // Default stage
         if (!rec.stage || !STAGES.includes(rec.stage)) rec.stage = 'New Lead';

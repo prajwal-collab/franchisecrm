@@ -121,19 +121,40 @@ export default function DistrictList() {
     const finalized = importData
       .map(row => {
         const obj = {};
+        let hasData = false;
         Object.entries(importMapping).forEach(([fileCol, dbCol]) => {
-          if (dbCol && row[fileCol] !== undefined) obj[dbCol] = String(row[fileCol]).trim();
+          if (dbCol && row[fileCol] !== undefined && row[fileCol] !== null) {
+            const val = String(row[fileCol]).trim();
+            if (val) {
+              obj[dbCol] = val;
+              hasData = true;
+            }
+          }
         });
+
+        if (!hasData) return null;
+
+        // Ensure name exists for model requirements, use state as fallback
+        if (!obj.name) {
+          if (obj.state) obj.name = `District in ${obj.state} (${Math.floor(Math.random() * 1000)})`;
+          else obj.name = `Imported District ${Math.floor(Math.random() * 10000)}`;
+        }
+
         // Build enriched notes from state/price/inquiry if present
         const extras = [];
-        if (obj.state) { extras.push(`State: ${obj.state}`); delete obj.state; }
-        if (obj.price) { extras.push(`Price: ₹${obj.price}`); delete obj.price; }
-        if (obj.inquiryCount) { extras.push(`Inquiries: ${obj.inquiryCount}`); delete obj.inquiryCount; }
+        if (obj.state) { extras.push(`State: ${obj.state}`); }
+        if (obj.price) { extras.push(`Price: ₹${obj.price}`); }
+        if (obj.inquiryCount) { extras.push(`Inquiries: ${obj.inquiryCount}`); }
         if (extras.length && !obj.notes) obj.notes = extras.join(' | ');
+
         return { ...obj, status: obj.status || 'Available' };
       })
-      .filter(obj => obj.name && obj.name.trim() !== ''); // Skip rows without a name
-    if (!finalized.length) { toast('No valid districts found. Make sure the Name column is mapped.', 'error'); return; }
+      .filter(Boolean);
+
+    if (!finalized.length) {
+      toast('No data found in selected columns. Please check your mapping.', 'error');
+      return;
+    }
     await importDistricts(finalized);
     setShowImport(false);
     setImportStep(1);

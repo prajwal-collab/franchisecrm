@@ -60,8 +60,13 @@ mongoose.connect(process.env.MONGODB_URI)
 
 // Leads
 app.get('/api/leads', async (req, res) => {
-  const leads = await Lead.find().sort({ updatedDate: -1 });
-  res.json(leads);
+  try {
+    const leads = await Lead.find().sort({ updatedDate: -1 });
+    res.json(leads);
+  } catch (err) {
+    console.error('GET /api/leads error:', err.message);
+    res.status(500).json({ error: 'Failed to fetch leads', details: err.message });
+  }
 });
 
 app.post('/api/leads/bulk', async (req, res) => {
@@ -108,8 +113,13 @@ app.delete('/api/leads/:id', async (req, res) => {
 
 // Districts
 app.get('/api/districts', async (req, res) => {
-  const districts = await District.find().sort({ name: 1 }).lean();
-  res.json(districts);
+  try {
+    const districts = await District.find().sort({ name: 1 }).lean();
+    res.json(districts);
+  } catch (err) {
+    console.error('GET /api/districts error:', err.message);
+    res.status(500).json({ error: 'Failed to fetch districts', details: err.message });
+  }
 });
 
 app.post('/api/districts/bulk', async (req, res) => {
@@ -160,8 +170,13 @@ app.delete('/api/districts/:id', async (req, res) => {
 
 // Franchisees
 app.get('/api/franchisees', async (req, res) => {
-  const franchisees = await Franchisee.find().sort({ onboardingDate: -1 });
-  res.json(franchisees);
+  try {
+    const franchisees = await Franchisee.find().sort({ onboardingDate: -1 });
+    res.json(franchisees);
+  } catch (err) {
+    console.error('GET /api/franchisees error:', err.message);
+    res.status(500).json({ error: 'Failed to fetch franchisees', details: err.message });
+  }
 });
 
 app.post('/api/franchisees/bulk', async (req, res) => {

@@ -2,7 +2,7 @@
   "functions": {
     "api/*.js": {
       "maxDuration": 15,
-      "includeFiles": ["server/**"]
+      "includeFiles": "server/**"
     }
   },
   "headers": [

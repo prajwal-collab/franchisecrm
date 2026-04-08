@@ -556,33 +556,6 @@ Respond directly to the user's latest query based on this context.`;
   }
 });
 
-// Bulk Operations
-app.post('/api/leads/bulk', async (req, res) => {
-  try {
-    const results = await Lead.insertMany(req.body, { ordered: false });
-    res.status(201).json(results);
-  } catch (err) {
-    res.status(400).json({ message: 'Bulk lead import failed', error: err.message });
-  }
-});
-
-app.post('/api/districts/bulk', async (req, res) => {
-  try {
-    const results = await District.insertMany(req.body, { ordered: false });
-    res.status(201).json(results);
-  } catch (err) {
-    res.status(400).json({ message: 'Bulk district import failed', error: err.message });
-  }
-});
-
-app.post('/api/franchisees/bulk', async (req, res) => {
-  try {
-    const results = await Franchisee.insertMany(req.body, { ordered: false });
-    res.status(201).json(results);
-  } catch (err) {
-    res.status(400).json({ message: 'Bulk franchisee import failed', error: err.message });
-  }
-});
 
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;

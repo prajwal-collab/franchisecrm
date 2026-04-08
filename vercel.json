@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/*.{js,cjs}": {
+    "api/*.js": {
       "maxDuration": 15
     }
   },

@@ -1,4 +1,10 @@
 {
+  "functions": {
+    "api/*.js": {
+      "maxDuration": 15,
+      "includeFiles": ["server/**"]
+    }
+  },
   "headers": [
     {
       "source": "/api/(.*)",

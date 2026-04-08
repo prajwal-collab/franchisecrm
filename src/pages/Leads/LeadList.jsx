@@ -70,11 +70,14 @@ export default function LeadList() {
   };
 
   // Enrich leads
-  const enriched = useMemo(() => leads.map(l => ({
-    ...l,
-    districtName: districts.find(d => (d.id || d._id) === l.districtId)?.name || '—',
-    assignedToName: users.find(u => (u.id || u._id) === l.assignedTo)?.name || '—',
-  })), [leads, districts, users]);
+  const enriched = useMemo(() => {
+    if (!Array.isArray(leads)) return [];
+    return leads.map(l => ({
+      ...l,
+      districtName: districts.find(d => (d.id || d._id) === l.districtId)?.name || '—',
+      assignedToName: users.find(u => (u.id || u._id) === l.assignedTo)?.name || '—',
+    }));
+  }, [leads, districts, users]);
 
   // Filter + sort
   const filtered = useMemo(() => {

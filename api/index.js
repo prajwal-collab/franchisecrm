@@ -1,15 +1,17 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const morgan = require('morgan');
-const nodemailer = require('nodemailer');
-const { v4: uuidv4 } = require('uuid');
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import morgan from 'morgan';
+import nodemailer from 'nodemailer';
+import { v4 as uuidv4 } from 'uuid';
+// Global fetch is available in Node 18+ on Vercel
 
 // --- SCHEMAS ---
 const LeadSchema = new mongoose.Schema({
   id: String, firstName: String, lastName: String, phone: String, email: String, 
   districtId: String, districtName: String, profession: String, investmentCapacity: String, 
-  source: String, stage: String, score: Number, notes: String, assignedTo: String, assignedToName: String, createdDate: { type: Date, default: Date.now }, updatedDate: { type: Date, default: Date.now }
+  source: String, stage: String, score: Number, notes: String, assignedTo: String, assignedToName: String, 
+  createdDate: { type: Date, default: Date.now }, updatedDate: { type: Date, default: Date.now }
 });
 const Lead = mongoose.models.Lead || mongoose.model('Lead', LeadSchema);
 
@@ -53,7 +55,7 @@ app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 app.use(morgan('dev'));
 
-// PREVENT CACHING (Crucial for Vercel 304 issues)
+// PREVENT CACHING 
 app.use((req, res, next) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.set('Pragma', 'no-cache');
@@ -71,9 +73,7 @@ const connectDB = async () => {
     if (!uri) throw new Error('MONGODB_URI is missing');
     const conn = await mongoose.connect(uri, { serverSelectionTimeoutMS: 5000 });
     isConnected = conn.connections[0].readyState === 1;
-    console.log('✅ Connected');
   } catch (err) {
-    console.error(`❌ Connection Error: ${err.message}`);
     isConnected = false;
     throw err;
   }
@@ -108,7 +108,6 @@ app.post('/api/leads/bulk', async (req, res) => {
   }
 });
 
-// Add Bulk Delete endpoint for efficiency
 app.post('/api/leads/bulk-delete', async (req, res) => {
   try { await Lead.deleteMany({ $or: [{ id: { $in: req.body } }, { _id: { $in: req.body } }] }); res.status(204).send(); } 
   catch (err) { res.status(400).json({ message: 'Bulk delete failed' }); }
@@ -185,7 +184,7 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/users', async (req, res) => res.json(await User.find()));
 app.get('/api/users/sdrs', async (req, res) => res.json(await User.find({ role: 'SDR' })));
 
-// AI Gemini
+// Gemini AI
 app.post('/api/ai/chat', async (req, res) => {
   try {
     const { messages } = req.body;
@@ -206,4 +205,4 @@ app.post('/api/ai/chat', async (req, res) => {
   } catch (err) { res.status(500).json({ message: 'AI Chat failed', details: err.message }); }
 });
 
-module.exports = app;
+export default app;

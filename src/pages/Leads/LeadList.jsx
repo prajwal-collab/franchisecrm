@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Plus, Download, Upload, Search, Filter, Trash2,
   Edit2, ChevronUp, ChevronDown, RefreshCw, LayoutGrid,
-  List, CheckSquare, Square, AlertTriangle, X, Zap,
+  List, CheckSquare, Square, AlertTriangle, X, Zap, AlertCircle,
   TrendingUp, Users, Target, PieChart, Inbox
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';

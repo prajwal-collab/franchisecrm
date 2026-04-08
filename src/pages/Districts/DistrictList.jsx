@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { 
   Search, MapPin, Building2, Calendar, 
   ExternalLink, Plus, Filter, ChevronUp, ChevronDown,
@@ -55,9 +55,10 @@ export default function DistrictList() {
   };
 
   const filtered = useMemo(() => {
+    if (!Array.isArray(districts)) return [];
     let r = districts.map(d => ({
       ...d,
-      franchiseeName: franchisees.find(f => (f.id || f._id) === d.franchiseeId)?.name || '—'
+      franchiseeName: Array.isArray(franchisees) ? franchisees.find(f => (f.id || f._id) === d.franchiseeId)?.name || '—' : '—'
     }));
     
     if (search) {

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Building2, Search, Download, Plus, 
@@ -54,10 +54,13 @@ export default function FranchiseeList() {
     }
   };
 
-  const enriched = useMemo(() => franchisees.map(f => ({
-    ...f,
-    districtName: districts.find(d => (d.id || d._id) === f.districtId)?.name || '—'
-  })), [franchisees, districts]);
+  const enriched = useMemo(() => {
+    if (!Array.isArray(franchisees)) return [];
+    return franchisees.map(f => ({
+      ...f,
+      districtName: districts.find(d => (d.id || d._id) === f.districtId)?.name || '—'
+    }));
+  }, [franchisees, districts]);
 
   const filtered = useMemo(() => {
     let r = enriched;

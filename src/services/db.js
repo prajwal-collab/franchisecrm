@@ -26,7 +26,8 @@ const smartRequest = async (path, method = 'GET', body = null) => {
       let msg = `Server Error (${res.status})`;
       if (contentType && contentType.includes('application/json')) {
         const err = await res.json();
-        msg = err.message || msg;
+        msg = err.message || err.details || msg;
+        if (err.details) console.error('🔍 Server Error Details:', err.details);
       }
       errorMessage = msg; // Store for catch block
       throw new Error(msg);

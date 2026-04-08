@@ -56,11 +56,17 @@ let isConnected = false;
 const connectDB = async () => {
   if (isConnected) return;
   try {
-    const db = await mongoose.connect(process.env.MONGODB_URI);
+    if (!process.env.MONGODB_URI) {
+      throw new Error('MONGODB_URI is not defined in environment variables');
+    }
+    const db = await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 10000,
+    });
     isConnected = db.connections[0].readyState;
     console.log('✅ Connected to MongoDB Atlas');
   } catch (err) {
-    console.error('❌ MongoDB Connection Error:', err);
+    console.error('❌ MongoDB Connection Error:', err.message);
     throw err;
   }
 };
@@ -121,7 +127,7 @@ app.post('/api/leads/bulk', async (req, res) => {
       return res.status(201).json(inserted);
     }
     console.error('Bulk leads import error:', err.message);
-    res.status(400).json({ message: 'Bulk lead import failed', error: err.message });
+    res.status(400).json({ message: 'Bulk lead import failed', details: err.message });
   }
 });
 
@@ -158,7 +164,7 @@ app.get('/api/districts', async (req, res) => {
     res.json(districts);
   } catch (err) {
     console.error('GET /api/districts error:', err.message);
-    res.status(500).json({ error: 'Failed to fetch districts', details: err.message });
+    res.status(500).json({ message: 'Failed to fetch districts', details: err.message });
   }
 });
 
@@ -215,7 +221,7 @@ app.get('/api/franchisees', async (req, res) => {
     res.json(franchisees);
   } catch (err) {
     console.error('GET /api/franchisees error:', err.message);
-    res.status(500).json({ error: 'Failed to fetch franchisees', details: err.message });
+    res.status(500).json({ message: 'Failed to fetch franchisees', details: err.message });
   }
 });
 

@@ -97,18 +97,21 @@ export default function DistrictList() {
     const reader = new FileReader();
     reader.onload = (evt) => {
       const records = parseCSV(evt.target.result);
+      if (!records.length) { toast('No data found in file', 'error'); return; }
       setImportData(records);
-      // Auto-mapping
+      // Smart Auto-mapping - handles both user's format and template format
       const mapping = {};
-      if (records.length) {
-        Object.keys(records[0]).forEach(col => {
-          const lcol = col.toLowerCase();
-          if (lcol.includes('name')) mapping[col] = 'name';
-          else if (lcol.includes('status')) mapping[col] = 'status';
-          else if (lcol.includes('sold') || lcol.includes('date')) mapping[col] = 'soldDate';
-          else if (lcol.includes('franchisee')) mapping[col] = 'franchiseeId';
-        });
-      }
+      Object.keys(records[0]).forEach(col => {
+        const lcol = col.toLowerCase().trim();
+        if (lcol === 'district name' || lcol === 'name') mapping[col] = 'name';
+        else if (lcol === 'status') mapping[col] = 'status';
+        else if (lcol === 'state') mapping[col] = 'state';
+        else if (lcol.includes('sold') || lcol.includes('date')) mapping[col] = 'soldDate';
+        else if (lcol.includes('franchisee')) mapping[col] = 'franchiseeId';
+        else if (lcol === 'price' || lcol.includes('price')) mapping[col] = 'price';
+        else if (lcol.includes('inquiry') || lcol.includes('count')) mapping[col] = 'inquiryCount';
+        else if (lcol === 'notes') mapping[col] = 'notes';
+      });
       setImportMapping(mapping);
       setImportStep(2);
     };
@@ -116,16 +119,22 @@ export default function DistrictList() {
   };
 
   const handleImportConfirm = async () => {
-    const finalized = importData.map(row => {
-      const obj = {};
-      Object.entries(importMapping).forEach(([fileCol, dbCol]) => {
-        if (dbCol) obj[dbCol] = row[fileCol];
-      });
-      return { 
-        ...obj, 
-        status: obj.status || 'Available'
-      };
-    });
+    const finalized = importData
+      .map(row => {
+        const obj = {};
+        Object.entries(importMapping).forEach(([fileCol, dbCol]) => {
+          if (dbCol && row[fileCol]) obj[dbCol] = row[fileCol];
+        });
+        // Build enriched notes from state/price/inquiry if present
+        const extras = [];
+        if (obj.state) { extras.push(`State: ${obj.state}`); delete obj.state; }
+        if (obj.price) { extras.push(`Price: ₹${obj.price}`); delete obj.price; }
+        if (obj.inquiryCount) { extras.push(`Inquiries: ${obj.inquiryCount}`); delete obj.inquiryCount; }
+        if (extras.length && !obj.notes) obj.notes = extras.join(' | ');
+        return { ...obj, status: obj.status || 'Available' };
+      })
+      .filter(obj => obj.name); // Skip rows without a name
+    if (!finalized.length) { toast('No valid districts found. Make sure the Name column is mapped.', 'error'); return; }
     await importDistricts(finalized);
     setShowImport(false);
     setImportStep(1);
@@ -352,7 +361,7 @@ export default function DistrictList() {
                       {can('delete') && (
                         <button className="btn btn-ghost" style={{ padding: 6, minWidth: 'auto', color: '#ef4444' }} onClick={async (e) => {
                           e.stopPropagation();
-                          if (confirm('Delete this district?')) {
+                          if (window.confirm('Delete this district?')) {
                             await deleteDistrict(did);
                           }
                         }}>

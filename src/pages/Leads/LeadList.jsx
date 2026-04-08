@@ -406,8 +406,9 @@ export default function LeadList() {
                           </button>
                         )}
                         {can('delete') && (
-                          <button className="btn btn-secondary" style={{ padding: 6, color: '#ef4444' }} onClick={async () => {
-                            if (confirm('Delete this lead?')) {
+                          <button className="btn btn-secondary" style={{ padding: 6, color: '#ef4444' }} onClick={async (e) => {
+                            e.stopPropagation();
+                            if (window.confirm('Delete this lead?')) {
                               await deleteLead(lid);
                             }
                           }}>

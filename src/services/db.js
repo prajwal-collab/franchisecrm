@@ -220,15 +220,17 @@ export const exportToCSV = (data, filename, columns) => {
 };
 
 export const parseCSV = (csvText) => {
-  const lines = csvText.split('\n').filter(l => l.trim());
+  const lines = csvText.split(/\r?\n/).filter(l => l.trim());
   if (lines.length < 2) return [];
-  const header = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  // Auto-detect delimiter: tab or comma
+  const delimiter = lines[0].includes('\t') ? '\t' : ',';
+  const header = lines[0].split(delimiter).map(h => h.trim().replace(/^"|"$/g, ''));
   return lines.slice(1).map(line => {
-    const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+    const values = line.split(delimiter).map(v => v.trim().replace(/^"|"$/g, ''));
     const obj = {};
     header.forEach((h, i) => { if (values[i] !== undefined) obj[h] = values[i]; });
     return obj;
-  });
+  }).filter(row => Object.values(row).some(v => v !== ''));
 };
 
 export const downloadTemplate = (headers, filename) => {

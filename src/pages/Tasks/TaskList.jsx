@@ -1,17 +1,18 @@
 import React, { useState, useMemo } from 'react';
 import { 
   CheckSquare, Square, Clock, AlertCircle, 
-  Trash2, Plus, Calendar, Filter, User, X
+  Trash2, Plus, Calendar, Filter, User, X, Edit2
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 
 export default function TaskList() {
-  const { tasks, leads, franchisees, districts, toggleTask, deleteTask, createTask, users } = useApp();
+  const { tasks, leads, franchisees, districts, toggleTask, deleteTask, createTask, updateTask, users } = useApp();
   const { currentUser } = useAuth();
 
   const [filter, setFilter] = useState('pending'); // all, pending, done, overdue
   const [showAdd, setShowAdd] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
   const [newTask, setNewTask] = useState({ title: '', assignedTo: '', leadId: '', dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0] });
   const now = new Date();
 
@@ -119,6 +120,18 @@ export default function TaskList() {
                   <button onClick={() => deleteTask(task.id || task._id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#ef4444' }}>
                     <Trash2 size={16} />
                   </button>
+                  <button onClick={() => {
+                    setEditingTask(task);
+                    setNewTask({
+                      title: task.title,
+                      assignedTo: task.assignedTo,
+                      leadId: task.leadId || '',
+                      dueDate: new Date(task.dueDate).toISOString().split('T')[0]
+                    });
+                    setShowAdd(true);
+                  }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--brand-primary)' }}>
+                    <Edit2 size={16} />
+                  </button>
                 </div>
                 
                 <div style={{ display: 'flex', gap: 20, marginTop: 6 }}>
@@ -143,13 +156,19 @@ export default function TaskList() {
         <div className="modal-overlay">
           <div className="modal-content animate-in" style={{ maxWidth: 500 }}>
             <div style={{ padding: '24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#33475b', margin: 0 }}>Create New Task</h2>
-              <button className="btn btn-secondary" onClick={() => setShowAdd(false)} style={{ padding: 4, minWidth: 'auto', border: 'none' }}><X size={20} /></button>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#33475b', margin: 0 }}>{editingTask ? 'Edit Task' : 'Create New Task'}</h2>
+              <button className="btn btn-secondary" onClick={() => { setShowAdd(false); setEditingTask(null); }} style={{ padding: 4, minWidth: 'auto', border: 'none' }}><X size={20} /></button>
             </div>
-            <form style={{ padding: '24px' }} onSubmit={(e) => {
+            <form style={{ padding: '24px' }} onSubmit={async (e) => {
               e.preventDefault();
-              createTask(newTask);
+              const { createTask, updateTask } = useApp();
+              if (editingTask) {
+                await updateTask(editingTask.id || editingTask._id, newTask);
+              } else {
+                await createTask(newTask);
+              }
               setShowAdd(false);
+              setEditingTask(null);
               setNewTask({ title: '', assignedTo: currentUser.id, leadId: '', dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0] });
             }}>
               <div style={{ marginBottom: 20 }}>
@@ -172,6 +191,20 @@ export default function TaskList() {
                   onChange={e => setNewTask({...newTask, dueDate: e.target.value})}
                 />
               </div>
+              <div style={{ marginBottom: 20 }}>
+                <label className="form-label">Assigned To</label>
+                <select 
+                  className="form-input" 
+                  value={newTask.assignedTo} 
+                  onChange={e => setNewTask({...newTask, assignedTo: e.target.value})}
+                >
+                  {users.map(u => (
+                    <option key={u.id || u._id} value={u.id || u._id}>
+                      {u.name} ({u.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div style={{ marginBottom: 32 }}>
                 <label className="form-label">Related Lead (Optional)</label>
                 <select 
@@ -191,7 +224,7 @@ export default function TaskList() {
                 </select>
               </div>
               <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '12px' }}>
-                Create Task
+                {editingTask ? 'Save Changes' : 'Create Task'}
               </button>
             </form>
           </div>

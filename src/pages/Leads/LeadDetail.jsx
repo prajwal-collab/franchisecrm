@@ -20,11 +20,14 @@ const STAGE_BADGE = {
 export default function LeadDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { leads, districts, users, tasks, meetings, updateLead, deleteLead, createTask, toggleTask, createMeeting } = useApp();
+  const { leads, districts, users, tasks, meetings, updateLead, deleteLead, createTask, toggleTask, updateTask, createMeeting, deleteMeeting, toast } = useApp();
   const { currentUser, can } = useAuth();
 
   const [activeTab, setActiveTab] = useState('Overview');
   const [showEdit, setShowEdit] = useState(false);
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
+  const [taskFormData, setTaskFormData] = useState({ title: '', assignedTo: '', dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0] });
   const [aiStrategy, setAiStrategy] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
 
@@ -220,19 +223,32 @@ export default function LeadDetail() {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {leadMeetings.length === 0 && <p className="text-muted" style={{ textAlign: 'center', padding: 20 }}>No sessions scheduled.</p>}
-                  {leadMeetings.map(meeting => (
-                    <div key={meeting.id} className="glass-card" style={{ padding: 16, background: 'rgba(255,255,255,0.03)', border: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>{meeting.eventType}</div>
-                        <div className="text-muted" style={{ fontSize: 12 }}>{new Date(meeting.scheduledDateTime).toLocaleString()}</div>
+                  {leadMeetings.map(meeting => {
+                    const isPassed = new Date(meeting.scheduledDateTime) < new Date();
+                    return (
+                      <div key={meeting.id} className="glass-card" style={{ 
+                        padding: 16, background: 'rgba(255,255,255,0.03)', border: 'none', 
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        opacity: isPassed ? 0.4 : 1,
+                        pointerEvents: isPassed ? 'none' : 'auto'
+                      }}>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>{meeting.eventType}</div>
+                          <div className="text-muted" style={{ fontSize: 12 }}>{new Date(meeting.scheduledDateTime).toLocaleString()}</div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                          {meeting.googleMeetLink && !isPassed && (
+                            <a href={meeting.googleMeetLink.startsWith('http') ? meeting.googleMeetLink : `https://${meeting.googleMeetLink}`} target="_blank" rel="noopener noreferrer" className="btn btn-ghost" style={{ padding: '8px 16px' }}>
+                              Join Now
+                            </a>
+                          )}
+                          <button onClick={() => { if(confirm('Delete meeting?')) deleteMeeting(meeting.id || meeting._id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#ef4444', pointerEvents: 'auto' }}>
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
-                      {meeting.googleMeetLink && (
-                        <a href={meeting.googleMeetLink.startsWith('http') ? meeting.googleMeetLink : `https://${meeting.googleMeetLink}`} target="_blank" rel="noopener noreferrer" className="btn btn-ghost" style={{ padding: '8px 16px' }}>
-                          Join Now
-                        </a>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -242,8 +258,9 @@ export default function LeadDetail() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                   <h4 style={{ fontSize: 18, fontWeight: 700 }}>Related Tasks</h4>
                   <button className="btn btn-primary" onClick={() => {
-                    const title = prompt('Task title:');
-                    if (title) createTask({ title, leadId: lead.id || lead._id, assignedTo: lead.assignedTo, dueDate: new Date(Date.now() + 86400000).toISOString() });
+                    setEditingTask(null);
+                    setTaskFormData({ title: '', assignedTo: lead.assignedTo || currentUser.id, dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0] });
+                    setShowTaskModal(true);
                   }}>
                     <Plus size={18} /> New Task
                   </button>
@@ -263,8 +280,24 @@ export default function LeadDetail() {
                         {task.done && <CheckCircle size={14} color="white" />}
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 14, fontWeight: 600, textDecoration: task.done ? 'line-through' : 'none' }}>{task.title}</div>
-                        <div className="text-muted" style={{ fontSize: 11 }}>Due: {new Date(task.dueDate).toLocaleDateString()}</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <div style={{ fontSize: 14, fontWeight: 600, textDecoration: task.done ? 'line-through' : 'none' }}>{task.title}</div>
+                            <div className="text-muted" style={{ fontSize: 11 }}>Due: {new Date(task.dueDate).toLocaleDateString()} • {users.find(u => (u.id || u._id) === task.assignedTo)?.name || 'Unassigned'}</div>
+                          </div>
+                          <div style={{ display: 'flex', gap: 8 }} onClick={e => e.stopPropagation()}>
+                            <button onClick={() => {
+                              setEditingTask(task);
+                              setTaskFormData({ title: task.title, assignedTo: task.assignedTo, dueDate: new Date(task.dueDate).toISOString().split('T')[0] });
+                              setShowTaskModal(true);
+                            }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--brand-primary)' }}>
+                              <Edit2 size={16} />
+                            </button>
+                            <button onClick={() => { if(confirm('Delete task?')) deleteTask(task.id || task._id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#ef4444' }}>
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -333,6 +366,49 @@ export default function LeadDetail() {
           lead={lead} 
           onClose={() => setShowEdit(false)} 
         />
+      )}
+
+      {showTaskModal && (
+        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="card animate-in" style={{ width: '100%', maxWidth: 450, padding: 0, overflow: 'hidden' }}>
+            <div style={{ padding: '20px 32px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700 }}>{editingTask ? 'Edit Task' : 'New Task'}</h2>
+              <button className="btn btn-secondary" style={{ padding: 4, minWidth: 'auto' }} onClick={() => setShowTaskModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <form style={{ padding: '32px' }} onSubmit={async (e) => {
+              e.preventDefault();
+              const payload = { ...taskFormData, leadId: lead.id || lead._id };
+              if (editingTask) {
+                await updateTask(editingTask.id || editingTask._id, payload);
+              } else {
+                await createTask(payload);
+              }
+              setShowTaskModal(false);
+            }}>
+              <div className="form-group mb-6">
+                <label className="form-label">Task Title</label>
+                <input required className="form-input" value={taskFormData.title} onChange={e => setTaskFormData({...taskFormData, title: e.target.value})} placeholder="What needs to be done?" />
+              </div>
+              <div className="form-group mb-6">
+                <label className="form-label">Due Date</label>
+                <input required type="date" className="form-input" value={taskFormData.dueDate} onChange={e => setTaskFormData({...taskFormData, dueDate: e.target.value})} />
+              </div>
+              <div className="form-group mb-8">
+                <label className="form-label">Assigned To</label>
+                <select className="form-input" value={taskFormData.assignedTo} onChange={e => setTaskFormData({...taskFormData, assignedTo: e.target.value})}>
+                  {users.map(u => (
+                    <option key={u.id || u._id} value={u.id || u._id}>{u.name} ({u.role})</option>
+                  ))}
+                </select>
+              </div>
+              <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                {editingTask ? 'Save Changes' : 'Create Task'}
+              </button>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

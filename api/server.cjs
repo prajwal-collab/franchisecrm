@@ -560,6 +560,10 @@ app.post('/api/ai/generate-strategy', async (req, res) => {
     }
 
     const data = await response.json();
+    if (!data.candidates || !data.candidates[0]) {
+      console.error('Invalid Gemini Response (Strategy):', JSON.stringify(data));
+      throw new Error('AI failed to generate a strategy candidate. The response may have been blocked or empty.');
+    }
     const strategy = data.candidates[0].content.parts[0].text;
     res.json({ strategy });
   } catch (err) {
@@ -639,6 +643,10 @@ Respond directly to the user's latest query based on this context.`;
     }
 
     const data = await response.json();
+    if (!data.candidates || !data.candidates[0]) {
+      console.error('Invalid Gemini Response (Chat):', JSON.stringify(data));
+      throw new Error('AI failed to generate a response. This may be due to safety filters or an empty model response.');
+    }
     const reply = data.candidates[0].content.parts[0].text;
     res.json({ reply });
   } catch (err) {

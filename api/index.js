@@ -201,6 +201,9 @@ app.post('/api/ai/chat', async (req, res) => {
       })
     });
     const data = await response.json();
+    if (!data.candidates || !data.candidates[0]) {
+      throw new Error('AI API returned an empty or blocked response. Check your API key and safety settings.');
+    }
     res.json({ reply: data.candidates[0].content.parts[0].text });
   } catch (err) { res.status(500).json({ message: 'AI Chat failed', details: err.message }); }
 });

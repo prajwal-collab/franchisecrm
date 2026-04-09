@@ -77,7 +77,15 @@ app.use(async (req, res, next) => {
 
 // Health
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', database: isConnected ? 'Connected' : 'Disconnected' });
+  res.json({ 
+    status: 'ok', 
+    database: isConnected ? 'Connected' : 'Disconnected',
+    env_debug: {
+        has_uri: !!process.env.MONGODB_URI,
+        uri_prefix: process.env.MONGODB_URI ? process.env.MONGODB_URI.substring(0, 10) : 'none',
+        node_version: process.version
+    }
+  });
 });
 
 // Leads
@@ -200,6 +208,17 @@ app.delete('/api/tasks/:id', async (req, res) => {
     await Task.findOneAndDelete({ $or: [{ id }, { _id: id }] });
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Error Handler
+app.use((err, req, res, next) => {
+  console.error('SERVER_ERROR:', err);
+  res.status(500).json({ 
+    error: 'Internal Server Error', 
+    message: err.message, 
+    stack: err.stack, // Shared temporarily for debugging
+    hint: 'Check Vercel Logs for more details.' 
+  });
 });
 
 module.exports = app;

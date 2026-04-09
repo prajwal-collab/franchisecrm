@@ -41,7 +41,7 @@ export default function FranchiseeForm({ franchisee, onClose }) {
     if (!formData.contactPerson.trim()) newErrors.contactPerson = 'Contact person is required';
     if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
     if (!formData.districtId) newErrors.districtId = 'District is required';
-    if (formData.committedAmount <= 0) newErrors.committedAmount = 'Invalid commitment';
+    if (formData.committedAmount === '' || Number(formData.committedAmount) < 0 || isNaN(Number(formData.committedAmount))) newErrors.committedAmount = 'Invalid commitment';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -51,10 +51,16 @@ export default function FranchiseeForm({ franchisee, onClose }) {
     e.preventDefault();
     if (!validate()) return;
 
+    const payload = {
+      ...formData,
+      committedAmount: Number(formData.committedAmount) || 0,
+      receivedAmount: Number(formData.receivedAmount) || 0
+    };
+
     if (franchisee) {
-      updateFranchisee(franchisee.id || franchisee._id, formData);
+      updateFranchisee(franchisee.id || franchisee._id, payload);
     } else {
-      createFranchisee(formData);
+      createFranchisee(payload);
     }
     onClose();
   };
@@ -158,7 +164,7 @@ export default function FranchiseeForm({ franchisee, onClose }) {
                   type="number"
                   className="form-input" 
                   value={formData.committedAmount} 
-                  onChange={e => setFormData({...formData, committedAmount: parseFloat(e.target.value)})} 
+                  onChange={e => setFormData({...formData, committedAmount: e.target.value === '' ? '' : Number(e.target.value)})} 
                 />
               </div>
               <div className="form-group">
@@ -167,7 +173,7 @@ export default function FranchiseeForm({ franchisee, onClose }) {
                   type="number"
                   className="form-input" 
                   value={formData.receivedAmount} 
-                  onChange={e => setFormData({...formData, receivedAmount: parseFloat(e.target.value)})} 
+                  onChange={e => setFormData({...formData, receivedAmount: e.target.value === '' ? '' : Number(e.target.value)})} 
                 />
               </div>
               <div className="form-group">

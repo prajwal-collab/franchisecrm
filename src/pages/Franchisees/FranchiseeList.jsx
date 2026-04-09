@@ -333,10 +333,10 @@ export default function FranchiseeList() {
                 <td style={{ color: '#7c98b6', fontSize: 13 }}>
                   {new Date(f.onboardingDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </td>
-                <td className="text-right" style={{ fontWeight: 600, color: '#33475b' }}>₹{f.committedAmount.toLocaleString('en-IN')}</td>
-                <td className="text-right" style={{ color: 'var(--brand-primary)', fontWeight: 700 }}>₹{f.receivedAmount.toLocaleString('en-IN')}</td>
-                <td className="text-right" style={{ fontWeight: 700, color: (f.committedAmount - f.receivedAmount) > 0 ? '#ef4444' : '#22c55e' }}>
-                  ₹{(f.committedAmount - f.receivedAmount).toLocaleString('en-IN')}
+                <td className="text-right" style={{ fontWeight: 600, color: '#33475b' }}>₹{(f.committedAmount || 0).toLocaleString('en-IN')}</td>
+                <td className="text-right" style={{ color: 'var(--brand-primary)', fontWeight: 700 }}>₹{(f.receivedAmount || 0).toLocaleString('en-IN')}</td>
+                <td className="text-right" style={{ fontWeight: 700, color: ((f.committedAmount || 0) - (f.receivedAmount || 0)) > 0 ? '#ef4444' : '#22c55e' }}>
+                  ₹{((f.committedAmount || 0) - (f.receivedAmount || 0)).toLocaleString('en-IN')}
                 </td>
                 <td>
                   <span className={`badge ${PAYMENT_BADGE[f.paymentStatus]}`}>{f.paymentStatus}</span>

@@ -40,10 +40,10 @@ export default function FranchiseeDetail() {
   };
 
   const handleUpdateCommitment = (e) => {
-    updateFranchisee(franchisee.id || franchisee._id, { committedAmount: parseFloat(committedAmount) });
+    updateFranchisee(franchisee.id || franchisee._id, { committedAmount: parseFloat(committedAmount) || 0 });
   };
 
-  const balance = franchisee.committedAmount - franchisee.receivedAmount;
+  const balance = (franchisee.committedAmount || 0) - (franchisee.receivedAmount || 0);
 
   return (
     <div className="animate-in">
@@ -91,11 +91,11 @@ export default function FranchiseeDetail() {
             <div className="kpi-grid mb-8" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
               <div className="glass-card" style={{ padding: 20, background: 'rgba(255,255,255,0.03)' }}>
                 <div className="detail-field-label" style={{ fontSize: 10, color: 'var(--text-muted)' }}>COMMITTED</div>
-                <div style={{ fontSize: 20, fontWeight: 800 }}>₹{franchisee.committedAmount.toLocaleString('en-IN')}</div>
+                <div style={{ fontSize: 20, fontWeight: 800 }}>₹{(franchisee.committedAmount || 0).toLocaleString('en-IN')}</div>
               </div>
               <div className="glass-card" style={{ padding: 20, background: 'rgba(255,255,255,0.03)' }}>
                 <div className="detail-field-label" style={{ fontSize: 10, color: 'var(--text-muted)' }}>RECEIVED</div>
-                <div style={{ fontSize: 20, fontWeight: 800, color: '#10b981' }}>₹{franchisee.receivedAmount.toLocaleString('en-IN')}</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: '#10b981' }}>₹{(franchisee.receivedAmount || 0).toLocaleString('en-IN')}</div>
               </div>
               <div className="glass-card" style={{ padding: 20, background: 'rgba(255,255,255,0.03)' }}>
                 <div className="detail-field-label" style={{ fontSize: 10, color: 'var(--text-muted)' }}>BALANCE</div>

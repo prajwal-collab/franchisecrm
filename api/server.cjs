@@ -5,6 +5,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const Lead = require('./models/Lead.cjs');
 const District = require('./models/District.cjs');
@@ -535,40 +536,28 @@ app.post('/api/ai/generate-strategy', async (req, res) => {
     3. How to handle potential objections for this specific lead.
     4. Next best action.
 
-    Format in Markdown. Keep it professional and punchy.
-    `;
+    Format in Markdown. Keep it professional and punchy.`;
 
     const GEMINI_API_KEY = (process.env.Gemini_API_KEY || '').trim();
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{ text: prompt }]
-        }],
-        system_instruction: {
-          parts: [{ text: 'You are a highly experienced and empathetic Senior Sales Strategist at EarlyJobs. Your goal is to provide punchy, human-sounding sales playbooks that help Closers win deals. Avoid generic advice; be specific, creative, and professional.' }]
-        }
-      })
-    });
+    if (!GEMINI_API_KEY) throw new Error('Gemini_API_KEY environment variable is not configured.');
 
-    if (!response.ok) {
-      const errData = await response.json();
-      console.error('Gemini Strategy API Error:', JSON.stringify(errData, null, 2));
-      const errorMsg = errData.error?.message || 'Gemini API error';
-      throw new Error(errorMsg);
-    }
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    const data = await response.json();
-    if (!data.candidates || !data.candidates[0]) {
-      console.error('Invalid Gemini Response (Strategy):', JSON.stringify(data));
-      throw new Error('AI failed to generate a strategy candidate. The response may have been blocked or empty.');
+    console.log('Generating AI Strategy for Lead:', leadDetails.firstName);
+    
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const strategy = response.text();
+
+    if (!strategy) {
+      throw new Error('AI generated an empty response.');
     }
-    const strategy = data.candidates[0].content.parts[0].text;
+    
     res.json({ strategy });
   } catch (err) {
     console.error('AI Strategy Error:', err);
-    res.status(500).json({ message: err.message || 'AI Generation failed' });
+    res.status(500).json({ message: 'AI failed to generate strategy', details: err.message });
   }
 });
 
@@ -614,44 +603,30 @@ ${JSON.stringify(crmData)}
 Respond directly to the user's latest query based on this context.`;
 
     const GEMINI_API_KEY = (process.env.Gemini_API_KEY || '').trim();
-    if (!GEMINI_API_KEY) {
-      return res.status(400).json({ 
-        message: 'Gemini API Key is missing. Please add Gemini_API_KEY to your .env file.',
-        suggestion: 'You can get a key from https://aistudio.google.com/app/apikey' 
-      });
-    }
-    console.log('Gemini API Key Loaded:', GEMINI_API_KEY ? 'Yes' : 'No');
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: messages.map(m => ({
-          role: m.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: m.content }]
-        })),
-        system_instruction: {
-          parts: [{ text: systemPrompt }]
-        }
-      })
+    if (!GEMINI_API_KEY) throw new Error('Gemini_API_KEY environment variable is not configured.');
+
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+    const chat = model.startChat({
+      history: messages.slice(0, -1).map(m => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content }]
+      })),
+      generationConfig: { systemInstruction: systemPrompt }
     });
 
-    if (!response.ok) {
-      const errData = await response.json();
-      console.error('Gemini API Error Detail (Status ' + response.status + '):', JSON.stringify(errData, null, 2));
-      const errorMsg = errData.error?.message || 'Gemini API error';
-      throw new Error(errorMsg);
-    }
+    const result = await chat.sendMessage(messages[messages.length - 1].content);
+    const reply = result.response.text();
 
-    const data = await response.json();
-    if (!data.candidates || !data.candidates[0]) {
-      console.error('Invalid Gemini Response (Chat):', JSON.stringify(data));
-      throw new Error('AI failed to generate a response. This may be due to safety filters or an empty model response.');
+    if (!reply) {
+      throw new Error('AI returned an empty reply.');
     }
-    const reply = data.candidates[0].content.parts[0].text;
+    
     res.json({ reply });
   } catch (err) {
     console.error('AI Chat Error:', err);
-    res.status(500).json({ message: err.message || 'AI Chat failed' });
+    res.status(500).json({ message: 'AI Chat failed', details: err.message });
   }
 });
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, Mail, Shield, Trash2, X, Send, CheckSquare, Square } from 'lucide-react';
+import { UserPlus, Mail, Shield, Trash2, X, Send, CheckSquare, Square, Edit2 } from 'lucide-react';
 import { usersDB, exportToCSV } from '../../services/db';
 import TableToolbar from '../../components/TableToolbar';
 import { useAuth } from '../../context/AuthContext';
@@ -146,17 +146,38 @@ export default function UserList() {
                   <span className="badge badge-success" style={{ background: '#eafaf1', color: '#22c55e' }}>Active</span>
                 </td>
                 <td style={{ textAlign: 'right' }}>
-                  <button 
-                    className="btn btn-secondary btn-sm" 
-                    onClick={async () => {
-                      const res = await usersDB.resendInvite(user.id || user._id);
-                      if (res) toast(`Success! Invitation email re-sent to ${user.email}`, 'success');
-                      else toast('Failed to resend invitation. Check server logs.', 'error');
-                    }} 
-                    title="Resend Invite"
-                  >
-                    <Send size={14} />
-                  </button>
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                    <button 
+                      className="btn btn-secondary btn-sm" 
+                      onClick={() => {
+                        setEditingUser(user);
+                        setNewUser({ name: user.name, email: user.email, role: user.role });
+                        setShowAdd(true);
+                      }} 
+                      title="Edit User"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button 
+                      className="btn btn-secondary btn-sm" 
+                      onClick={async () => {
+                        const res = await usersDB.resendInvite(user.id || user._id);
+                        if (res) toast(`Success! Invitation email re-sent to ${user.email}`, 'success');
+                        else toast('Failed to resend invitation. Check server logs.', 'error');
+                      }} 
+                      title="Resend Invite"
+                    >
+                      <Send size={14} />
+                    </button>
+                    <button 
+                      className="btn btn-secondary btn-sm" 
+                      style={{ color: '#ef4444' }}
+                      onClick={() => handleDelete(user.id || user._id)} 
+                      title="Delete User"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </td>
                 </tr>
               )})}

@@ -138,6 +138,22 @@ app.delete('/api/leads/:id', async (req, res) => {
   }
 });
 
+app.post('/api/leads/bulk-delete', async (req, res) => {
+  try {
+    const ids = req.body || [];
+    const validObjectIds = ids.filter(id => mongoose.Types.ObjectId.isValid(id));
+    await Lead.deleteMany({
+      $or: [
+        { _id: { $in: validObjectIds } },
+        { id: { $in: ids } },
+      ]
+    });
+    res.status(204).send();
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // Districts
 app.get('/api/districts', async (req, res) => {
   try {
@@ -192,6 +208,22 @@ app.delete('/api/districts/:id', async (req, res) => {
     res.status(204).send();
   } catch (e) {
     res.status(400).json({ error: e.message });
+  }
+});
+
+app.post('/api/districts/bulk-delete', async (req, res) => {
+  try {
+    const ids = req.body || [];
+    const validObjectIds = ids.filter(id => mongoose.Types.ObjectId.isValid(id));
+    await District.deleteMany({
+      $or: [
+        { _id: { $in: validObjectIds } },
+        { id: { $in: ids } },
+      ]
+    });
+    res.status(204).send();
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 });
 
@@ -251,6 +283,22 @@ app.delete('/api/franchisees/:id', async (req, res) => {
     res.status(204).send();
   } catch (err) {
     res.status(400).json({ message: 'Deletion failed', error: err.message });
+  }
+});
+
+app.post('/api/franchisees/bulk-delete', async (req, res) => {
+  try {
+    const ids = req.body || [];
+    const validObjectIds = ids.filter(id => mongoose.Types.ObjectId.isValid(id));
+    await Franchisee.deleteMany({
+      $or: [
+        { _id: { $in: validObjectIds } },
+        { id: { $in: ids } },
+      ]
+    });
+    res.status(204).send();
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 });
 
@@ -332,6 +380,32 @@ app.get('/api/users', async (req, res) => {
 app.get('/api/users/sdrs', async (req, res) => {
   const sdrs = await User.find({ role: 'SDR' });
   res.json(sdrs);
+});
+
+app.delete('/api/users/:id', async (req, res) => {
+  try {
+    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
+    await User.findOneAndDelete(query);
+    res.status(204).send();
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/users/bulk-delete', async (req, res) => {
+  try {
+    const ids = req.body || [];
+    const validObjectIds = ids.filter(id => mongoose.Types.ObjectId.isValid(id));
+    await User.deleteMany({
+      $or: [
+        { _id: { $in: validObjectIds } },
+        { id: { $in: ids } },
+      ]
+    });
+    res.status(204).send();
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 const sendInvitationEmail = async (user) => {

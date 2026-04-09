@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Search, MapPin, Building2, Calendar, 
   ExternalLink, Plus, Filter, ChevronUp, ChevronDown,
@@ -20,6 +21,7 @@ const STATUS_BADGE = {
 };
 
 export default function DistrictList() {
+  const navigate = useNavigate();
   const { districts, franchisees, updateDistrict, createDistrict, importDistricts, deleteDistrict, bulkDeleteDistricts, toast } = useApp();
   const { can } = useAuth();
   const fileRef = useRef(null);

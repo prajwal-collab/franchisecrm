@@ -55,6 +55,14 @@ export default function LeadList() {
   const [showBulkMenu, setShowBulkMenu] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
   const [tempNote, setTempNote] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const PAGE_SIZE = 50;
+
+  // Reset to first page when filters/search/sort changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filterStage, filterSource, filterDistrict, sortKey, sortDir]);
 
   // Handle note edit start
   useEffect(() => {
@@ -68,6 +76,15 @@ export default function LeadList() {
     if (editingNote === id) {
       if (type === 'lead') await updateLead(id, { notes: tempNote });
       setEditingNote(null);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refresh();
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -104,6 +121,10 @@ export default function LeadList() {
     return r;
   }, [enriched, search, filterStage, filterSource, filterDistrict, sortKey, sortDir]);
 
+  // Compute pagination
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
   const toggleSort = (key) => {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortKey(key); setSortDir('asc'); }
@@ -115,15 +136,14 @@ export default function LeadList() {
   };
 
   const toggleAll = () => {
-    const allIds = filtered.map(l => l.id || l._id).filter(Boolean);
-    const areAllInFilteredSelected = allIds.every(id => selected.includes(id));
-    
-    if (areAllInFilteredSelected && allIds.length > 0) {
-      // Unselect only those in the current filtered view
-      setSelected(prev => prev.filter(id => !allIds.includes(id)));
+    // Toggle selection for current page only
+    const pageIds = paginated.map(l => l.id || l._id).filter(Boolean);
+    const areAllPageSelected = pageIds.every(id => selected.includes(id));
+
+    if (areAllPageSelected && pageIds.length > 0) {
+      setSelected(prev => prev.filter(id => !pageIds.includes(id)));
     } else {
-      // Select all in current filtered view
-      setSelected(prev => [...new Set([...prev, ...allIds])]);
+      setSelected(prev => [...new Set([...prev, ...pageIds])]);
     }
   };
 
@@ -175,7 +195,20 @@ export default function LeadList() {
         if (!hasData) return null;
 
         // Fallbacks for required-ish fields to prevent UI breakage
-        if (!rec.firstName && !rec.lastName) rec.firstName = 'Imported';
+        if (!rec.firstName && !rec.lastName) {
+          // Use phone or email as identifier rather than generic 'Imported'
+          if (rec.phone) {
+            const digits = String(rec.phone).replace(/\D/g, '');
+            rec.firstName = 'Lead';
+            rec.lastName = digits.length >= 10 ? `+91${digits.slice(-10)}` : rec.phone;
+          } else if (rec.email) {
+            rec.firstName = 'Lead';
+            rec.lastName = rec.email.split('@')[0];
+          } else {
+            rec.firstName = 'Unknown';
+            rec.lastName = 'Contact';
+          }
+        }
         if (!rec.firstName) rec.firstName = '';
         if (!rec.lastName) rec.lastName = '';
         if (!rec.phone) rec.phone = '';
@@ -276,7 +309,28 @@ export default function LeadList() {
           <option value="">All Sources</option>
           {SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 12 }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center' }}>
+          {/* Refresh button */}
+          <button
+            className="btn btn-secondary"
+            style={{ padding: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            title="Refresh leads data"
+          >
+            <RefreshCw
+              size={17}
+              style={{
+                display: 'block',
+                animation: isRefreshing ? 'spin 0.7s linear infinite' : 'none',
+                transition: 'opacity 0.2s',
+                opacity: isRefreshing ? 0.6 : 1,
+              }}
+            />
+          </button>
+
+          <div style={{ width: 1, height: 22, background: 'var(--border-color)' }} />
+
           <button className={`btn ${view === 'list' ? 'btn-primary' : 'btn-secondary'}`} style={{ padding: 8 }} onClick={() => setView('list')}>
             <List size={18} />
           </button>
@@ -346,13 +400,77 @@ export default function LeadList() {
               </div>
             )}
           </TableToolbar>
+
+          {/* Pagination top bar */}
+          {filtered.length > 0 && (
+            <div style={{
+              padding: '10px 24px',
+              borderBottom: '1px solid var(--border-color)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: '#fafbfc',
+              fontSize: 13,
+              color: 'var(--text-secondary)',
+              flexWrap: 'wrap',
+              gap: 8,
+            }}>
+              <span>
+                Showing{' '}
+                <strong style={{ color: 'var(--text-primary)' }}>
+                  {Math.min((currentPage - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(currentPage * PAGE_SIZE, filtered.length)}
+                </strong>{' '}of{' '}
+                <strong style={{ color: 'var(--text-primary)' }}>{filtered.length}</strong> leads
+                {selected.length > 0 && (
+                  <span style={{ marginLeft: 12, color: 'var(--brand-primary)', fontWeight: 600 }}>· {selected.length} selected</span>
+                )}
+              </span>
+              {totalPages > 1 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: '3px 10px', fontSize: 12, opacity: currentPage === 1 ? 0.4 : 1 }}
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >← Prev</button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                    .reduce((acc, p, idx, arr) => {
+                      if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...');
+                      acc.push(p);
+                      return acc;
+                    }, [])
+                    .map((p, idx) =>
+                      p === '...' ? (
+                        <span key={`e-${idx}`} style={{ padding: '0 4px', fontSize: 12, color: 'var(--text-muted)' }}>…</span>
+                      ) : (
+                        <button
+                          key={p}
+                          className={`btn ${p === currentPage ? 'btn-primary' : 'btn-secondary'}`}
+                          style={{ padding: '3px 10px', fontSize: 12, minWidth: 32 }}
+                          onClick={() => setCurrentPage(p)}
+                        >{p}</button>
+                      )
+                    )
+                  }
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: '3px 10px', fontSize: 12, opacity: currentPage === totalPages ? 0.4 : 1 }}
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >Next →</button>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="table-responsive">
             <table className="premium-table">
             <thead>
               <tr>
                 <th style={{ width: 48 }}>
                   <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={toggleAll}>
-                    {filtered.length > 0 && filtered.every(l => selected.includes(l.id || l._id)) ? <CheckSquare size={16} color="var(--brand-primary)" /> : <Square size={16} />}
+                    {paginated.length > 0 && paginated.every(l => selected.includes(l.id || l._id)) ? <CheckSquare size={16} color="var(--brand-primary)" /> : <Square size={16} />}
                   </div>
                 </th>
                 <th onClick={() => toggleSort('firstName')} style={{ cursor: 'pointer' }}>Name</th>
@@ -367,9 +485,9 @@ export default function LeadList() {
             </thead>
             <tbody>
               {filtered.length === 0 && (
-                <tr><td colSpan={8} style={{ padding: '60px', textAlign: 'center', color: 'var(--text-secondary)' }}>No leads found Matching your criteria.</td></tr>
+                <tr><td colSpan={8} style={{ padding: '60px', textAlign: 'center', color: 'var(--text-secondary)' }}>No leads found matching your criteria.</td></tr>
               )}
-              {filtered.map(lead => {
+              {paginated.map(lead => {
                 const lid = lead._id || lead.id;
                 if (!lid) return null; // Safety check
                 return (
@@ -459,6 +577,35 @@ export default function LeadList() {
             </tbody>
             </table>
           </div>
+
+          {/* Pagination bottom bar */}
+          {totalPages > 1 && (
+            <div style={{
+              padding: '14px 24px',
+              borderTop: '1px solid var(--border-color)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 10,
+              background: '#fafbfc'
+            }}>
+              <button
+                className="btn btn-secondary"
+                style={{ padding: '6px 16px', fontSize: 13, opacity: currentPage === 1 ? 0.4 : 1 }}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >← Previous</button>
+              <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                Page <strong style={{ color: 'var(--text-primary)' }}>{currentPage}</strong> of <strong style={{ color: 'var(--text-primary)' }}>{totalPages}</strong>
+              </span>
+              <button
+                className="btn btn-secondary"
+                style={{ padding: '6px 16px', fontSize: 13, opacity: currentPage === totalPages ? 0.4 : 1 }}
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >Next →</button>
+            </div>
+          )}
         </div>
       )}
 

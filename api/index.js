@@ -7,647 +7,199 @@ const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-const Lead = require('./models/Lead.js');
-const District = require('./models/District.js');
-const Franchisee = require('./models/Franchisee.js');
+// --- DATABASE CONFIG ---
+let isConnected = false;
+const connectDB = async () => {
+  if (isConnected && mongoose.connection.readyState === 1) return;
+  try {
+    const uri = process.env.MONGODB_URI;
+    if (!uri) throw new Error('MONGODB_URI is missing');
+    const conn = await mongoose.connect(uri, { serverSelectionTimeoutMS: 5000 });
+    isConnected = conn.connections[0].readyState === 1;
+    console.log('✅ Connected to MongoDB');
+  } catch (err) {
+    console.error(`❌ Connection Error: ${err.message}`);
+    isConnected = false;
+    throw err;
+  }
+};
+
+// --- MODELS ---
+const LeadSchema = new mongoose.Schema({
+  id: String, firstName: { type: String, default: '' }, lastName: { type: String, default: '' },
+  phone: { type: String, default: '' }, email: String, districtId: String,
+  profession: String, investmentCapacity: String, source: String,
+  stage: { type: String, default: 'New Lead' }, score: { type: Number, default: 0 },
+  assignedTo: String, notes: String, createdDate: { type: Date, default: Date.now }, updatedDate: { type: Date, default: Date.now }
+});
+const Lead = mongoose.models.Lead || mongoose.model('Lead', LeadSchema);
+
+const DistrictSchema = new mongoose.Schema({
+  id: String, name: String, state: String, region: String, 
+  status: { type: String, default: 'Available' }, assignedTo: String, quota: Number,
+  pricing: { franchiseFee: Number, loyaltyFee: Number }
+});
+const District = mongoose.models.District || mongoose.model('District', DistrictSchema);
+
+const FranchiseeSchema = new mongoose.Schema({
+  id: String, name: String, leadId: String, districtId: String, contactPerson: String,
+  email: String, phone: String, status: { type: String, default: 'Pending' }, 
+  agreementDate: Date, paymentStatus: { type: String, default: 'Unpaid' }
+});
+const Franchisee = mongoose.models.Franchisee || mongoose.model('Franchisee', FranchiseeSchema);
 
 const TaskSchema = new mongoose.Schema({
-  id: String, // Compatibility with legacy records
-  title: String, leadId: String, franchiseeId: String, meetingId: String, 
+  id: String, title: String, leadId: String, franchiseeId: String,
   assignedTo: String, dueDate: Date, done: { type: Boolean, default: false }, createdDate: { type: Date, default: Date.now }
 });
-const Task = mongoose.model('Task', TaskSchema);
-
-const MeetingSchema = new mongoose.Schema({
-  id: String, // Compatibility with legacy records
-  leadId: String, eventType: String, eventLink: String, googleMeetLink: String, 
-  scheduledDateTime: Date, attended: { type: Boolean, default: false }, createdDate: { type: Date, default: Date.now }
-});
-const Meeting = mongoose.model('Meeting', MeetingSchema);
+const Task = mongoose.models.Task || mongoose.model('Task', TaskSchema);
 
 const UserSchema = new mongoose.Schema({
-  id: String, name: String, email: { type: String, unique: true }, role: String, password: String, avatar: String
+  id: String, name: String, email: { type: String, unique: true }, role: String, password: String
 });
-const User = mongoose.model('User', UserSchema);
+const User = mongoose.models.User || mongoose.model('User', UserSchema);
 
-// Email Transporter (GMAIL Service)
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT),
-  secure: false, // true for 465, false for other ports
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
-
+// --- APP SETUP ---
 const app = express();
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
-app.options('*', cors()); // Handle preflight requests for all routes
-app.use(express.json({ limit: '100mb' }));
-app.use(express.urlencoded({ limit: '100mb', extended: true }));
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
 app.use(morgan('dev'));
 
-const { connectDB, getIsConnected } = require('./db.js');
-
-// MongoDB Connection Middleware
+// DB Middleware
 app.use(async (req, res, next) => {
   if (req.path.startsWith('/api')) {
-    try {
-      await connectDB();
-      next();
-    } catch (err) {
-      console.error('Database connection middleware failed:', err.message);
-      res.status(500).json({ 
-        message: 'Database connection failed', 
-        details: err.message,
-        hint: 'Verify MONGODB_URI in Vercel settings and Atlas IP whitelist.'
-      });
-    }
-  } else {
-    next();
-  }
+    try { await connectDB(); next(); }
+    catch (err) { res.status(500).json({ error: 'DB Connection Failed', details: err.message }); }
+  } else next();
 });
 
+// --- ROUTES ---
+
+// Health
 app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    database: getIsConnected() ? 'Connected' : 'Disconnected',
-    env: {
-      has_uri: !!process.env.MONGODB_URI,
-      node_env: process.env.NODE_ENV || 'production'
-    }
-  });
+  res.json({ status: 'ok', database: isConnected ? 'Connected' : 'Disconnected' });
 });
-
-// --- API ROUTES ---
 
 // Leads
 app.get('/api/leads', async (req, res) => {
-  try {
-    const leads = await Lead.find().sort({ updatedDate: -1 });
-    res.json(leads);
-  } catch (err) {
-    console.error('GET /api/leads error:', err.message);
-    res.status(500).json({ error: 'Failed to fetch leads', details: err.message });
-  }
-});
-
-app.post('/api/leads/bulk', async (req, res) => {
-  try {
-    const leads = await Lead.insertMany(req.body, { ordered: false });
-    res.status(201).json(leads);
-  } catch (err) {
-    // MongoBulkWriteError: partial inserts succeeded — return what was actually inserted
-    if (err.name === 'MongoBulkWriteError' || err.code === 11000) {
-      const inserted = err.insertedDocs || [];
-      console.log(`Leads bulk: ${inserted.length} inserted, ${(err.writeErrors || []).length} skipped (duplicates/errors)`);
-      return res.status(201).json(inserted);
-    }
-    console.error('Bulk leads import error:', err.message);
-    res.status(400).json({ message: 'Bulk lead import failed', details: err.message });
-  }
+  try { res.json(await Lead.find().sort({ updatedDate: -1 })); } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/leads', async (req, res) => {
-  const lead = new Lead(req.body);
-  await lead.save();
-  res.status(201).json(lead);
+  try { 
+    const data = { ...req.body, id: uuidv4() };
+    const lead = new Lead(data);
+    await lead.save();
+    res.json(lead);
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.put('/api/leads/:id', async (req, res) => {
   try {
-    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
-    const updated = await Lead.findOneAndUpdate(query, req.body, { new: true });
-    res.json(updated);
-  } catch (e) {
-    res.status(400).json({ error: e.message });
-  }
+    const id = req.params.id;
+    const update = { ...req.body, updatedDate: Date.now() };
+    const lead = await Lead.findOneAndUpdate({ $or: [{ id }, { _id: id }] }, update, { new: true });
+    res.json(lead);
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.delete('/api/leads/:id', async (req, res) => {
   try {
-    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
-    await Lead.findOneAndDelete(query);
-    res.status(204).send();
-  } catch (e) {
-    res.status(400).json({ error: e.message });
+    const id = req.params.id;
+    await Lead.findOneAndDelete({ $or: [{ id }, { _id: id }] });
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// AI Chat
+app.post('/api/ai/chat', async (req, res) => {
+  try {
+    const { messages, prompt: directPrompt } = req.body;
+    const prompt = directPrompt || (messages && messages[messages.length - 1]?.content);
+    if (!prompt) throw new Error('No prompt provided');
+
+    const key = (process.env.Gemini_API_KEY || '').trim();
+    if (!key) throw new Error('Gemini API Key missing');
+
+    const genAI = new GoogleGenerativeAI(key);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    res.json({ reply: text });
+  } catch (err) {
+    console.error('AI Chat Error:', err.message);
+    res.status(500).json({ message: 'AI Chat failed', details: err.message });
   }
 });
 
 // Districts
 app.get('/api/districts', async (req, res) => {
-  try {
-    const districts = await District.find().sort({ name: 1 }).lean();
-    res.json(districts);
-  } catch (err) {
-    console.error('GET /api/districts error:', err.message);
-    res.status(500).json({ message: 'Failed to fetch districts', details: err.message });
-  }
-});
-
-app.post('/api/districts/bulk', async (req, res) => {
-  try {
-    const districts = await District.insertMany(req.body, { ordered: false });
-    res.status(201).json(districts);
-  } catch (err) {
-    // MongoBulkWriteError: partial inserts succeeded — return what was actually inserted
-    if (err.name === 'MongoBulkWriteError' || err.code === 11000) {
-      const inserted = err.insertedDocs || [];
-      console.log(`Districts bulk: ${inserted.length} inserted, ${(err.writeErrors || []).length} skipped (duplicates/errors)`);
-      return res.status(201).json(inserted);
-    }
-    console.error('Bulk districts import error:', err.message);
-    res.status(400).json({ message: 'Bulk district import failed', error: err.message });
-  }
-});
-
-app.post('/api/districts', async (req, res) => {
-  try {
-    const d = new District(req.body);
-    await d.save();
-    res.status(201).json(d);
-  } catch (err) {
-    res.status(400).json({ message: 'District creation failed', error: err.message });
-  }
-});
-
-app.put('/api/districts/:id', async (req, res) => {
-  try {
-    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
-    const updated = await District.findOneAndUpdate(query, req.body, { new: true });
-    res.json(updated);
-  } catch (e) {
-    res.status(400).json({ error: e.message });
-  }
-});
-
-app.delete('/api/districts/:id', async (req, res) => {
-  try {
-    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
-    await District.findOneAndDelete(query);
-    res.status(204).send();
-  } catch (e) {
-    res.status(400).json({ error: e.message });
-  }
+  try { res.json(await District.find()); } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // Franchisees
 app.get('/api/franchisees', async (req, res) => {
-  try {
-    const franchisees = await Franchisee.find().sort({ onboardingDate: -1 });
-    res.json(franchisees);
-  } catch (err) {
-    console.error('GET /api/franchisees error:', err.message);
-    res.status(500).json({ message: 'Failed to fetch franchisees', details: err.message });
-  }
+  try { res.json(await Franchisee.find()); } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/franchisees/bulk', async (req, res) => {
-  try {
-    const franchisees = await Franchisee.insertMany(req.body, { ordered: false });
-    res.status(201).json(franchisees);
-  } catch (err) {
-    // MongoBulkWriteError: partial inserts succeeded — return what was actually inserted
-    if (err.name === 'MongoBulkWriteError' || err.code === 11000) {
-      const inserted = err.insertedDocs || [];
-      console.log(`Franchisees bulk: ${inserted.length} inserted, ${(err.writeErrors || []).length} skipped (duplicates/errors)`);
-      return res.status(201).json(inserted);
-    }
-    console.error('Bulk franchisees import error:', err.message);
-    res.status(400).json({ message: 'Bulk franchisee import failed', error: err.message });
-  }
-});
-
-app.post('/api/franchisees', async (req, res) => {
-  try {
-    const f = new Franchisee(req.body);
-    await f.save();
-    res.status(201).json(f);
-  } catch (err) {
-    res.status(400).json({ message: 'Franchisee creation failed', error: err.message });
-  }
-});
-
-app.put('/api/franchisees/:id', async (req, res) => {
-  try {
-    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
-    const updated = await Franchisee.findOneAndUpdate(query, req.body, { new: true });
-    if (!updated) return res.status(404).json({ message: 'Franchisee not found' });
-    res.json(updated);
-  } catch (err) {
-    res.status(400).json({ message: 'Update failed', error: err.message });
-  }
-});
-
-app.delete('/api/franchisees/:id', async (req, res) => {
-  try {
-    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
-    const deleted = await Franchisee.findOneAndDelete(query);
-    if (!deleted) return res.status(404).json({ message: 'Franchisee not found' });
-    res.status(204).send();
-  } catch (err) {
-    res.status(400).json({ message: 'Deletion failed', error: err.message });
-  }
-});
-
-// Tasks
-app.get('/api/tasks', async (req, res) => {
-  const tasks = await Task.find().sort({ dueDate: 1 });
-  res.json(tasks);
-});
-app.post('/api/tasks', async (req, res) => {
-  try {
-    const t = new Task(req.body);
-    await t.save();
-    
-    // Notify assignee via email
-    if (t.assignedTo) {
-      const user = await User.findOne({ id: t.assignedTo });
-      if (user && user.email) {
-        sendTaskAssignmentEmail(user, t).catch(err => console.error('Task Email Failed:', err));
-      }
-    }
-    
-    res.status(201).json(t);
-  } catch (err) {
-    res.status(400).json({ message: 'Task creation failed' });
-  }
-});
-app.put('/api/tasks/:id', async (req, res) => {
-  const previousTask = await Task.findById(req.params.id);
-  const updated = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  
-  // If assignee changed, notify the new one
-  if (updated.assignedTo && updated.assignedTo !== previousTask?.assignedTo) {
-    const user = await User.findOne({ id: updated.assignedTo });
-    if (user) sendTaskAssignmentEmail(user, updated).catch(err => console.error('Task Update Email Failed:', err));
-  }
-  
-  res.json(updated);
-});
-app.delete('/api/tasks/:id', async (req, res) => {
-  await Task.findByIdAndDelete(req.params.id);
-  res.status(204).send();
-});
-
-// Meetings
-app.get('/api/meetings', async (req, res) => {
-  const meetings = await Meeting.find().sort({ scheduledDateTime: 1 }).lean();
-  res.json(meetings);
-});
-
-app.post('/api/meetings', async (req, res) => {
-  const m = new Meeting(req.body);
-  await m.save();
-  res.status(201).json(m);
-});
-
-app.put('/api/meetings/:id', async (req, res) => {
-  const updated = await Meeting.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  res.json(updated);
-});
-
-app.delete('/api/meetings/:id', async (req, res) => {
-  await Meeting.findByIdAndDelete(req.params.id);
-  res.status(204).send();
-});
-
-// Auth & Users
-app.post('/api/auth/login', async (req, res) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ email, password });
-  if (user) res.json(user);
-  else res.status(401).json({ message: 'Invalid credentials' });
-});
-
+// Users
 app.get('/api/users', async (req, res) => {
-  const users = await User.find();
-  res.json(users);
-});
-
-app.get('/api/users/sdrs', async (req, res) => {
-  const sdrs = await User.find({ role: 'SDR' });
-  res.json(sdrs);
-});
-
-const sendInvitationEmail = async (user) => {
-  const mailOptions = {
-    from: '"EarlyJobs Portal" <' + process.env.SMTP_USER + '>',
-    to: user.email,
-    subject: '🚀 Welcome to EarlyJobs - You have been invited!',
-    html: `
-      <div style="font-family: 'Plus Jakarta Sans', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #33475b; line-height: 1.6; border: 1px solid #eaf0f6; border-radius: 12px; overflow: hidden;">
-        <div style="background: linear-gradient(135deg, #FF6B00 0%, #FF8533 100%); padding: 40px; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 800;">Welcome to EarlyJobs</h1>
-        </div>
-        <div style="padding: 40px; background-color: #ffffff;">
-          <p style="font-size: 16px;">Hello <strong>${user.name}</strong>,</p>
-          <p>You have been invited to join the EarlyJobs Franchise Sales Management portal as a <strong>${user.role}</strong>.</p>
-          
-          <div style="background-color: #f5f8fa; padding: 24px; border-radius: 8px; margin: 24px 0; border: 1px dashed #cbd6e2;">
-            <p style="margin: 0; color: #516f90; font-size: 14px;">Your temporary credentials:</p>
-            <p style="margin: 10px 0 0; font-weight: 700; font-size: 18px;">Email: ${user.email}</p>
-            <p style="margin: 5px 0 0; font-weight: 700; font-size: 18px;">Password: ${user.password || 'password123'}</p>
-          </div>
-
-          <p>Click the button below to sign in and start managing your leads.</p>
-          
-          <div style="text-align: center; margin-top: 32px;">
-            <a href="http://localhost:5173/login" style="display: inline-block; background-color: #FF6B00; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 700; box-shadow: 0 4px 12px rgba(255, 107, 0, 0.2);">Sign In to Portal</a>
-          </div>
-          
-          <hr style="border: none; border-top: 1px solid #eaf0f6; margin: 32px 0;" />
-          
-          <p style="font-size: 12px; color: #7c98b6; text-align: center;">
-            This is an automated invitation. If you did not expect this, please ignore this email.
-          </p>
-        </div>
-      </div>
-    `
-  };
-  return transporter.sendMail(mailOptions);
-};
-
-const sendTaskAssignmentEmail = async (user, task) => {
-  const mailOptions = {
-    from: '"EarlyJobs Task Assistant" <' + process.env.SMTP_USER + '>',
-    to: user.email,
-    subject: `📋 New Task Assigned: ${task.title}`,
-    html: `
-      <div style="font-family: 'Plus Jakarta Sans', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #33475b; line-height: 1.6; border: 1px solid #eaf0f6; border-radius: 8px;">
-        <div style="background-color: #FF6B00; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-          <h2 style="color: white; margin: 0; font-size: 20px;">Management Alert</h2>
-        </div>
-        <div style="padding: 30px; background-color: #ffffff;">
-          <p>Hello <strong>${user.name}</strong>,</p>
-          <p>A new task has been assigned to you in the EarlyJobs CRM.</p>
-          
-          <div style="background-color: #f5f8fa; padding: 20px; border-radius: 6px; margin: 20px 0;">
-            <p style="margin-top: 0;"><strong>Task:</strong> ${task.title}</p>
-            <p><strong>Due Date:</strong> ${new Date(task.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-          </div>
-
-          <a href="http://localhost:5173/tasks" style="display: inline-block; background-color: #FF6B00; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 700;">View Task List</a>
-          
-          <p style="margin-top: 30px; font-size: 12px; color: #7c98b6;">
-            This is an automated notification. Please do not reply directly to this email.
-          </p>
-        </div>
-      </div>
-    `
-  };
-  return transporter.sendMail(mailOptions);
-};
-
-let sdrCounter = 0;
-app.get('/api/users/next-sdr', async (req, res) => {
-  const sdrs = await User.find({ role: 'SDR' });
-  if (!sdrs.length) return res.status(404).json({ message: 'No SDRs found' });
-  const sdr = sdrs[sdrCounter % sdrs.length];
-  sdrCounter++;
-  res.json(sdr);
-});
-
-// Resend invitation (moved up to ensure no conflicts)
-app.post('/api/users/:id/resend-invite', async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    // Check if it's a local/temp ID
-    if (id.startsWith('temp_')) {
-      return res.status(400).json({ 
-        message: 'This user is currently stored locally. Please refresh the page once the server is back online to sync data before resending invites.' 
-      });
-    }
-
-    const user = await User.findOne({ id });
-    if (!user) return res.status(404).json({ message: 'User not found on server. Try refreshing the list.' });
-    
-    await sendInvitationEmail(user);
-    res.json({ success: true, message: 'Invitation email re-sent successfully' });
-  } catch (err) {
-    console.error('Mail resending failed:', err);
-    res.status(500).json({ message: 'Failed to resend invitation email', error: err.message });
-  }
+  try { res.json(await User.find()); } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/users', async (req, res) => {
   try {
-    const { name, email, role, password } = req.body;
-    const existing = await User.findOne({ email });
-    if (existing) return res.status(400).json({ message: 'User already exists' });
-    
-    const user = new User({
-      id: uuidv4(),
-      name,
-      email,
-      role,
-      password: password || 'password123',
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=FF6B00&color=fff`
-    });
+    const userData = { ...req.body, id: uuidv4() };
+    const user = new User(userData);
     await user.save();
-
-    try {
-      await sendInvitationEmail(user);
-      res.status(201).json({ ...user.toObject(), inviteSent: true });
-    } catch (mailErr) {
-      console.error('Mail sending failed:', mailErr);
-      res.status(201).json({ ...user.toObject(), inviteSent: false, error: 'Invitation email failed to send (Check SMTP config)' });
-    }
-  } catch (err) {
-    res.status(400).json({ message: 'User creation failed', error: err.message });
-  }
+    res.json(user);
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.put('/api/users/:id', async (req, res) => {
   try {
-    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
-    const updated = await User.findOneAndUpdate(query, req.body, { new: true });
-    if (!updated) return res.status(404).json({ message: 'User not found' });
-    res.json(updated);
-  } catch (err) {
-    res.status(400).json({ message: 'User update failed', error: err.message });
-  }
+    const id = req.params.id;
+    const user = await User.findOneAndUpdate({ $or: [{ id }, { _id: id }] }, req.body, { new: true });
+    res.json(user);
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.delete('/api/users/:id', async (req, res) => {
   try {
-    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
-    const deleted = await User.findOneAndDelete(query);
-    if (!deleted) return res.status(404).json({ message: 'User not found' });
-    res.status(204).send();
-  } catch (err) {
-    res.status(400).json({ message: 'User deletion failed', error: err.message });
-  }
+    const id = req.params.id;
+    await User.findOneAndDelete({ $or: [{ id }, { _id: id }] });
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/users/bulk-delete', async (req, res) => {
+// Tasks
+app.get('/api/tasks', async (req, res) => {
+  try { res.json(await Task.find()); } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/tasks', async (req, res) => {
   try {
-    await User.deleteMany({ $or: [{ id: { $in: req.body } }, { _id: { $in: req.body } }] });
-    res.status(204).send();
-  } catch (err) {
-    res.status(400).json({ message: 'Bulk delete failed' });
-  }
+    const task = new Task({ ...req.body, id: uuidv4() });
+    await task.save();
+    res.json(task);
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// AI Context (Store in DB for persistence across devices)
-const SettingSchema = new mongoose.Schema({ key: String, value: String });
-const Setting = mongoose.model('Setting', SettingSchema);
-
-app.get('/api/settings/ai-context', async (req, res) => {
-  const s = await Setting.findOne({ key: 'ai_context' });
-  res.json({ value: s ? s.value : '' });
-});
-
-app.post('/api/settings/ai-context', async (req, res) => {
-  await Setting.findOneAndUpdate({ key: 'ai_context' }, { value: req.body.value }, { upsert: true });
-  res.sendStatus(200);
-});
-
-// AI endpoints (Gemini integration)
-app.post('/api/ai/generate-strategy', async (req, res) => {
+app.put('/api/tasks/:id', async (req, res) => {
   try {
-    const { leadDetails } = req.body;
-    const context = await Setting.findOne({ key: 'ai_context' });
-    const businessContext = context ? context.value : "EarlyJobs Franchise CRM";
-
-    const prompt = `
-    You are an expert sales assistant for EarlyJobs Franchise.
-    Business Context (The Handbook):
-    ${businessContext}
-
-    Lead Details:
-    - Name: ${leadDetails.firstName} ${leadDetails.lastName}
-    - Profession: ${leadDetails.profession}
-    - Location: ${leadDetails.districtName}
-    - Stage: ${leadDetails.stage}
-    - Capacity: ${leadDetails.investmentCapacity}
-    - Current Notes: ${leadDetails.notes}
-
-    Task:
-    Provide a concise sales strategy including:
-    1. A "Hook" based on their location and profession.
-    2. A WhatsApp/Call script snippet.
-    3. How to handle potential objections for this specific lead.
-    4. Next best action.
-
-    Format in Markdown. Keep it professional and punchy.`;
-
-    const GEMINI_API_KEY = (process.env.Gemini_API_KEY || '').trim();
-    if (!GEMINI_API_KEY) throw new Error('Gemini_API_KEY environment variable is not configured.');
-
-    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
-    console.log('Generating AI Strategy for Lead:', leadDetails.firstName);
-    
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const strategy = response.text();
-
-    if (!strategy) {
-      throw new Error('AI generated an empty response.');
-    }
-    
-    res.json({ strategy });
-  } catch (err) {
-    console.error('AI Strategy Error:', err);
-    res.status(500).json({ message: 'AI failed to generate strategy', details: err.message });
-  }
+    const id = req.params.id;
+    const task = await Task.findOneAndUpdate({ $or: [{ id }, { _id: id }] }, req.body, { new: true });
+    res.json(task);
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/ai/chat', async (req, res) => {
+app.delete('/api/tasks/:id', async (req, res) => {
   try {
-    const { messages } = req.body;
-    
-    // Fetch CRM summaries context to inject into LLM
-    const leads = await Lead.find({}, 'firstName lastName stage source profession investmentCapacity notes updatedDate').lean();
-    const districts = await District.find({}, 'name status notes').lean();
-    const franchisees = await Franchisee.find({}, 'name districtId committedAmount receivedAmount paymentStatus notes').lean();
-
-    const crmData = {
-      leadsTotal: leads.length,
-      franchiseesTotal: franchisees.length,
-      districtsTotal: districts.length,
-      leads: leads,
-      districts: districts,
-      franchisees: franchisees
-    };
-
-    const systemPrompt = `You are the EarlyJobs CRM Insight Assistant. 
-Your goal is to help users manage their franchise pipeline with clear, professional, and human-like insights.
-
-### IDENTITY & TONE:
-- You are a High-Performance Sales Director and CRM Strategist at EarlyJobs.
-- Your tone is executive, data-driven, and highly encouraging but realistic.
-- Use professional sales terminology (e.g., Conversion Rate, Pipeline Velocity, LTV).
-
-### DATA SOURCE:
-- You have FULL visibility into the EarlyJobs CRM database provided below.
-- Analyze the "Notes" field carefully—it often contains the "ground truth" about a lead's interest or a franchisee's concerns.
-- If data is missing, recommend specific questions the user should ask the lead to fill the gaps.
-
-### FORMATTING:
-- Use Markdown for structured data.
-- If listing stats, use tables or bullet points.
-- Highlights important names or numbers in **bold**.
-
-### CRM DATA:
-${JSON.stringify(crmData)}
-
-Respond directly to the user's latest query based on this context.`;
-
-    const GEMINI_API_KEY = (process.env.Gemini_API_KEY || '').trim();
-    if (!GEMINI_API_KEY) throw new Error('Gemini_API_KEY environment variable is not configured.');
-
-    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
-    const chat = model.startChat({
-      history: messages.slice(0, -1).map(m => ({
-        role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: m.content }]
-      })),
-      generationConfig: { systemInstruction: systemPrompt }
-    });
-
-    const result = await chat.sendMessage(messages[messages.length - 1].content);
-    const reply = result.response.text();
-
-    if (!reply) {
-      throw new Error('AI returned an empty reply.');
-    }
-    
-    res.json({ reply });
-  } catch (err) {
-    console.error('AI Chat Error:', err);
-    res.status(500).json({ message: 'AI Chat failed', details: err.message });
-  }
+    const id = req.params.id;
+    await Task.findOneAndDelete({ $or: [{ id }, { _id: id }] });
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 5000;
-  const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`
-    🚀 CRM Backend Ready
-    📡 Port: ${PORT}
-    🔗 API: http://localhost:${PORT}/api
-    `);
-  });
-
-  server.on('error', (e) => {
-    if (e.code === 'EADDRINUSE') {
-      console.error(`❌ Port ${PORT} is already in use. Please kill the existing process or change the PORT in .env`);
-      process.exit(1);
-    }
-  });
-}
-
-// Export for Vercel Serverless Function
 module.exports = app;

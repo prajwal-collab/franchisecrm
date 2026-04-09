@@ -20,6 +20,12 @@ export default function FranchiseeDetail() {
   const [paymentAmount, setPaymentAmount] = useState('');
   const [committedAmount, setCommittedAmount] = useState(franchisee?.committedAmount || 0);
 
+  React.useEffect(() => {
+    if (franchisee) {
+      setCommittedAmount(franchisee.committedAmount || 0);
+    }
+  }, [franchisee?.committedAmount]);
+
   if (!franchisee) return <div className="page-body">Franchisee not found</div>;
 
   const handleUpdatePayment = (e) => {
@@ -30,17 +36,25 @@ export default function FranchiseeDetail() {
       return;
     }
 
-    const newReceived = franchisee.receivedAmount + amount;
+    const newReceived = (franchisee.receivedAmount || 0) + amount;
+    const paymentStatus = (newReceived >= (franchisee.committedAmount || 0) && (franchisee.committedAmount || 0) > 0) ? 'Paid Full' : 'Partial';
+
     updateFranchisee(franchisee.id || franchisee._id, { 
       receivedAmount: newReceived,
-      // Status updated automatically in franchiseesDB.update
+      paymentStatus
     });
     setPaymentAmount('');
     toast(`Payment of ₹${amount.toLocaleString('en-IN')} recorded`, 'success');
   };
 
   const handleUpdateCommitment = (e) => {
-    updateFranchisee(franchisee.id || franchisee._id, { committedAmount: parseFloat(committedAmount) || 0 });
+    const newCommitted = parseFloat(committedAmount) || 0;
+    const paymentStatus = ((franchisee.receivedAmount || 0) >= newCommitted && newCommitted > 0) ? 'Paid Full' : 'Partial';
+
+    updateFranchisee(franchisee.id || franchisee._id, { 
+      committedAmount: newCommitted,
+      paymentStatus
+    });
   };
 
   const balance = (franchisee.committedAmount || 0) - (franchisee.receivedAmount || 0);

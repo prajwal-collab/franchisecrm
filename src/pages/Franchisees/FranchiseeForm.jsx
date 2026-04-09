@@ -51,10 +51,15 @@ export default function FranchiseeForm({ franchisee, onClose }) {
     e.preventDefault();
     if (!validate()) return;
 
+    const ctd = Number(formData.committedAmount) || 0;
+    const recd = Number(formData.receivedAmount) || 0;
+    const paymentStatus = (recd >= ctd && ctd > 0) ? 'Paid Full' : 'Partial';
+
     const payload = {
       ...formData,
-      committedAmount: Number(formData.committedAmount) || 0,
-      receivedAmount: Number(formData.receivedAmount) || 0
+      committedAmount: ctd,
+      receivedAmount: recd,
+      paymentStatus
     };
 
     if (franchisee) {

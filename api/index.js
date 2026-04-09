@@ -7,9 +7,9 @@ const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-const Lead = require('./models/Lead.cjs');
-const District = require('./models/District.cjs');
-const Franchisee = require('./models/Franchisee.cjs');
+const Lead = require('./models/Lead.js');
+const District = require('./models/District.js');
+const Franchisee = require('./models/Franchisee.js');
 
 const TaskSchema = new mongoose.Schema({
   id: String, // Compatibility with legacy records
@@ -52,7 +52,7 @@ app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 app.use(morgan('dev'));
 
-const { connectDB, getIsConnected } = require('./db.cjs');
+const { connectDB, getIsConnected } = require('./db.js');
 
 // MongoDB Connection Middleware
 app.use(async (req, res, next) => {

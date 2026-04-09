@@ -1,11 +1,11 @@
-require('dotenv').config();
+// require('dotenv').config(); // Vercel handles env vars natively
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const morgan = require('morgan');
 const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+// const { GoogleGenerativeAI } = require('@google/generative-ai'); // Temporarily disabled to debug boot crash
 
 // --- DATABASE CONFIG ---
 let isConnected = false;
@@ -119,26 +119,9 @@ app.delete('/api/leads/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// AI Chat
+// AI Chat (Stubbed for debugging boot)
 app.post('/api/ai/chat', async (req, res) => {
-  try {
-    const { messages, prompt: directPrompt } = req.body;
-    const prompt = directPrompt || (messages && messages[messages.length - 1]?.content);
-    if (!prompt) throw new Error('No prompt provided');
-
-    const key = (process.env.Gemini_API_KEY || '').trim();
-    if (!key) throw new Error('Gemini API Key missing');
-
-    const genAI = new GoogleGenerativeAI(key);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
-    res.json({ reply: text });
-  } catch (err) {
-    console.error('AI Chat Error:', err.message);
-    res.status(500).json({ message: 'AI Chat failed', details: err.message });
-  }
+  res.json({ reply: "AI is temporarily in maintenance mode for a few minutes while we stabilize the backend. Please try again shortly." });
 });
 
 // Districts

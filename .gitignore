@@ -3,3 +3,8 @@ node_modules
 server/.env
 .token.txt
 .DS_Store
+dist
+dist/*
+build_output.txt
+out.txt
+*.log

@@ -188,9 +188,12 @@ export default function LeadList() {
         }
         // Resolve districtId from name (optional)
         if (rec.districtName) {
-          const d = districts.find(dist => dist.name.toLowerCase() === rec.districtName.toLowerCase());
-          if (d) rec.districtId = d._id || d.id;
-          // Keep districtName if we want to show it in table fallback, but model uses id
+          const d = districts.find(dist => 
+            dist.name.toLowerCase() === rec.districtName.toLowerCase().trim()
+          );
+          rec.districtId = d ? (d._id || d.id) : null;
+        } else {
+          rec.districtId = null;
         }
         // Default stage
         if (!rec.stage || !STAGES.includes(rec.stage)) rec.stage = 'New Lead';
@@ -382,7 +385,13 @@ export default function LeadList() {
                       <div style={{ fontSize: 14 }}>{lead?.phone}</div>
                       <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{lead?.email}</div>
                     </td>
-                    <td><span className="badge badge-new" style={{ background: '#f0f9ff', color: '#0369a1' }}>{lead.districtName}</span></td>
+                    <td>
+                      {lead.districtName === 'Pending' ? (
+                        <span className="badge" style={{ background: '#fff1f2', color: '#e11d48', border: '1px solid #fecaca' }}>Pending</span>
+                      ) : (
+                        <span className="badge badge-new" style={{ background: '#f0f9ff', color: '#0369a1' }}>{lead.districtName}</span>
+                      )}
+                    </td>
                     <td><span className={`badge ${STAGE_BADGE[lead.stage] || ''}`} style={{ fontWeight: 700 }}>{lead.stage}</span></td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

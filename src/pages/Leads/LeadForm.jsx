@@ -44,7 +44,8 @@ export default function LeadForm({ lead, onClose }) {
       newErrors.phone = 'Format: +91XXXXXXXXXX (10 digits)';
     }
 
-    if (!formData.districtId) newErrors.districtId = 'District is required';
+    // Removed mandatory district validation per user request
+    // if (!formData.districtId) newErrors.districtId = 'District is required';
     
     const district = districts.find(d => (d.id || d._id) === formData.districtId);
     if (!lead && district && (district.status === 'Sold' || district.status === 'Blocked')) {

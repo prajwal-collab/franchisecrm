@@ -76,7 +76,7 @@ export default function LeadList() {
     if (!Array.isArray(leads)) return [];
     return leads.map(l => ({
       ...l,
-      districtName: districts.find(d => (d.id || d._id) === l.districtId)?.name || '—',
+      districtName: districts.find(d => (d.id || d._id) === l.districtId)?.name || 'Pending',
       assignedToName: users.find(u => (u.id || u._id) === l.assignedTo)?.name || '—',
     }));
   }, [leads, districts, users]);

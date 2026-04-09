@@ -10,6 +10,7 @@ export default function UserList() {
   const { toast } = useApp();
   const [users, setUsers] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState([]);
   
@@ -33,17 +34,35 @@ export default function UserList() {
 
   const handleAdd = async (e) => {
     e.preventDefault();
-    const res = await usersDB.create(newUser);
-    if (res) {
-      setShowAdd(false);
-      setNewUser({ name: '', email: '', role: 'SDR', password: 'password123' });
-      loadUsers();
-      if (res.inviteSent) {
-        toast(`Success! Invitation email sent to ${newUser.email}`, 'success');
-      } else {
-        toast(`User created, but invitation email failed. Check SMTP settings.`, 'warning');
+    if (editingUser) {
+      const updated = await usersDB.update(editingUser.id || editingUser._id, newUser);
+      if (updated) {
+        setShowAdd(false);
+        setEditingUser(null);
+        setNewUser({ name: '', email: '', role: 'SDR', password: 'password123' });
+        loadUsers();
+        toast('User updated successfully', 'success');
+      }
+    } else {
+      const res = await usersDB.create(newUser);
+      if (res) {
+        setShowAdd(false);
+        setNewUser({ name: '', email: '', role: 'SDR', password: 'password123' });
+        loadUsers();
+        if (res.inviteSent) {
+          toast(`Success! Invitation email sent to ${newUser.email}`, 'success');
+        } else {
+          toast(`User created, but invitation email failed. Check SMTP settings.`, 'warning');
+        }
       }
     }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this user?')) return;
+    await usersDB.delete(id);
+    setUsers(prev => prev.filter(u => (u.id || u._id) !== id));
+    toast('User deleted successfully', 'success');
   };
 
   if (!can('manage_users')) return <div className="p-8 text-center">Unauthorized</div>;
@@ -63,9 +82,23 @@ export default function UserList() {
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <TableToolbar 
           selectedCount={selected.length}
-          onEdit={() => toast('Please edit users from the system console.', 'info')}
+          onEdit={() => {
+            if (selected.length !== 1) return toast('Select exactly one user to edit', 'info');
+            const target = users.find(u => (u.id || u._id) === selected[0]);
+            if (target) {
+              setEditingUser(target);
+              setNewUser({ name: target.name, email: target.email, role: target.role });
+              setShowAdd(true);
+            }
+          }}
           onDuplicate={() => toast('Cloning users is restricted.', 'error')}
-          onDelete={() => toast('Deleting users is restricted. Please deactivate instead.', 'error')}
+          onDelete={async () => {
+            if (!window.confirm(`Delete ${selected.length} users?`)) return;
+            await usersDB.bulkDelete(selected);
+            setUsers(prev => prev.filter(u => !selected.includes(u.id || u._id)));
+            setSelected([]);
+            toast('Users deleted successfully', 'success');
+          }}
           onPrint={() => window.print()}
           onExport={() => {
             const data = selected.length ? users.filter(u => selected.includes(u.id || u._id)) : users;
@@ -136,8 +169,8 @@ export default function UserList() {
         <div className="modal-overlay">
           <div className="modal-content animate-in">
             <div style={{ padding: '24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#33475b', margin: 0 }}>Invite New User</h2>
-              <button className="btn btn-secondary" onClick={() => setShowAdd(false)} style={{ padding: 4, minWidth: 'auto', border: 'none' }}><X size={20} /></button>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#33475b', margin: 0 }}>{editingUser ? 'Edit User' : 'Invite New User'}</h2>
+              <button className="btn btn-secondary" onClick={() => { setShowAdd(false); setEditingUser(null); setNewUser({ name: '', email: '', role: 'SDR', password: 'password123' }) }} style={{ padding: 4, minWidth: 'auto', border: 'none' }}><X size={20} /></button>
             </div>
             <form onSubmit={handleAdd} style={{ padding: '24px' }}>
               <div style={{ marginBottom: 20 }}>
@@ -175,7 +208,7 @@ export default function UserList() {
                 </select>
               </div>
               <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '12px' }}>
-                Send Invitation Email
+                {editingUser ? 'Save Changes' : 'Send Invitation Email'}
               </button>
             </form>
           </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, Bell, User, PlusCircle } from 'lucide-react';
+import { Search, Bell, User, PlusCircle, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 
@@ -24,7 +24,8 @@ const BREADCRUMB_MAP = {
 
 export default function Topbar() {
   const { currentUser } = useAuth();
-  const { leads, districts, franchisees, setIsGlobalLeadFormOpen } = useApp();
+  const { leads, districts, franchisees, setIsGlobalLeadFormOpen, refresh, toast } = useApp();
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
@@ -106,14 +107,31 @@ export default function Topbar() {
       </div>
 
       {/* Quick Action */}
-      <button 
-        className="btn btn-primary" 
-        onClick={() => setIsGlobalLeadFormOpen(true)}
-        style={{ padding: '8px 16px', gap: 8, fontSize: 13, display: 'flex', alignItems: 'center' }}
-      >
-        <PlusCircle size={16} />
-        {!location.pathname.includes('/leads') && <span>Create Lead</span>}
-      </button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <button 
+          className="btn btn-secondary" 
+          onClick={async () => {
+            setIsRefreshing(true);
+            await refresh();
+            toast('Data synchronized', 'success');
+            setIsRefreshing(false);
+          }}
+          disabled={isRefreshing}
+          style={{ padding: '8px 12px', display: 'flex', alignItems: 'center' }}
+          title="Refresh Data"
+        >
+          <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+        </button>
+
+        <button 
+          className="btn btn-primary" 
+          onClick={() => setIsGlobalLeadFormOpen(true)}
+          style={{ padding: '8px 16px', gap: 8, fontSize: 13, display: 'flex', alignItems: 'center' }}
+        >
+          <PlusCircle size={16} />
+          {!location.pathname.includes('/leads') && <span>Create Lead</span>}
+        </button>
+      </div>
 
       {/* User Info */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>

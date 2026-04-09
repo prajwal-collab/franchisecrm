@@ -463,6 +463,37 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
+app.put('/api/users/:id', async (req, res) => {
+  try {
+    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
+    const updated = await User.findOneAndUpdate(query, req.body, { new: true });
+    if (!updated) return res.status(404).json({ message: 'User not found' });
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ message: 'User update failed', error: err.message });
+  }
+});
+
+app.delete('/api/users/:id', async (req, res) => {
+  try {
+    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
+    const deleted = await User.findOneAndDelete(query);
+    if (!deleted) return res.status(404).json({ message: 'User not found' });
+    res.status(204).send();
+  } catch (err) {
+    res.status(400).json({ message: 'User deletion failed', error: err.message });
+  }
+});
+
+app.post('/api/users/bulk-delete', async (req, res) => {
+  try {
+    await User.deleteMany({ $or: [{ id: { $in: req.body } }, { _id: { $in: req.body } }] });
+    res.status(204).send();
+  } catch (err) {
+    res.status(400).json({ message: 'Bulk delete failed' });
+  }
+});
+
 // AI Context (Store in DB for persistence across devices)
 const SettingSchema = new mongoose.Schema({ key: String, value: String });
 const Setting = mongoose.model('Setting', SettingSchema);
@@ -508,7 +539,7 @@ app.post('/api/ai/generate-strategy', async (req, res) => {
     `;
 
     const GEMINI_API_KEY = (process.env.Gemini_API_KEY || '').trim();
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -586,7 +617,7 @@ Respond directly to the user's latest query based on this context.`;
       });
     }
     console.log('Gemini API Key Loaded:', GEMINI_API_KEY ? 'Yes' : 'No');
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

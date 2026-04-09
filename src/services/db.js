@@ -171,6 +171,11 @@ export const meetingsDB = crudFactory('/meetings', 'meetings');
 export const usersDB = {
   ...crudFactory('/users', 'users'),
   resendInvite: async (userId) => await smartRequest(`/users/${userId}/resend-invite`, 'POST'),
+  bulkDelete: async (ids) => {
+    await smartRequest('/users/bulk-delete', 'POST', ids);
+    const stored = getLocal('users');
+    setLocal('users', stored.filter(u => !ids.includes(u.id || u._id)));
+  },
   authenticate: async (email, password) => {
     try {
       const res = await fetch(`${API_BASE}/auth/login`, {

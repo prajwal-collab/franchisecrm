@@ -96,10 +96,14 @@ export default function FranchiseeList() {
         Object.keys(records[0]).forEach(col => {
           const lcol = col.toLowerCase();
           if (lcol.includes('name')) mapping[col] = 'name';
-          else if (lcol.includes('person') || lcol.includes('contact')) mapping[col] = 'contactPerson';
-          else if (lcol.includes('phone')) mapping[col] = 'phone';
+          else if (lcol.includes('district')) mapping[col] = 'districtName';
+          else if (lcol.includes('onboarding') || lcol.includes('date')) mapping[col] = 'onboardingDate';
           else if (lcol.includes('committed')) mapping[col] = 'committedAmount';
           else if (lcol.includes('received')) mapping[col] = 'receivedAmount';
+          else if (lcol.includes('status')) mapping[col] = 'paymentStatus';
+          else if (lcol.includes('notes')) mapping[col] = 'notes';
+          else if (lcol.includes('person') || lcol.includes('contact')) mapping[col] = 'contactPerson';
+          else if (lcol.includes('phone')) mapping[col] = 'phone';
         });
       }
       setImportMapping(mapping);
@@ -116,8 +120,23 @@ export default function FranchiseeList() {
         Object.entries(importMapping).forEach(([fileCol, dbCol]) => {
           if (dbCol && row[fileCol] !== undefined && row[fileCol] !== null) {
             let val = String(row[fileCol]).trim();
-            if (val) {
-              if (dbCol.includes('Amount')) val = parseFloat(val) || 0;
+            if (val && val !== '(blank)') {
+              if (dbCol.includes('Amount')) {
+                // Remove commas and currency symbols
+                val = parseFloat(val.replace(/[^0-9.-]+/g, "")) || 0;
+              }
+              if (dbCol === 'onboardingDate') {
+                // Handle DD/MM/YY or DD/MM/YYYY
+                const parts = val.split(/[\/\-.]/);
+                if (parts.length === 3) {
+                  let d = parseInt(parts[0]);
+                  let m = parseInt(parts[1]) - 1;
+                  let y = parseInt(parts[2]);
+                  if (y < 100) y += 2000;
+                  const date = new Date(y, m, d);
+                  if (!isNaN(date)) val = date.toISOString();
+                }
+              }
               obj[dbCol] = val;
               hasData = true;
             }
@@ -126,15 +145,27 @@ export default function FranchiseeList() {
 
         if (!hasData) return null;
 
+        // District Matching
+        if (obj.districtName && !obj.districtId) {
+          const match = districts.find(d => 
+            d.name.toLowerCase().includes(obj.districtName.toLowerCase()) || 
+            obj.districtName.toLowerCase().includes(d.name.toLowerCase())
+          );
+          if (match) obj.districtId = match.id || match._id;
+        }
+
         // Ensure name exists
         if (!obj.name) obj.name = `Partner ${Math.floor(Math.random() * 10000)}`;
 
+        const committed = parseFloat(obj.committedAmount) || 0;
+        const received = parseFloat(obj.receivedAmount) || 0;
+
         return { 
           ...obj,
-          committedAmount: obj.committedAmount || 0,
-          receivedAmount: obj.receivedAmount || 0,
-          onboardingDate: new Date().toISOString(),
-          paymentStatus: ((obj.receivedAmount || 0) >= (obj.committedAmount || 0) && (obj.committedAmount || 0) > 0) ? 'Paid Full' : 'Partial'
+          committedAmount: committed,
+          receivedAmount: received,
+          onboardingDate: obj.onboardingDate || new Date().toISOString(),
+          paymentStatus: obj.paymentStatus || ((received >= committed && committed > 0) ? 'Paid Full' : 'Partial')
         };
       })
       .filter(Boolean);
@@ -471,10 +502,14 @@ export default function FranchiseeList() {
                         >
                           <option value="">Skip this column</option>
                           <option value="name">Franchise Name</option>
+                          <option value="districtName">District Name (Matching)</option>
+                          <option value="onboardingDate">Onboarding Date</option>
                           <option value="contactPerson">Contact Person</option>
                           <option value="phone">Phone Number</option>
                           <option value="committedAmount">Committed (₹)</option>
                           <option value="receivedAmount">Received (₹)</option>
+                          <option value="paymentStatus">Payment Status</option>
+                          <option value="notes">Notes/Remarks</option>
                         </select>
                       </div>
                     ))}

@@ -333,13 +333,29 @@ app.get('/api/users/next-sdr', async (req, res) => {
 
 app.post('/api/ai/chat', async (req, res) => {
   try {
-    const prompt = req.body.prompt || (req.body.messages && req.body.messages[req.body.messages.length - 1]?.content);
-    const key = (process.env.Gemini_API_KEY || '').trim();
-    if (!key) throw new Error('API Key missing');
-    const genAI = new GoogleGenerativeAI(key);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const result = await model.generateContent(prompt);
-    res.json({ reply: result.response.text() });
+    const messages = req.body.messages || [{ role: 'user', content: req.body.prompt }];
+    const apiKey = (process.env.Gemini_API_KEY || '').trim();
+    if (!apiKey) throw new Error('API Key missing');
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: messages.map(m => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }]
+        }))
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error?.message || 'AI API Error');
+    }
+
+    const data = await response.json();
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response from AI';
+    res.json({ reply });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

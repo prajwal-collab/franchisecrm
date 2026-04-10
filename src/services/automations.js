@@ -13,6 +13,17 @@ export function runStageAutomation(lead, newStage, closer, onFranchiseeCreated) 
     case 'Contacted':
       break; // No automation
 
+    case 'Follow Up':
+      if (lead.followUpDate) {
+        tasksDB.create({
+          title: `Follow up with ${lead.firstName} ${lead.lastName}`,
+          leadId: lead.id || lead._id,
+          assignedTo: lead.assignedTo,
+          dueDate: new Date(lead.followUpDate).toISOString(),
+        });
+      }
+      break;
+
     case 'Interested':
       tasksDB.create({
         title: 'Schedule webinar invitation',

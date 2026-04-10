@@ -13,6 +13,7 @@ const LeadSchema = new mongoose.Schema({
   stage: { type: String, default: 'New Lead' },
   score: { type: Number, default: 0 },
   assignedTo: String,
+  followUpDate: String,
   notes: String,
   createdDate: { type: Date, default: Date.now },
   updatedDate: { type: Date, default: Date.now },

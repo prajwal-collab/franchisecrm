@@ -2,9 +2,9 @@ import React from 'react';
 import { STAGES } from '../../data/initialData';
 
 const STAGE_COLORS = {
-  'New Lead': '#64748b', 'Contacted': '#3b82f6', 'Interested': '#8b5cf6',
+  'New Lead': '#64748b', 'Contacted': '#3b82f6', 'Follow Up': '#f59e0b', 'Interested': '#8b5cf6',
   'Webinar Registered': '#06b6d4', 'Webinar Attended': '#0891b2',
-  '1:1 Scheduled': '#f59e0b', 'Qualified': '#10b981', 'Negotiation': '#f97316',
+  '1:1 Scheduled': '#facc15', 'Qualified': '#10b981', 'Negotiation': '#f97316',
   'Closed Won': '#22c55e', 'Closed Lost': '#ef4444',
 };
 

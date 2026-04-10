@@ -47,7 +47,7 @@ export default function TaskList() {
         </div>
         <div className="page-header-actions" style={{ marginTop: 16 }}>
           <button className="btn btn-primary" onClick={() => {
-            setNewTask({ ...newTask, assignedTo: currentUser.id });
+            setNewTask({ ...newTask, assignedTo: currentUser.id || currentUser._id });
             setShowAdd(true);
           }}>
             <Plus size={18} /> Create New Task
@@ -169,7 +169,7 @@ export default function TaskList() {
               }
               setShowAdd(false);
               setEditingTask(null);
-              setNewTask({ title: '', assignedTo: currentUser.id, leadId: '', dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0] });
+              setNewTask({ title: '', assignedTo: currentUser.id || currentUser._id, leadId: '', dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0] });
             }}>
               <div style={{ marginBottom: 20 }}>
                 <label className="form-label">Task Title</label>

@@ -11,7 +11,7 @@ import LeadForm from './LeadForm';
 import { STAGES } from '../../data/initialData';
 
 const STAGE_BADGE = {
-  'New Lead': 'badge-new-lead', 'Contacted': 'badge-contacted', 'Interested': 'badge-interested',
+  'New Lead': 'badge-new-lead', 'Contacted': 'badge-contacted', 'Follow Up': 'badge-warning', 'Interested': 'badge-interested',
   'Webinar Registered': 'badge-webinar-reg', 'Webinar Attended': 'badge-webinar-att',
   '1:1 Scheduled': 'badge-1-1', 'Qualified': 'badge-qualified', 'Negotiation': 'badge-negotiation',
   'Closed Won': 'badge-closed-won', 'Closed Lost': 'badge-closed-lost',
@@ -48,7 +48,16 @@ export default function LeadDetail() {
   };
 
   const handleStageChange = (newStage) => {
-    updateLead(lead.id || lead._id, { ...lead, stage: newStage }, lead.stage);
+    let payload = { ...lead, stage: newStage };
+    if (newStage === 'Follow Up') {
+      const date = prompt('Enter Follow Up Date (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+      if (!date) return; // Cancelled
+      payload.followUpDate = date;
+    }
+    if (newStage !== 'Follow Up') {
+      payload.followUpDate = '';
+    }
+    updateLead(lead.id || lead._id, payload, lead.stage);
   };
 
   return (

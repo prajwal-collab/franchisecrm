@@ -13,7 +13,7 @@ export default function LeadForm({ lead, onClose }) {
     firstName: '', lastName: '', phone: '', email: '',
     districtId: '', profession: '', investmentCapacity: '<1L',
     source: 'Website', notes: '', stage: 'New Lead',
-    assignedTo: '',
+    assignedTo: '', followUpDate: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -42,6 +42,10 @@ export default function LeadForm({ lead, onClose }) {
     const phoneRegex = /^\+91\d{10}$/;
     if (!formData.phone.match(phoneRegex)) {
       newErrors.phone = 'Format: +91XXXXXXXXXX (10 digits)';
+    }
+
+    if (formData.stage === 'Follow Up' && !formData.followUpDate) {
+      newErrors.followUpDate = 'Follow up date is required for this stage';
     }
 
     // Removed mandatory district validation per user request
@@ -226,21 +230,54 @@ export default function LeadForm({ lead, onClose }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 32 }}>
             <div className="form-group">
               <label className="form-label">Pipeline Stage</label>
-              <select className="form-input" value={formData.stage} onChange={e => setFormData({...formData, stage: e.target.value})}>
+              <select className="form-input" value={formData.stage} onChange={e => {
+                const updated = {...formData, stage: e.target.value};
+                if (e.target.value !== 'Follow Up') updated.followUpDate = '';
+                setFormData(updated);
+              }}>
                 {STAGES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
-            <div className="form-group">
-              <label className="form-label">Assigned To</label>
-              <select 
-                className="form-input" 
-                value={formData.assignedTo} 
-                onChange={e => setFormData({...formData, assignedTo: e.target.value})} 
-              >
-                {users.map(u => <option key={u.id || u._id} value={u.id || u._id}>{u.name} ({u.role})</option>)}
-              </select>
-            </div>
+            {formData.stage === 'Follow Up' ? (
+              <div className="form-group">
+                <label className="form-label">Follow Up Date</label>
+                <input 
+                  type="date" 
+                  className="form-input" 
+                  value={formData.followUpDate || ''} 
+                  onChange={e => setFormData({...formData, followUpDate: e.target.value})} 
+                  min={new Date().toISOString().split('T')[0]}
+                />
+                {errors.followUpDate && <div style={{ color: '#ef4444', fontSize: 11, marginTop: 4 }}>{errors.followUpDate}</div>}
+              </div>
+            ) : (
+              <div className="form-group">
+                <label className="form-label">Assigned To</label>
+                <select 
+                  className="form-input" 
+                  value={formData.assignedTo} 
+                  onChange={e => setFormData({...formData, assignedTo: e.target.value})} 
+                >
+                  {users.map(u => <option key={u.id || u._id} value={u.id || u._id}>{u.name} ({u.role})</option>)}
+                </select>
+              </div>
+            )}
           </div>
+          
+          {formData.stage === 'Follow Up' && (
+            <div style={{ marginBottom: 32 }}>
+              <div className="form-group">
+                <label className="form-label">Assigned To</label>
+                <select 
+                  className="form-input" 
+                  value={formData.assignedTo} 
+                  onChange={e => setFormData({...formData, assignedTo: e.target.value})} 
+                >
+                  {users.map(u => <option key={u.id || u._id} value={u.id || u._id}>{u.name} ({u.role})</option>)}
+                </select>
+              </div>
+            </div>
+          )}
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, borderTop: '1px solid var(--border-color)', paddingTop: 24 }}>
             <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>

@@ -3,7 +3,7 @@
 // ============================================================
 
 export const STAGES = [
-  'New Lead', 'Contacted', 'Interested', 'Webinar Registered',
+  'New Lead', 'Contacted', 'Follow Up', 'Interested', 'Webinar Registered',
   'Webinar Attended', '1:1 Scheduled', 'Qualified',
   'Negotiation', 'Closed Won', 'Closed Lost'
 ];

@@ -36,7 +36,12 @@ export default function MeetingList() {
       toast('Please fill in lead and date/time', 'error');
       return;
     }
-    createMeeting(newMeeting);
+    const finalMeeting = {
+      ...newMeeting,
+      scheduledDateTime: new Date(newMeeting.scheduledDateTime).toISOString()
+    };
+    
+    createMeeting(finalMeeting);
     setShowAdd(false);
     setNewMeeting({ leadId: '', eventType: 'Webinar', scheduledDateTime: '', googleMeetLink: '' });
   };

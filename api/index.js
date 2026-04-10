@@ -143,15 +143,16 @@ app.post('/api/leads', async (req, res) => {
 
 app.put('/api/leads/:id', async (req, res) => {
   try {
-    const id = req.params.id;
-    const lead = await Lead.findOneAndUpdate({ $or: [{ id }, { _id: id }] }, { ...req.body, updatedDate: Date.now() }, { new: true });
+    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { $or: [{ id: req.params.id }, { _id: req.params.id }] } : { id: req.params.id };
+    const lead = await Lead.findOneAndUpdate(query, { ...req.body, updatedDate: Date.now() }, { new: true });
     res.json(lead);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.delete('/api/leads/:id', async (req, res) => {
   try {
-    await Lead.findOneAndDelete({ $or: [{ id: req.params.id }, { _id: req.params.id }] });
+    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { $or: [{ id: req.params.id }, { _id: req.params.id }] } : { id: req.params.id };
+    await Lead.findOneAndDelete(query);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -204,14 +205,16 @@ app.post('/api/franchisees', async (req, res) => {
 
 app.put('/api/franchisees/:id', async (req, res) => {
   try {
-    const f = await Franchisee.findOneAndUpdate({ $or: [{ id: req.params.id }, { _id: req.params.id }] }, req.body, { new: true });
+    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { $or: [{ id: req.params.id }, { _id: req.params.id }] } : { id: req.params.id };
+    const f = await Franchisee.findOneAndUpdate(query, req.body, { new: true });
     res.json(f);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.delete('/api/franchisees/:id', async (req, res) => {
   try {
-    await Franchisee.findOneAndDelete({ $or: [{ id: req.params.id }, { _id: req.params.id }] });
+    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { $or: [{ id: req.params.id }, { _id: req.params.id }] } : { id: req.params.id };
+    await Franchisee.findOneAndDelete(query);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -245,14 +248,16 @@ app.post('/api/meetings', async (req, res) => {
 
 app.put('/api/meetings/:id', async (req, res) => {
   try {
-    const m = await Meeting.findOneAndUpdate({ $or: [{ id: req.params.id }, { _id: req.params.id }] }, req.body, { new: true });
+    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { $or: [{ id: req.params.id }, { _id: req.params.id }] } : { id: req.params.id };
+    const m = await Meeting.findOneAndUpdate(query, req.body, { new: true });
     res.json(m);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.delete('/api/meetings/:id', async (req, res) => {
   try {
-    await Meeting.findOneAndDelete({ $or: [{ id: req.params.id }, { _id: req.params.id }] });
+    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { $or: [{ id: req.params.id }, { _id: req.params.id }] } : { id: req.params.id };
+    await Meeting.findOneAndDelete(query);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -270,14 +275,16 @@ app.post('/api/users', async (req, res) => {
 
 app.put('/api/users/:id', async (req, res) => {
   try {
-    const user = await User.findOneAndUpdate({ $or: [{ id: req.params.id }, { _id: req.params.id }] }, req.body, { new: true });
+    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { $or: [{ id: req.params.id }, { _id: req.params.id }] } : { id: req.params.id };
+    const user = await User.findOneAndUpdate(query, req.body, { new: true });
     res.json(user);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/users/:id/resend-invite', async (req, res) => {
   try {
-    const user = await User.findOne({ $or: [{ id: req.params.id }, { _id: req.params.id }] });
+    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { $or: [{ id: req.params.id }, { _id: req.params.id }] } : { id: req.params.id };
+    const user = await User.findOne(query);
     if (!user) throw new Error('User not found');
     await sendInvitationEmail(user);
     res.json({ success: true });
@@ -309,14 +316,16 @@ app.post('/api/tasks', async (req, res) => {
 
 app.put('/api/tasks/:id', async (req, res) => {
   try {
-    const task = await Task.findOneAndUpdate({ $or: [{ id: req.params.id }, { _id: req.params.id }] }, req.body, { new: true });
+    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { $or: [{ id: req.params.id }, { _id: req.params.id }] } : { id: req.params.id };
+    const task = await Task.findOneAndUpdate(query, req.body, { new: true });
     res.json(task);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.delete('/api/tasks/:id', async (req, res) => {
   try {
-    await Task.findOneAndDelete({ $or: [{ id: req.params.id }, { _id: req.params.id }] });
+    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { $or: [{ id: req.params.id }, { _id: req.params.id }] } : { id: req.params.id };
+    await Task.findOneAndDelete(query);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

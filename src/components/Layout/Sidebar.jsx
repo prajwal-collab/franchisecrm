@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { path: '/leads', icon: Users, label: 'Leads', badge: true },
   { path: '/districts', icon: MapPin, label: 'Districts' },
   { path: '/franchisees', icon: Building2, label: 'Franchisees' },
+  { path: '/activations', icon: Layers, label: 'Activations' },
   { path: '/meetings', icon: Video, label: 'Webinars / Meetings' },
   { path: '/tasks', icon: CheckSquare, label: 'Tasks', badge: true },
   { path: '/reports', icon: BarChart3, label: 'Reports' },

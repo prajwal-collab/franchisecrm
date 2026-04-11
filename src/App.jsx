@@ -10,6 +10,7 @@ import LeadDetail from './pages/Leads/LeadDetail';
 import DistrictList from './pages/Districts/DistrictList';
 import FranchiseeList from './pages/Franchisees/FranchiseeList';
 import FranchiseeDetail from './pages/Franchisees/FranchiseeDetail';
+import FranchiseActivations from './pages/Franchisees/FranchiseActivations';
 import MeetingList from './pages/Meetings/MeetingList';
 import TaskList from './pages/Tasks/TaskList';
 import Reports from './pages/Reports/Reports';
@@ -32,6 +33,7 @@ function ProtectedApp() {
           <Route path="/districts" element={<DistrictList />} />
           <Route path="/franchisees" element={<FranchiseeList />} />
           <Route path="/franchisees/:id" element={<FranchiseeDetail />} />
+          <Route path="/activations" element={<FranchiseActivations />} />
           <Route path="/meetings" element={<MeetingList />} />
           <Route path="/tasks" element={<TaskList />} />
           <Route path="/users" element={<UserList />} />

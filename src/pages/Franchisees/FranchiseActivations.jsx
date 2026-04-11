@@ -10,7 +10,7 @@ export default function FranchiseActivations() {
 
   // Compute activation progress for each franchisee
   const activationStats = useMemo(() => {
-    return franchisees.map(f => {
+    return franchisees.filter(f => f.status === 'Active').map(f => {
       const workflow = f.onboardingWorkflow || JSON.parse(JSON.stringify(DEFAULT_WORKFLOW_TEMPLATE));
       let totalSteps = 0;
       let completedSteps = 0;

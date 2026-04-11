@@ -13,6 +13,7 @@ export default function FranchiseeForm({ franchisee, onClose }) {
     committedAmount: 0,
     receivedAmount: 0,
     paymentStatus: 'Partial',
+    status: 'Inactive',
     onboardingDate: new Date().toISOString().split('T')[0],
     notes: ''
   });
@@ -29,6 +30,7 @@ export default function FranchiseeForm({ franchisee, onClose }) {
         committedAmount: franchisee.committedAmount || 0,
         receivedAmount: franchisee.receivedAmount || 0,
         paymentStatus: franchisee.paymentStatus || 'Partial',
+        status: franchisee.status || 'Inactive',
         onboardingDate: franchisee.onboardingDate ? franchisee.onboardingDate.split('T')[0] : new Date().toISOString().split('T')[0],
         notes: franchisee.notes || ''
       });
@@ -157,6 +159,29 @@ export default function FranchiseeForm({ franchisee, onClose }) {
                 </select>
               </div>
               {errors.districtId && <div style={{ color: '#ef4444', fontSize: 11, marginTop: 4 }}>{errors.districtId}</div>}
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 20 }}>
+            <div className="form-group">
+              <label className="form-label">Activation Status</label>
+              <select 
+                className="form-input" 
+                value={formData.status} 
+                onChange={e => setFormData({...formData, status: e.target.value})}
+              >
+                <option value="Inactive">Inactive</option>
+                <option value="Active">Active</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Onboarding Date</label>
+              <input 
+                type="date"
+                className="form-input" 
+                value={formData.onboardingDate} 
+                onChange={e => setFormData({...formData, onboardingDate: e.target.value})} 
+              />
             </div>
           </div>
 

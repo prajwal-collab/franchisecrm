@@ -14,6 +14,7 @@ const FranchiseeSchema = new mongoose.Schema({
   sourceOfLead: String,
   notes: String,
   leadId: String,
+  onboardingWorkflow: { type: mongoose.Schema.Types.Mixed },
   createdDate: { type: Date, default: Date.now },
 });
 

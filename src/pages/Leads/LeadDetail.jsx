@@ -62,123 +62,144 @@ export default function LeadDetail() {
 
   return (
     <div className="animate-in">
-      <div className="page-header" style={{ marginBottom: 32 }}>
+      <div className="page-header" style={{ marginBottom: 40, alignItems: 'flex-end' }}>
         <div className="page-header-left">
-          <button className="btn btn-ghost btn-sm mb-4" onClick={() => navigate('/leads')} style={{ paddingLeft: 0, opacity: 0.7 }}>
+          <button className="btn btn-ghost btn-sm mb-6" onClick={() => navigate('/leads')} style={{ paddingLeft: 0, opacity: 0.7 }}>
             <ChevronLeft size={16} /> Back to Leads
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <h1 className="page-title" style={{ fontSize: 32, fontWeight: 800 }}>{lead.firstName} {lead.lastName}</h1>
-            <span className={`badge ${STAGE_BADGE[lead.stage]}`}>{lead.stage}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+            <div style={{ 
+              width: 64, height: 64, borderRadius: '20px', background: 'var(--brand-primary)', 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', 
+              fontSize: 24, fontWeight: 800, color: 'white',
+              boxShadow: '0 8px 24px rgba(255, 107, 0, 0.2)'
+            }}>
+              {lead.firstName[0]}{lead.lastName[0]}
+            </div>
+            <div>
+              <h1 className="page-title" style={{ fontSize: 36, fontWeight: 800, margin: 0 }}>{lead.firstName} {lead.lastName}</h1>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
+                <span className={`badge ${STAGE_BADGE[lead.stage]}`} style={{ padding: '6px 16px', fontSize: 13 }}>{lead.stage}</span>
+                <div style={{ width: 1, height: 16, background: 'var(--border-color)' }}></div>
+                <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>Registered {new Date(lead.createdDate).toLocaleDateString()}</span>
+              </div>
+            </div>
           </div>
-          <div className="page-subtitle" style={{ color: 'var(--text-muted)', marginTop: 4 }}>ID: {lead.id || lead._id} • Registered {new Date(lead.createdDate).toLocaleDateString()}</div>
         </div>
         <div className="page-header-actions" style={{ display: 'flex', gap: 12 }}>
           {can('edit') && (
-            <button className="sidebar-item" style={{ width: 'auto', background: 'var(--glass-bg)', padding: '8px 16px' }} onClick={() => setShowEdit(true)}>
+            <button className="btn btn-secondary" style={{ padding: '10px 20px', borderRadius: 8 }} onClick={() => setShowEdit(true)}>
               <Edit2 size={16} /> Edit Profile
             </button>
           )}
           {can('delete') && (
-            <button className="btn btn-ghost" style={{ color: '#ef4444' }} onClick={() => { if (confirm('Delete lead?')) { deleteLead(lead.id || lead._id); navigate('/leads'); } }}>
-              <Trash2 size={16} />
+            <button className="btn btn-ghost" style={{ color: '#ef4444', padding: 10 }} onClick={() => { if (confirm('Delete lead?')) { deleteLead(lead.id || lead._id); navigate('/leads'); } }}>
+              <Trash2 size={20} />
             </button>
           )}
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 320px', gap: 32 }}>
-        <div className="flex-col gap-6">
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 340px', gap: 40 }}>
+        <div className="flex-col gap-8">
           {/* Quick Stage Actions */}
-          <div className="glass-card" style={{ padding: 24 }}>
-            <div className="page-subtitle" style={{ marginBottom: 16, color: 'var(--text-muted)', fontSize: 12, textTransform: 'uppercase' }}>Workflow Stage</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-              {STAGES.map(s => (
-                <button 
-                  key={s} 
-                  className={`chip ${lead.stage === s ? 'active' : ''}`}
-                  onClick={() => handleStageChange(s)}
-                  style={{ 
-                    padding: '8px 16px', borderRadius: 100, border: '1px solid var(--glass-border)',
-                    background: lead.stage === s ? 'var(--brand-primary)' : 'var(--glass-bg)',
-                    color: lead.stage === s ? 'white' : 'var(--text-muted)',
-                    fontSize: 13, fontWeight: 600, transition: 'all 0.2s'
-                  }}
-                >
-                  {s}
-                </button>
+          <div className="glass-card" style={{ padding: 24, background: 'var(--bg-white)', border: '1px solid var(--border-color)' }}>
+            <div className="page-subtitle" style={{ marginBottom: 20, color: 'var(--text-muted)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Journey Stage</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, position: 'relative' }}>
+              {STAGES.map((s, idx) => (
+                <div key={s} style={{ display: 'flex', alignItems: 'center' }}>
+                  <button 
+                    className={`chip ${lead.stage === s ? 'active' : ''}`}
+                    onClick={() => handleStageChange(s)}
+                    style={{ 
+                      padding: '8px 16px', borderRadius: 8, border: '1px solid ' + (lead.stage === s ? 'var(--brand-primary)' : 'var(--border-color)'),
+                      background: lead.stage === s ? 'var(--brand-primary)' : 'white',
+                      color: lead.stage === s ? 'white' : 'var(--text-secondary)',
+                      fontSize: 12, fontWeight: 700, transition: 'all 0.2s',
+                      boxShadow: lead.stage === s ? '0 4px 12px rgba(255,107,0,0.2)' : 'none'
+                    }}
+                  >
+                    {s}
+                  </button>
+                  {idx < STAGES.length - 1 && (
+                    <div style={{ width: 16, height: 1, background: 'var(--border-color)', margin: '0 4px' }}></div>
+                  )}
+                </div>
               ))}
             </div>
           </div>
 
-          <div className="tabs" style={{ display: 'flex', gap: 24, borderBottom: '1px solid var(--glass-border)', paddingBottom: 16 }}>
-            {['Overview', 'AI Strategy', 'Tasks', 'Webinars & Meetings', 'Notes'].map(t => (
-              <button 
-                key={t} 
-                className={`tab-btn ${activeTab === t ? 'active' : ''}`} 
-                onClick={() => setActiveTab(t)}
-                style={{ 
-                  background: 'none', border: 'none', color: activeTab === t ? 'var(--brand-primary)' : 'var(--text-muted)',
-                  fontSize: 15, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
-                  padding: '4px 0', position: 'relative'
-                }}
-              >
-                {t}
-                {activeTab === t && <div style={{ position: 'absolute', bottom: -17, left: 0, right: 0, height: 2, background: 'var(--brand-primary)' }} />}
-              </button>
-            ))}
-          </div>
-
-          <div className="animate-in" style={{ animationDelay: '0.1s' }}>
+          <div className="animate-in">
             {activeTab === 'Overview' && (
-              <div className="grid gap-6">
-                <div className="glass-card" style={{ padding: 24 }}>
-                  <h4 style={{ marginBottom: 20, fontSize: 18, fontWeight: 700 }}>Lead Profile</h4>
-                  <div className="detail-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+              <div className="grid gap-8">
+                <div className="glass-card" style={{ padding: 32 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+                    <h4 style={{ margin: 0, fontSize: 20, fontWeight: 800 }}>Master Profile</h4>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                       <div className="text-muted" style={{ fontSize: 11, fontWeight: 700 }}>ENGAGEMENT</div>
+                       <div style={{ width: 100, height: 8, background: 'var(--bg-page)', borderRadius: 10, overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${lead.score}%`, background: 'var(--brand-primary)', borderRadius: 10 }} />
+                       </div>
+                       <span style={{ fontWeight: 800, color: 'var(--brand-primary)' }}>{lead.score}</span>
+                    </div>
+                  </div>
+
+                  <div className="detail-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32 }}>
                     <div className="detail-field">
-                      <div className="detail-field-label" style={{ color: 'var(--text-muted)', fontSize: 11, marginBottom: 4 }}>PHONE</div>
+                      <div className="detail-field-label" style={{ color: 'var(--text-muted)', fontSize: 10, fontWeight: 700, marginBottom: 8, textTransform: 'uppercase' }}>
+                        <Phone size={12} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Contact Number
+                      </div>
                       <div className="detail-field-value" style={{ fontSize: 15, fontWeight: 600 }}>{lead.phone}</div>
                     </div>
                     <div className="detail-field">
-                      <div className="detail-field-label" style={{ color: 'var(--text-muted)', fontSize: 11, marginBottom: 4 }}>EMAIL</div>
+                      <div className="detail-field-label" style={{ color: 'var(--text-muted)', fontSize: 10, fontWeight: 700, marginBottom: 8, textTransform: 'uppercase' }}>
+                        <Mail size={12} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Email Address
+                      </div>
                       <div className="detail-field-value" style={{ fontSize: 15, fontWeight: 600 }}>{lead.email || '—'}</div>
                     </div>
                     <div className="detail-field">
-                      <div className="detail-field-label" style={{ color: 'var(--text-muted)', fontSize: 11, marginBottom: 4 }}>DISTRICT</div>
+                      <div className="detail-field-label" style={{ color: 'var(--text-muted)', fontSize: 10, fontWeight: 700, marginBottom: 8, textTransform: 'uppercase' }}>
+                        <MapPin size={12} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Territory / District
+                      </div>
                       <div className="detail-field-value" style={{ fontSize: 15, fontWeight: 600 }}>{district?.name || 'Pending'}</div>
                     </div>
                     <div className="detail-field">
-                      <div className="detail-field-label" style={{ color: 'var(--text-muted)', fontSize: 11, marginBottom: 4 }}>PROFESSION</div>
+                      <div className="detail-field-label" style={{ color: 'var(--text-muted)', fontSize: 10, fontWeight: 700, marginBottom: 8, textTransform: 'uppercase' }}>
+                        <Briefcase size={12} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Current Profession
+                      </div>
                       <div className="detail-field-value" style={{ fontSize: 15, fontWeight: 600 }}>{lead.profession || '—'}</div>
                     </div>
                     <div className="detail-field">
-                      <div className="detail-field-label" style={{ color: 'var(--text-muted)', fontSize: 11, marginBottom: 4 }}>INVESTMENT</div>
+                      <div className="detail-field-label" style={{ color: 'var(--text-muted)', fontSize: 10, fontWeight: 700, marginBottom: 8, textTransform: 'uppercase' }}>
+                        <Wallet size={12} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Investment Capacity
+                      </div>
                       <div className="detail-field-value" style={{ fontSize: 15, fontWeight: 600 }}>{lead.investmentCapacity}</div>
                     </div>
                     <div className="detail-field">
-                      <div className="detail-field-label" style={{ color: 'var(--text-muted)', fontSize: 11, marginBottom: 4 }}>SOURCE</div>
-                      <div className="detail-field-value" style={{ fontSize: 15, fontWeight: 600 }}>{lead.source}</div>
+                      <div className="detail-field-label" style={{ color: 'var(--text-muted)', fontSize: 10, fontWeight: 700, marginBottom: 8, textTransform: 'uppercase' }}>
+                        <User size={12} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Assigned Expert
+                      </div>
+                      <div className="detail-field-value" style={{ fontSize: 15, fontWeight: 600 }}>{assignedUser?.name || 'Unassigned'}</div>
                     </div>
                   </div>
                 </div>
 
-                <div className="glass-card" style={{ padding: 24 }}>
-                  <h4 style={{ marginBottom: 20, fontSize: 18, fontWeight: 700 }}>System Assignment</h4>
-                  <div className="detail-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-                    <div className="detail-field">
-                      <div className="detail-field-label" style={{ color: 'var(--text-muted)', fontSize: 11, marginBottom: 4 }}>ENGAGEMENT SCORE</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <div style={{ flex: 1, height: 6, background: 'var(--glass-border)', borderRadius: 10 }}>
-                          <div style={{ height: '100%', width: `${lead.score}%`, background: 'var(--brand-primary)', borderRadius: 10 }} />
-                        </div>
-                        <span style={{ fontWeight: 800 }}>{lead.score}</span>
-                      </div>
-                    </div>
-                    <div className="detail-field">
-                      <div className="detail-field-label" style={{ color: 'var(--text-muted)', fontSize: 11, marginBottom: 4 }}>ASSIGNED EXPERT</div>
-                      <div className="detail-field-value" style={{ fontSize: 15, fontWeight: 600 }}>{assignedUser?.name || 'Unassigned'}</div>
-                    </div>
-                  </div>
+                <div className="tabs" style={{ display: 'flex', gap: 32, borderBottom: '1px solid var(--border-color)', marginBottom: 8 }}>
+                  {['AI Strategy', 'Tasks', 'Webinars & Meetings', 'Notes'].map(t => (
+                    <button 
+                      key={t} 
+                      className={`tab-btn ${activeTab === t ? 'active' : t === 'Overview' ? 'hidden' : ''}`} 
+                      onClick={() => setActiveTab(t)}
+                      style={{ 
+                        background: 'none', border: 'none', color: activeTab === t ? 'var(--brand-primary)' : 'var(--text-muted)',
+                        fontSize: 14, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
+                        padding: '12px 0', position: 'relative'
+                      }}
+                    >
+                      {t}
+                      {activeTab === t && <div style={{ position: 'absolute', bottom: -1, left: 0, right: 0, height: 2, background: 'var(--brand-primary)', borderRadius: 100 }} />}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
@@ -330,41 +351,54 @@ export default function LeadDetail() {
         </div>
 
         {/* Sidebar Mini Profile */}
-        <div className="flex-col gap-6">
-          <div className="glass-card" style={{ textAlign: 'center', padding: 32 }}>
-            <div style={{ 
-              width: 80, height: 80, borderRadius: '24px', background: 'var(--brand-primary)', 
-              margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-              fontSize: 28, fontWeight: 800, color: 'white',
-              boxShadow: '0 8px 32px rgba(99, 102, 241, 0.3)'
-            }}>
-              {lead.firstName[0]}{lead.lastName[0]}
-            </div>
-            <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 4 }}>{lead.firstName} {lead.lastName}</h3>
-            <p className="text-muted" style={{ fontSize: 13, marginBottom: 24 }}>{lead.profession || 'Lead'}</p>
+        <div className="flex-col gap-8">
+          <div className="glass-card" style={{ padding: 24, background: 'linear-gradient(135deg, var(--bg-card) 0%, var(--bg-page) 100%)' }}>
+            <div className="text-muted" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.05em', marginBottom: 20, textTransform: 'uppercase' }}>Performance Metrics</div>
             
-            <div style={{ textAlign: 'left', borderTop: '1px solid var(--glass-border)', paddingTop: 24 }}>
-              <div className="mb-6">
-                <div className="text-muted" style={{ fontSize: 10, letterSpacing: '0.05em', marginBottom: 8, textTransform: 'uppercase' }}>Workflow Stage</div>
-                <div className={`badge ${STAGE_BADGE[lead.stage]}`} style={{ width: '100%', justifyContent: 'center', padding: '10px' }}>{lead.stage}</div>
+            <div style={{ marginBottom: 32 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Engagement Score</div>
+                <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--brand-primary)' }}>{lead.score}<span style={{ fontSize: 14, color: 'var(--text-muted)', fontWeight: 400 }}>%</span></div>
               </div>
-              <div>
-                <div className="text-muted" style={{ fontSize: 10, letterSpacing: '0.05em', marginBottom: 4, textTransform: 'uppercase' }}>Engagement Score</div>
-                <div style={{ fontSize: 32, fontWeight: 800 }}>{lead.score}<span style={{ fontSize: 14, color: 'var(--text-muted)', fontWeight: 400 }}>/100</span></div>
+              <div style={{ height: 10, background: 'rgba(0,0,0,0.05)', borderRadius: 10, overflow: 'hidden' }}>
+                <div style={{ 
+                  height: '100%', 
+                  width: `${lead.score}%`, 
+                  background: 'linear-gradient(90deg, var(--brand-primary-light) 0%, var(--brand-primary) 100%)', 
+                  borderRadius: 10,
+                  transition: 'width 1s cubic-bezier(0.16, 1, 0.3, 1)'
+                }} />
               </div>
+            </div>
+
+            <div style={{ padding: 20, background: 'rgba(255,255,255,0.03)', borderRadius: 12, border: '1px solid var(--border-color)' }}>
+               <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 12 }}>QUICK NOTES</div>
+               <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5', fontStyle: 'italic' }}>
+                 "Customer interested in 500sqft territory in Hyderabad..."
+               </p>
             </div>
           </div>
 
           <div className="glass-card" style={{ padding: 24 }}>
-            <h4 style={{ marginBottom: 16, fontSize: 16, fontWeight: 700 }}>Upcoming Tasks</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {leadTasks.filter(t => !t.done).slice(0, 3).map(t => (
-                <div key={t.id} style={{ display: 'flex', gap: 12, fontSize: 13 }}>
-                  <Clock size={16} className="text-warning" style={{ flexShrink: 0, marginTop: 2 }} />
-                  <span>{t.title}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Priority Actions</h4>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--brand-primary)', background: 'var(--brand-primary-light)', padding: '2px 10px', borderRadius: 100 }}>
+                {leadTasks.filter(t => !t.done).length}
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {leadTasks.filter(t => !t.done).slice(0, 4).map(t => (
+                <div key={t.id} style={{ display: 'flex', gap: 12, fontSize: 13, alignItems: 'center' }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--brand-primary)', flexShrink: 0 }} />
+                  <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{t.title}</span>
                 </div>
               ))}
-              {leadTasks.filter(t => !t.done).length === 0 && <p className="text-muted" style={{ fontSize: 13 }}>No pending tasks.</p>}
+              {leadTasks.filter(t => !t.done).length === 0 && (
+                <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                   <CheckCircle size={32} style={{ color: 'var(--brand-primary)', opacity: 0.2, marginBottom: 12 }} />
+                   <p className="text-muted" style={{ fontSize: 12 }}>All tasks completed!</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

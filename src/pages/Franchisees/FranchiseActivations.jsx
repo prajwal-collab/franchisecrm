@@ -72,53 +72,63 @@ export default function FranchiseActivations() {
             No franchise partners found.
           </div>
         ) : (
-          activationStats.map(stat => (
+          activationStats.map((stat, idx) => (
             <div 
               key={stat.id || stat._id}
-              className="glass-card table-row-hover"
+              className={`glass-card table-row-hover swipe-up delay-${(idx % 5) + 1}`}
               style={{ 
-                padding: 24, 
+                padding: '24px 32px', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'space-between',
                 cursor: 'pointer',
-                borderLeft: stat.progress === 100 ? '4px solid #10b981' : stat.progress > 0 ? '4px solid var(--brand-primary)' : '4px solid var(--glass-border)'
+                borderLeft: stat.progress === 100 ? '4px solid #10b981' : stat.progress > 0 ? '4px solid var(--brand-primary)' : '4px solid var(--glass-border)',
+                marginBottom: 12
               }}
               onClick={() => navigate(`/franchisees/${stat.id || stat._id}`)}
             >
               <div style={{ flex: 1 }}>
-                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Building2 size={18} color="var(--text-muted)" />
-                  {stat.name}
-                  {stat.progress === 100 && <CheckCircle size={16} color="#10b981" />}
-                </h3>
-                <div style={{ display: 'flex', gap: 24, fontSize: 13, color: 'var(--text-muted)' }}>
-                  <span><strong style={{ color: 'var(--text-primary)' }}>Owner:</strong> {stat.contactPerson || 'N/A'}</span>
-                  <span><strong style={{ color: 'var(--text-primary)' }}>District:</strong> {stat.districtName}</span>
-                  <span><strong style={{ color: 'var(--text-primary)' }}>Current State:</strong> {stat.currentStageName}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                  <div style={{ padding: 8, borderRadius: 8, background: 'var(--brand-primary-light)', color: 'var(--brand-primary)' }}>
+                    <Building2 size={20} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 18, fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                      {stat.name}
+                      {stat.progress === 100 && <CheckCircle size={16} color="#10b981" style={{ marginLeft: 8 }} />}
+                    </h3>
+                    <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{stat.districtName} Territory</div>
+                  </div>
+                </div>
+                
+                <div style={{ display: 'flex', gap: 24, fontSize: 12, color: 'var(--text-muted)', marginLeft: 44 }}>
+                  <span><strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>MANAGER:</strong> {stat.contactPerson || '—'}</span>
+                  <span><strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>STAGE:</strong> {stat.currentStageName}</span>
                 </div>
               </div>
 
-              <div style={{ width: 300, textAlign: 'right' }}>
-                <div style={{ marginBottom: 8, fontSize: 14, fontWeight: 600, color: stat.progress === 100 ? '#10b981' : 'var(--brand-primary)' }}>
-                  {stat.progress}% Activated
+              <div style={{ width: 340, textAlign: 'right', paddingRight: 24 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 10 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {stat.completedSteps} / {stat.totalSteps} Milestones
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: stat.progress === 100 ? '#10b981' : 'var(--brand-primary)' }}>
+                    {stat.progress}%
+                  </div>
                 </div>
-                <div style={{ height: 8, background: 'rgba(255,255,255,0.05)', borderRadius: 4, overflow: 'hidden', marginBottom: 8 }}>
+                <div style={{ height: 6, background: 'rgba(0,0,0,0.05)', borderRadius: 10, overflow: 'hidden' }}>
                   <div style={{ 
                     height: '100%', 
                     width: `${stat.progress}%`, 
                     background: stat.progress === 100 ? '#10b981' : 'var(--brand-primary)',
-                    borderRadius: 4,
-                    transition: 'width 0.5s ease-out'
+                    borderRadius: 10,
+                    transition: 'width 0.8s cubic-bezier(0.16, 1, 0.3, 1)'
                   }} />
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                  {stat.completedSteps} of {stat.totalSteps} steps completed
                 </div>
               </div>
 
-              <div style={{ paddingLeft: 24, color: 'var(--brand-primary)' }}>
-                <ChevronRight size={20} />
+              <div style={{ color: 'var(--brand-primary)', opacity: 0.5 }}>
+                <ChevronRight size={24} />
               </div>
             </div>
           ))

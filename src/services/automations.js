@@ -139,6 +139,27 @@ export function createPaymentReminderTask(franchisee, closerId) {
   });
 }
 
+// ---- Franchise Activation Flow ----
+export function runFranchiseActivationAutomation(franchisee, assignedTo) {
+  const steps = [
+    { title: 'Complete Legal Paperwork & Agreement', delay: 1 },
+    { title: 'Setup Sales Material & Brand Kit', delay: 2 },
+    { title: 'Initial Partner Training Session', delay: 3 },
+    { title: 'Marketing Support Kickoff', delay: 5 },
+    { title: 'Setup CRM Access & Dashboard', delay: 0 }
+  ];
+
+  steps.forEach(step => {
+    tasksDB.create({
+      title: `${step.title} – ${franchisee.name}`,
+      franchiseeId: franchisee.id || franchisee._id,
+      assignedTo: assignedTo,
+      dueDate: daysFromNow(step.delay),
+      done: false
+    });
+  });
+}
+
 // ---- Meeting Reminder Task ----
 export function createMeetingReminderTask(meeting, leadId, sdrId) {
   const reminderDate = daysFromDate(meeting.scheduledDateTime, -1);

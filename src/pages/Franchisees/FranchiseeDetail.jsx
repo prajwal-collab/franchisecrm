@@ -236,56 +236,83 @@ export default function FranchiseeDetail() {
       {activeTab === 'Activation Workflow' && (
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           {workflow.map((stage, stageIdx) => (
-            <div key={stage.stageId || stageIdx} className="glass-card" style={{ marginBottom: 24, padding: 24 }}>
-              <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 20, color: 'var(--brand-primary)' }}>{stage.stageName}</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div 
+              key={stage.stageId || stageIdx} 
+              className={`glass-card swipe-up delay-${(stageIdx % 5) + 1}`} 
+              style={{ marginBottom: 40, padding: 32, position: 'relative', overflow: 'visible' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
+                <div style={{ 
+                  width: 40, height: 40, borderRadius: 12, background: 'var(--brand-primary-light)', 
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-primary)' 
+                }}>
+                  <Layers size={20} />
+                </div>
+                <h3 style={{ fontSize: 20, fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>{stage.stageName}</h3>
+              </div>
+
+              <div className="timeline-root">
+                <div className="timeline-line"></div>
                 {stage.steps.map((step, stepIdx) => (
-                  <div key={step.id || stepIdx} style={{ 
-                    padding: 16, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--glass-border)', borderRadius: 12,
-                    borderLeft: step.status === 'Done' ? '4px solid #10b981' : step.status === 'In Progress' ? '4px solid #f59e0b' : '1px solid var(--glass-border)'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        {step.status === 'Done' ? <CheckCircle size={18} color="#10b981" /> : <Clock size={18} color="var(--text-muted)" />}
-                        <span style={{ fontSize: 15, fontWeight: 600, color: step.status === 'Done' ? 'var(--text-muted)' : 'var(--text-primary)', textDecoration: step.status === 'Done' ? 'line-through' : 'none' }}>
-                          {step.text}
-                        </span>
-                        {step.link && (
-                          <a href={step.link} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--brand-primary)', textDecoration: 'underline' }}>Link</a>
-                        )}
+                  <div key={step.id || stepIdx} className="timeline-step">
+                    <div className={`timeline-node ${step.status === 'Done' ? 'done' : step.status === 'In Progress' ? 'active' : ''}`}></div>
+                    
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 20 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                          <span style={{ 
+                            fontSize: 16, 
+                            fontWeight: 700, 
+                            color: step.status === 'Done' ? 'var(--text-muted)' : 'var(--text-primary)',
+                            textDecoration: step.status === 'Done' ? 'line-through' : 'none',
+                            transition: 'all 0.3s'
+                          }}>
+                            {step.text}
+                          </span>
+                          {step.status === 'Done' && <CheckCircle size={16} color="#10b981" className="pulse-success" />}
+                        </div>
+                        
+                        <textarea 
+                          className="glass-input" 
+                          placeholder="Updates or findings..." 
+                          style={{ width: '100%', minHeight: 60, fontSize: 13, background: 'rgba(0,0,0,0.02)', border: 'none' }}
+                          value={step.notes || ''}
+                          onChange={e => handleWorkflowChange(stageIdx, stepIdx, 'notes', e.target.value)}
+                        />
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <select 
                           className="glass-input" 
-                          style={{ padding: '6px 12px', fontSize: 13, minWidth: 130 }}
+                          style={{ 
+                            padding: '6px 12px', fontSize: 12, fontWeight: 600, minWidth: 120,
+                            color: step.status === 'Done' ? '#10b981' : step.status === 'In Progress' ? '#f59e0b' : 'var(--text-muted)'
+                          }}
                           value={step.status} 
                           onChange={e => handleWorkflowChange(stageIdx, stepIdx, 'status', e.target.value)}
                         >
-                          <option value="Pending" style={{ background: 'var(--bg-deep)' }}>Pending</option>
-                          <option value="In Progress" style={{ background: 'var(--bg-deep)' }}>In Progress</option>
-                          <option value="Done" style={{ background: 'var(--bg-deep)' }}>Done</option>
+                          <option value="Pending">Pending</option>
+                          <option value="In Progress">In Progress</option>
+                          <option value="Done">Completed</option>
                         </select>
-                        <button onClick={() => handleEditStep(stageIdx, stepIdx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--brand-primary)' }}><Edit2 size={16} /></button>
-                        <button onClick={() => handleDeleteStep(stageIdx, stepIdx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}><Trash2 size={16} /></button>
+                        <button onClick={() => handleEditStep(stageIdx, stepIdx)} className="btn btn-ghost" style={{ padding: 6, minWidth: 'auto' }}><Edit2 size={14} /></button>
+                        <button onClick={() => handleDeleteStep(stageIdx, stepIdx)} className="btn btn-ghost" style={{ padding: 6, minWidth: 'auto', color: '#ef4444' }}><Trash2 size={14} /></button>
                       </div>
                     </div>
-                    <textarea 
-                      className="glass-input" 
-                      placeholder="Add progress update, findings, or notes..." 
-                      style={{ width: '100%', height: 60, fontSize: 13 }}
-                      value={step.notes || ''}
-                      onChange={e => handleWorkflowChange(stageIdx, stepIdx, 'notes', e.target.value)}
-                    />
                   </div>
                 ))}
+
+                <button 
+                  className="btn btn-ghost" 
+                  style={{ 
+                    marginTop: 16, width: '100%', border: '1px dashed var(--border-color)', 
+                    borderRadius: var(--radius-md), fontSize: 13, background: 'transparent' 
+                  }}
+                  onClick={() => handleAddStep(stageIdx)}
+                >
+                  <Plus size={14} /> Add Progress Step
+                </button>
               </div>
-              <button 
-                className="btn btn-ghost" 
-                style={{ marginTop: 16, width: '100%', border: '1px dashed var(--glass-border)' }}
-                onClick={() => handleAddStep(stageIdx)}
-              >
-                <Plus size={16} /> Add Custom Step
-              </button>
             </div>
           ))}
         </div>

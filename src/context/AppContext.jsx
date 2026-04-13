@@ -173,11 +173,22 @@ export function AppProvider({ children }) {
 
   // ---- Franchisee operations ----
   const updateFranchisee = useCallback(async (id, updates) => {
+    const existing = franchisees.find(f => (f.id || f._id) === id);
     const f = await franchiseesDB.update(id, updates);
+    
+    // Trigger activation flow if status changed to Active
+    if (updates.status === 'Active' && (!existing || existing.status !== 'Active')) {
+      const closerUser = users.find(u => u.role === 'Closer');
+      const { runFranchiseActivationAutomation } = await import('../services/automations');
+      runFranchiseActivationAutomation(f, closerUser?.id || currentUser?.id);
+      toast(`🚀 Franchise Activated! Activation tasks generated for ${f.name}`, 'success');
+    } else {
+      toast('Franchisee updated', 'success');
+    }
+    
     await refresh();
-    toast('Franchisee updated', 'success');
     return f;
-  }, [refresh, toast]);
+  }, [refresh, toast, franchisees, users, currentUser]);
 
   const createFranchisee = useCallback(async (data) => {
     const f = await franchiseesDB.create(data);

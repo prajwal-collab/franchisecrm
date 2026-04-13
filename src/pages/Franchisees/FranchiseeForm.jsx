@@ -153,7 +153,7 @@ export default function FranchiseeForm({ franchisee, onClose }) {
                   onChange={e => setFormData({...formData, districtId: e.target.value})}
                 >
                   <option value="">Select District</option>
-                  {districts.map(d => (
+                  {(districts || []).map(d => (
                     <option key={d.id || d._id} value={d.id || d._id}>{d.name}</option>
                   ))}
                 </select>
@@ -169,10 +169,14 @@ export default function FranchiseeForm({ franchisee, onClose }) {
                 className="form-input" 
                 value={formData.status} 
                 onChange={e => setFormData({...formData, status: e.target.value})}
+                style={{ background: '#fff7ed', borderColor: '#fdba74' }}
               >
                 <option value="Inactive">Inactive</option>
                 <option value="Active">Active</option>
               </select>
+              <p style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>
+                Changing to 'Active' triggers the activation flow.
+              </p>
             </div>
             <div className="form-group">
               <label className="form-label">Onboarding Date</label>

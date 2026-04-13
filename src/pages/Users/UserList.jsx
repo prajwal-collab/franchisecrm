@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, Mail, Shield, Trash2, X, Send, CheckSquare, Square, Edit2 } from 'lucide-react';
+import { UserPlus, Mail, Shield, Trash2, X, Send, CheckSquare, Square, Edit2, Eye, EyeOff, RefreshCcw } from 'lucide-react';
 import { usersDB, exportToCSV } from '../../services/db';
 import TableToolbar from '../../components/TableToolbar';
 import { useAuth } from '../../context/AuthContext';
@@ -13,13 +13,23 @@ export default function UserList() {
   const [editingUser, setEditingUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState([]);
+  const [showPassword, setShowPassword] = useState(false);
   
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
     role: 'SDR',
-    password: 'password123' // Default for now
+    password: ''
   });
+
+  const generatePassword = () => {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+    let pass = '';
+    for (let i = 0; i < 12; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setNewUser(prev => ({ ...prev, password: pass }));
+  };
 
   useEffect(() => {
     loadUsers();
@@ -39,7 +49,7 @@ export default function UserList() {
       if (updated) {
         setShowAdd(false);
         setEditingUser(null);
-        setNewUser({ name: '', email: '', role: 'SDR', password: 'password123' });
+        setNewUser({ name: '', email: '', role: 'SDR', password: '' });
         loadUsers();
         toast('User updated successfully', 'success');
       }
@@ -47,7 +57,7 @@ export default function UserList() {
       const res = await usersDB.create(newUser);
       if (res) {
         setShowAdd(false);
-        setNewUser({ name: '', email: '', role: 'SDR', password: 'password123' });
+        setNewUser({ name: '', email: '', role: 'SDR', password: '' });
         loadUsers();
         if (res.inviteSent) {
           toast(`Success! Invitation email sent to ${newUser.email}`, 'success');
@@ -199,7 +209,7 @@ export default function UserList() {
           <div className="modal-content animate-in">
             <div style={{ padding: '24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 style={{ fontSize: 18, fontWeight: 700, color: '#33475b', margin: 0 }}>{editingUser ? 'Edit User' : 'Invite New User'}</h2>
-              <button className="btn btn-secondary" onClick={() => { setShowAdd(false); setEditingUser(null); setNewUser({ name: '', email: '', role: 'SDR', password: 'password123' }) }} style={{ padding: 4, minWidth: 'auto', border: 'none' }}><X size={20} /></button>
+              <button className="btn btn-secondary" onClick={() => { setShowAdd(false); setEditingUser(null); setNewUser({ name: '', email: '', role: 'SDR', password: '' }); setShowPassword(false); }} style={{ padding: 4, minWidth: 'auto', border: 'none' }}><X size={20} /></button>
             </div>
             <form onSubmit={handleAdd} style={{ padding: '24px' }}>
               <div style={{ marginBottom: 20 }}>
@@ -236,6 +246,42 @@ export default function UserList() {
                   <option value="Viewer">Viewer (Read Only)</option>
                 </select>
               </div>
+
+              {!editingUser && (
+                <div style={{ marginBottom: 32 }}>
+                  <label className="form-label">Password</label>
+                  <div style={{ position: 'relative', display: 'flex', gap: 8 }}>
+                    <div style={{ position: 'relative', flex: 1 }}>
+                      <input 
+                        className="form-input" 
+                        type={showPassword ? 'text' : 'password'}
+                        required 
+                        value={newUser.password} 
+                        onChange={e => setNewUser({...newUser, password: e.target.value})}
+                        placeholder="Set user password"
+                        style={{ paddingRight: 40 }}
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#7c98b6', cursor: 'pointer' }}
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                    <button 
+                      type="button" 
+                      className="btn btn-secondary" 
+                      onClick={generatePassword}
+                      title="Generate Random Password"
+                      style={{ padding: '0 12px' }}
+                    >
+                      <RefreshCcw size={18} />
+                    </button>
+                  </div>
+                  <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 8 }}>This password will be shared with the user via email.</p>
+                </div>
+              )}
               <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '12px' }}>
                 {editingUser ? 'Save Changes' : 'Send Invitation Email'}
               </button>

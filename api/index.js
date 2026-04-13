@@ -92,7 +92,7 @@ const District = mongoose.models.District || mongoose.model('District', new mong
 }, { strict: false }));
 
 const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({
-  id: String, name: String, email: { type: String, unique: true }, role: String
+  id: String, name: String, email: { type: String, unique: true }, role: String, password: String, avatar: String
 }, { strict: false }));
 
 const Task = mongoose.models.Task || mongoose.model('Task', new mongoose.Schema({
@@ -256,9 +256,19 @@ app.put('/api/meetings/:id', async (req, res) => {
 
 app.delete('/api/meetings/:id', async (req, res) => {
   try {
-    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { $or: [{ id: req.params.id }, { _id: req.params.id }] } : { id: req.params.id };
+    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
     await Meeting.findOneAndDelete(query);
     res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// --- Auth & Users ---
+app.post('/api/auth/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email, password });
+    if (user) res.json(user);
+    else res.status(401).json({ message: 'Invalid credentials' });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -266,11 +276,36 @@ app.get('/api/users', async (req, res) => {
   try { res.json(await User.find()); } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+app.get('/api/users/sdrs', async (req, res) => {
+  try { res.json(await User.find({ role: 'SDR' })); } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.post('/api/users', async (req, res) => {
   try {
-    const user = new User({ ...req.body, id: crypto.randomUUID() });
-    await user.save(); res.json(user);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+    const { name, email, role, password } = req.body;
+    const existing = await User.findOne({ email });
+    if (existing) return res.status(400).json({ message: 'User already exists' });
+
+    const user = new User({
+      id: crypto.randomUUID(),
+      name,
+      email,
+      role,
+      password: password || 'password123',
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=FF6B00&color=fff`
+    });
+    await user.save();
+
+    try {
+      await sendInvitationEmail(user);
+      res.status(201).json({ ...user.toObject(), inviteSent: true });
+    } catch (mailErr) {
+      console.error('Mail sending failed:', mailErr);
+      res.status(201).json({ ...user.toObject(), inviteSent: false, error: mailErr.message });
+    }
+  } catch (err) {
+    res.status(400).json({ message: 'User creation failed', error: err.message });
+  }
 });
 
 app.put('/api/users/:id', async (req, res) => {
@@ -330,30 +365,114 @@ app.delete('/api/tasks/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+let sdrCounter = 0;
 app.get('/api/users/next-sdr', async (req, res) => {
   try {
     const sdrs = await User.find({ role: 'SDR' });
     if (!sdrs.length) return res.status(404).json({ error: 'No SDRs' });
-    // Quick random SDR for rotation
-    const sdr = sdrs[Math.floor(Math.random() * sdrs.length)];
+    const sdr = sdrs[sdrCounter % sdrs.length];
+    sdrCounter++;
     res.json(sdr);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// --- AI & Settings ---
+const Setting = mongoose.models.Setting || mongoose.model('Setting', new mongoose.Schema({ key: String, value: String }));
+
+app.get('/api/settings/ai-context', async (req, res) => {
+  try {
+    const s = await Setting.findOne({ key: 'ai_context' });
+    res.json({ value: s ? s.value : '' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/settings/ai-context', async (req, res) => {
+  try {
+    await Setting.findOneAndUpdate({ key: 'ai_context' }, { value: req.body.value }, { upsert: true });
+    res.sendStatus(200);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/ai/generate-strategy', async (req, res) => {
+  try {
+    const { leadDetails } = req.body;
+    const context = await Setting.findOne({ key: 'ai_context' });
+    const businessContext = context ? context.value : "EarlyJobs Franchise CRM";
+
+    const prompt = `
+    You are an expert sales assistant for EarlyJobs Franchise.
+    Business Context (The Handbook):
+    ${businessContext}
+
+    Lead Details:
+    - Name: ${leadDetails.firstName} ${leadDetails.lastName}
+    - Profession: ${leadDetails.profession}
+    - Location: ${leadDetails.districtName}
+    - Stage: ${leadDetails.stage}
+    - Capacity: ${leadDetails.investmentCapacity}
+    - Current Notes: ${leadDetails.notes}
+
+    Task:
+    Provide a concise sales strategy including:
+    1. A "Hook" based on their location and profession.
+    2. A WhatsApp/Call script snippet.
+    3. How to handle potential objections for this specific lead.
+    4. Next best action.
+
+    Format in Markdown. Keep it professional and punchy.
+    `;
+
+    const apiKey = (process.env.Gemini_API_KEY || '').trim();
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        system_instruction: {
+          parts: [{ text: 'You are a highly experienced Senior Sales Strategist at EarlyJobs. Your goal is to provide punchy, human-sounding sales playbooks.' }]
+        }
+      })
+    });
+
+    if (!response.ok) throw new Error('AI API Error');
+    const data = await response.json();
+    res.json({ strategy: data.candidates[0].content.parts[0].text });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/ai/chat', async (req, res) => {
   try {
-    const messages = req.body.messages || [{ role: 'user', content: req.body.prompt }];
+    const { messages } = req.body;
     const apiKey = (process.env.Gemini_API_KEY || '').trim();
-    if (!apiKey) throw new Error('API Key missing');
+    if (!apiKey) throw new Error('Gemini API Key missing');
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+    const leads = await Lead.find({}, 'firstName lastName stage source profession investmentCapacity notes updatedDate').lean();
+    const districts = await District.find({}, 'name status notes').lean();
+    const franchisees = await Franchisee.find({}, 'name districtId committedAmount receivedAmount paymentStatus notes').lean();
+
+    const crmData = {
+      leadsTotal: leads.length,
+      franchiseesTotal: franchisees.length,
+      districtsTotal: districts.length,
+      leads: leads,
+      districts: districts,
+      franchisees: franchisees
+    };
+
+    const systemPrompt = `You are the EarlyJobs CRM Insight Assistant. 
+    Analyze the following CRM data to help users manage their franchise pipeline.
+    CRM DATA: ${JSON.stringify(crmData)}
+    Provide executive, data-driven, and Encouraging insights.`;
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: messages.map(m => ({
           role: m.role === 'assistant' ? 'model' : 'user',
           parts: [{ text: m.content }]
-        }))
+        })),
+        system_instruction: { parts: [{ text: systemPrompt }] }
       })
     });
 
@@ -363,7 +482,7 @@ app.post('/api/ai/chat', async (req, res) => {
     }
 
     const data = await response.json();
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response from AI';
+    const reply = data.candidates[0].content.parts[0].text;
     res.json({ reply });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

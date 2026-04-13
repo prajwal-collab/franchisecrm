@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ChevronLeft, Building2, MapPin, Phone, 
   Mail, Wallet, TrendingUp, Calendar, 
-  Save, Plus, History, FileText, CheckCircle, Clock, Trash2, Edit2
+  Save, Plus, History, FileText, CheckCircle, Clock, Trash2, Edit2, Layers
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
@@ -306,7 +306,7 @@ export default function FranchiseeDetail() {
                   className="btn btn-ghost" 
                   style={{ 
                     marginTop: 16, width: '100%', border: '1px dashed var(--border-color)', 
-                    borderRadius: var(--radius-md), fontSize: 13, background: 'transparent' 
+                    borderRadius: 'var(--radius-md)', fontSize: 13, background: 'transparent' 
                   }}
                   onClick={() => handleAddStep(stageIdx)}
                 >

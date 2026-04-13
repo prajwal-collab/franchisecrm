@@ -491,7 +491,7 @@ export default function LeadList() {
                 const lid = lead._id || lead.id;
                 if (!lid) return null; // Safety check
                 return (
-                  <tr key={lid} style={{ cursor: 'pointer' }} onClick={() => navigate(`/leads/${lid}`)}>
+                  <tr key={lid} style={{ cursor: 'pointer' }} onClick={() => lid && navigate(`/leads/${lid}`)}>
                     <td onClick={e => { e.stopPropagation(); toggleSelect(lid); }}>
                       {selected.includes(lid) ? <CheckSquare size={16} color="var(--brand-primary)" /> : <Square size={16} />}
                     </td>

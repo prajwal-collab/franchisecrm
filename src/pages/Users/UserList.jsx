@@ -60,9 +60,13 @@ export default function UserList() {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
-    await usersDB.delete(id);
-    setUsers(prev => prev.filter(u => (u.id || u._id) !== id));
-    toast('User deleted successfully', 'success');
+    const success = await usersDB.delete(id);
+    if (success) {
+      setUsers(prev => prev.filter(u => (u.id || u._id) !== id));
+      toast('User deleted successfully', 'success');
+    } else {
+      toast('Failed to delete user from server. Please check your connection.', 'error');
+    }
   };
 
   if (!can('manage_users')) return <div className="p-8 text-center">Unauthorized</div>;
@@ -94,10 +98,14 @@ export default function UserList() {
           onDuplicate={() => toast('Cloning users is restricted.', 'error')}
           onDelete={async () => {
             if (!window.confirm(`Delete ${selected.length} users?`)) return;
-            await usersDB.bulkDelete(selected);
-            setUsers(prev => prev.filter(u => !selected.includes(u.id || u._id)));
-            setSelected([]);
-            toast('Users deleted successfully', 'success');
+            const success = await usersDB.bulkDelete(selected);
+            if (success) {
+              setUsers(prev => prev.filter(u => !selected.includes(u.id || u._id)));
+              setSelected([]);
+              toast('Users deleted successfully', 'success');
+            } else {
+              toast('Bulk delete failed. Some users might not have been removed.', 'error');
+            }
           }}
           onPrint={() => window.print()}
           onExport={() => {

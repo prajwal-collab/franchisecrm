@@ -36,11 +36,11 @@ const smartRequest = async (path, method = 'GET', body = null) => {
     if (contentType && contentType.includes('application/json')) {
       return await res.json();
     }
-    return null;
+    return res.ok; // Return true for successful empty responses (like 204)
   } catch (err) {
     console.error(`❌ SmartRequest failed [${method} ${path}]:`, err.message);
     if (errorMessage) console.error('Details:', errorMessage);
-    return null;
+    return false; // Return false on error
   }
 };
 
@@ -93,9 +93,12 @@ const crudFactory = (endpoint, localKey) => ({
     return res;
   },
   delete: async (id) => {
-    await smartRequest(`${endpoint}/${id}`, 'DELETE');
-    const records = getLocal(localKey);
-    setLocal(localKey, records.filter(r => (r.id || r._id) !== id));
+    const success = await smartRequest(`${endpoint}/${id}`, 'DELETE');
+    if (success) {
+      const records = getLocal(localKey);
+      setLocal(localKey, records.filter(r => (r.id || r._id) !== id));
+    }
+    return success;
   },
   bulkCreate: async (records) => {
     const res = await smartRequest(`${endpoint}/bulk`, 'POST', records);
@@ -125,9 +128,12 @@ export const leadsDB = {
     );
   },
   bulkDelete: async (ids) => {
-    await smartRequest('/leads/bulk-delete', 'POST', ids);
-    const records = getLocal('leads');
-    setLocal('leads', records.filter(r => !ids.includes(r.id || r._id)));
+    const success = await smartRequest('/leads/bulk-delete', 'POST', ids);
+    if (success) {
+      const records = getLocal('leads');
+      setLocal('leads', records.filter(r => !ids.includes(r.id || r._id)));
+    }
+    return success;
   },
   bulkUpdate: async (ids, updates) => {
     // Serial updates - no bulk PUT endpoint on server
@@ -151,17 +157,23 @@ export const districtsDB = {
     });
   },
   bulkDelete: async (ids) => {
-    await smartRequest('/districts/bulk-delete', 'POST', ids);
-    const stored = getLocal('districts');
-    setLocal('districts', stored.filter(d => !ids.includes(d.id || d._id)));
+    const success = await smartRequest('/districts/bulk-delete', 'POST', ids);
+    if (success) {
+      const stored = getLocal('districts');
+      setLocal('districts', stored.filter(d => !ids.includes(d.id || d._id)));
+    }
+    return success;
   }
 };
 export const franchiseesDB = {
   ...crudFactory('/franchisees', 'franchisees'),
   bulkDelete: async (ids) => {
-    await smartRequest('/franchisees/bulk-delete', 'POST', ids);
-    const stored = getLocal('franchisees');
-    setLocal('franchisees', stored.filter(f => !ids.includes(f.id || f._id)));
+    const success = await smartRequest('/franchisees/bulk-delete', 'POST', ids);
+    if (success) {
+      const stored = getLocal('franchisees');
+      setLocal('franchisees', stored.filter(f => !ids.includes(f.id || f._id)));
+    }
+    return success;
   }
 };
 
@@ -172,9 +184,12 @@ export const usersDB = {
   ...crudFactory('/users', 'users'),
   resendInvite: async (userId) => await smartRequest(`/users/${userId}/resend-invite`, 'POST'),
   bulkDelete: async (ids) => {
-    await smartRequest('/users/bulk-delete', 'POST', ids);
-    const stored = getLocal('users');
-    setLocal('users', stored.filter(u => !ids.includes(u.id || u._id)));
+    const success = await smartRequest('/users/bulk-delete', 'POST', ids);
+    if (success) {
+      const stored = getLocal('users');
+      setLocal('users', stored.filter(u => !ids.includes(u.id || u._id)));
+    }
+    return success;
   },
   authenticate: async (email, password) => {
     try {

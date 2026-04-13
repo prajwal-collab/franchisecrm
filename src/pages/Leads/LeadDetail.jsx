@@ -31,7 +31,7 @@ export default function LeadDetail() {
   const [aiStrategy, setAiStrategy] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
 
-  const lead = leads.find(l => (l.id || l._id) === id);
+  const lead = leads.find(l => l.id === id || l._id === id);
   const district = districts.find(d => (d.id || d._id) === lead?.districtId);
   const assignedUser = users.find(u => (u.id || u._id) === lead?.assignedTo);
   const leadTasks = tasks.filter(t => t.leadId === id);

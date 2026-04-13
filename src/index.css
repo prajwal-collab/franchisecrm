@@ -521,3 +521,27 @@ body {
 .badge-closed-lost    { background: #fff1f2; color: #be123c; border: 1px solid #fda4af; }
 .badge-new            { background: #f0f9ff; color: #0369a1; }
 
+/* ---- Custom Minimal Scrollbar ---- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd6e2;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #7c98b6;
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd6e2 transparent;
+}

@@ -22,7 +22,7 @@ export default function KanbanView({ leads, districts, onLeadClick }) {
             {stageLeads.map(lead => {
               const district = districts.find(d => d.id === lead.districtId);
               return (
-                <div key={lead.id} className="kanban-card" onClick={() => onLeadClick(lead.id)}>
+                <div key={lead.id || lead._id} className="kanban-card" onClick={() => (lead.id || lead._id) && onLeadClick(lead.id || lead._id)}>
                   <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{lead.firstName} {lead.lastName}</div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>{district?.name || 'Pending'}</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

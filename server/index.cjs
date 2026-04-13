@@ -130,10 +130,19 @@ app.put('/api/leads/:id', async (req, res) => {
 
 app.delete('/api/leads/:id', async (req, res) => {
   try {
-    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
-    await Lead.findOneAndDelete(query);
+    const { id } = req.params;
+    const query = { $or: [{ id }] };
+    if (mongoose.Types.ObjectId.isValid(id)) query.$or.push({ _id: id });
+    
+    const deleted = await Lead.findOneAndDelete(query);
+    if (!deleted) {
+      console.log(`[DELETE] Lead not found: ${id}`);
+    } else {
+      console.log(`[DELETE] Lead deleted: ${id} (${deleted.firstName} ${deleted.lastName})`);
+    }
     res.status(204).send();
   } catch (e) {
+    console.error(`[DELETE] Lead error: ${e.message}`);
     res.status(400).json({ error: e.message });
   }
 });
@@ -203,10 +212,19 @@ app.put('/api/districts/:id', async (req, res) => {
 
 app.delete('/api/districts/:id', async (req, res) => {
   try {
-    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
-    await District.findOneAndDelete(query);
+    const { id } = req.params;
+    const query = { $or: [{ id }] };
+    if (mongoose.Types.ObjectId.isValid(id)) query.$or.push({ _id: id });
+
+    const deleted = await District.findOneAndDelete(query);
+    if (!deleted) {
+      console.log(`[DELETE] District not found: ${id}`);
+    } else {
+      console.log(`[DELETE] District deleted: ${id} (${deleted.name})`);
+    }
     res.status(204).send();
   } catch (e) {
+    console.error(`[DELETE] District error: ${e.message}`);
     res.status(400).json({ error: e.message });
   }
 });
@@ -277,11 +295,19 @@ app.put('/api/franchisees/:id', async (req, res) => {
 
 app.delete('/api/franchisees/:id', async (req, res) => {
   try {
-    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
+    const { id } = req.params;
+    const query = { $or: [{ id }] };
+    if (mongoose.Types.ObjectId.isValid(id)) query.$or.push({ _id: id });
+
     const deleted = await Franchisee.findOneAndDelete(query);
-    if (!deleted) return res.status(404).json({ message: 'Franchisee not found' });
+    if (!deleted) {
+      console.log(`[DELETE] Franchisee not found: ${id}`);
+      return res.status(404).json({ message: 'Franchisee not found' });
+    }
+    console.log(`[DELETE] Franchisee deleted: ${id} (${deleted.name})`);
     res.status(204).send();
   } catch (err) {
+    console.error(`[DELETE] Franchisee error: ${err.message}`);
     res.status(400).json({ message: 'Deletion failed', error: err.message });
   }
 });
@@ -384,10 +410,19 @@ app.get('/api/users/sdrs', async (req, res) => {
 
 app.delete('/api/users/:id', async (req, res) => {
   try {
-    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
-    await User.findOneAndDelete(query);
+    const { id } = req.params;
+    const query = { $or: [{ id }] };
+    if (mongoose.Types.ObjectId.isValid(id)) query.$or.push({ _id: id });
+
+    const deleted = await User.findOneAndDelete(query);
+    if (!deleted) {
+      console.log(`[DELETE] User not found: ${id}`);
+    } else {
+      console.log(`[DELETE] User deleted: ${id} (${deleted.name})`);
+    }
     res.status(204).send();
   } catch (err) {
+    console.error(`[DELETE] User error: ${err.message}`);
     res.status(400).json({ error: err.message });
   }
 });

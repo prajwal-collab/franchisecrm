@@ -112,6 +112,7 @@ const crudFactory = (endpoint, localKey) => ({
 
 export const leadsDB = {
   ...crudFactory('/leads', 'leads'),
+  getPublic: (id) => smartRequest(`/public/leads/${id}`),
   getAll: async (user) => {
     const backend = await smartRequest('/leads', 'GET');
     const local = getLocal('leads');
@@ -179,6 +180,42 @@ export const franchiseesDB = {
 
 export const tasksDB = crudFactory('/tasks', 'tasks');
 export const meetingsDB = crudFactory('/meetings', 'meetings');
+
+export const qualificationsDB = {
+  getAll: async () => {
+    const backend = await smartRequest('/qualifications', 'GET');
+    const local = getLocal('qualifications');
+    // For qualifications we primarily trust backend, but merge local for safety
+    if (!backend) return local;
+    return backend;
+  },
+  getByLeadId: async (leadId) => {
+    const q = await smartRequest(`/qualifications/${leadId}`, 'GET');
+    if (!q) {
+      const local = getLocal('qualifications');
+      return local.find(item => item.leadId === leadId) || null;
+    }
+    return q;
+  },
+  save: async (data) => {
+    const res = await smartRequest('/qualifications', 'POST', data);
+    if (!res) {
+      const local = getLocal('qualifications');
+      const idx = local.findIndex(item => item.leadId === data.leadId);
+      if (idx !== -1) {
+        local[idx] = { ...local[idx], ...data, updatedDate: new Date().toISOString() };
+      } else {
+        local.push({ ...data, id: `temp_q_${Date.now()}`, createdDate: new Date().toISOString() });
+      }
+      setLocal('qualifications', local);
+      return data;
+    }
+    return res;
+  },
+  convertToLead: async (id) => {
+    return await smartRequest(`/qualifications/convert/${id}`, 'POST');
+  }
+};
 
 export const usersDB = {
   ...crudFactory('/users', 'users'),

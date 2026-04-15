@@ -20,31 +20,34 @@ import AISettings from './pages/Settings/AISettings';
 import ToastContainer from './components/UI/ToastContainer';
 import AIChatWidget from './components/UI/AIChatWidget';
 
+import PublicQualification from './pages/Leads/PublicQualification';
+
+import QualificationList from './pages/Leads/QualificationList';
+
 function ProtectedApp() {
   const { currentUser } = useAuth();
   if (!currentUser) return <Navigate to="/login" replace />;
   return (
-    <AppProvider>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/leads" element={<LeadList />} />
-          <Route path="/leads/:id" element={<LeadDetail />} />
-          <Route path="/districts" element={<DistrictList />} />
-          <Route path="/franchisees" element={<FranchiseeList />} />
-          <Route path="/franchisees/:id" element={<FranchiseeDetail />} />
-          <Route path="/activations" element={<FranchiseActivations />} />
-          <Route path="/meetings" element={<MeetingList />} />
-          <Route path="/tasks" element={<TaskList />} />
-          <Route path="/users" element={<UserList />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/franchise-tool" element={<FranchiseTool />} />
-          <Route path="/ai-settings" element={<AISettings />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-        <AIChatWidget />
-      </Layout>
-    </AppProvider>
+    <Layout>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/leads" element={<LeadList />} />
+        <Route path="/leads/:id" element={<LeadDetail />} />
+        <Route path="/qualifications" element={<QualificationList />} />
+        <Route path="/districts" element={<DistrictList />} />
+        <Route path="/franchisees" element={<FranchiseeList />} />
+        <Route path="/franchisees/:id" element={<FranchiseeDetail />} />
+        <Route path="/activations" element={<FranchiseActivations />} />
+        <Route path="/meetings" element={<MeetingList />} />
+        <Route path="/tasks" element={<TaskList />} />
+        <Route path="/users" element={<UserList />} />
+        <Route path="/reports" element={<Reports />} />
+        <Route path="/franchise-tool" element={<FranchiseTool />} />
+        <Route path="/ai-settings" element={<AISettings />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <AIChatWidget />
+    </Layout>
   );
 }
 
@@ -52,10 +55,14 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/*" element={<ProtectedApp />} />
-        </Routes>
+        <AppProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/qualify/:id" element={<PublicQualification />} />
+            <Route path="/*" element={<ProtectedApp />} />
+          </Routes>
+          <ToastContainer />
+        </AppProvider>
       </AuthProvider>
     </BrowserRouter>
   );

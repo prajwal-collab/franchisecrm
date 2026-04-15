@@ -9,6 +9,7 @@ const { v4: uuidv4 } = require('uuid');
 const Lead = require('./models/Lead');
 const District = require('./models/District');
 const Franchisee = require('./models/Franchisee');
+const Qualification = require('./models/Qualification');
 
 const TaskSchema = new mongoose.Schema({
   id: String, // Compatibility with legacy records
@@ -406,6 +407,87 @@ app.get('/api/users', async (req, res) => {
 app.get('/api/users/sdrs', async (req, res) => {
   const sdrs = await User.find({ role: 'SDR' });
   res.json(sdrs);
+});
+
+// Qualifications
+app.get('/api/qualifications', async (req, res) => {
+  try {
+    const qs = await Qualification.find().sort({ date: -1 });
+    res.json(qs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/qualifications/:leadId', async (req, res) => {
+  try {
+    const q = await Qualification.findOne({ leadId: req.params.leadId });
+    res.json(q || null);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/qualifications', async (req, res) => {
+  try {
+    const { leadId, leadData, ...data } = req.body;
+    
+    let targetLeadId = leadId;
+
+    // Automatic Matching Logic for Standalone Forms
+    if (!targetLeadId && leadData?.email) {
+      const existingLead = await Lead.findOne({ email: leadData.email.toLowerCase() });
+      if (existingLead) {
+        targetLeadId = existingLead.id || existingLead._id;
+      }
+    }
+
+    const q = await Qualification.findOneAndUpdate(
+      { $or: [
+        { leadId: targetLeadId && targetLeadId !== 'null' ? targetLeadId : 'NONE' }, 
+        { "leadData.email": leadData?.email && !targetLeadId ? leadData.email : 'NONE' }
+      ]},
+      { leadId: targetLeadId, leadData, ...data },
+      { upsert: true, new: true, runValidators: true }
+    );
+    res.status(201).json(q);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/qualifications/convert/:id', async (req, res) => {
+  try {
+    const q = await Qualification.findById(req.params.id);
+    if (!q || !q.leadData) return res.status(404).json({ error: 'Qualification or Data not found' });
+
+    // Find Prajwal or any Admin for assignment
+    const admin = await User.findOne({ 
+      $or: [{ email: 'prajwal@earlyjobs.in' }, { role: 'Admin' }] 
+    });
+
+    const newLead = new Lead({
+      firstName: q.leadData.firstName,
+      lastName: q.leadData.lastName,
+      email: q.leadData.email,
+      phone: q.leadData.phone,
+      districtId: q.leadData.interestedDistrict, // User will type district for now
+      stage: 'Qualified', // Start them as qualified if they filled the form
+      assignedTo: admin ? (admin.id || admin._id) : null,
+      notes: `Converted from Qualification form. Status: ${q.qualificationStatus}. Score: ${q.totalScore}/60`
+    });
+
+    await newLead.save();
+    
+    // Link qualification to the new lead
+    q.leadId = newLead.id || newLead._id;
+    q.leadData = undefined; // Clear the standalone data once converted
+    await q.save();
+
+    res.json(newLead);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 app.delete('/api/users/:id', async (req, res) => {

@@ -3,11 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ChevronLeft, Edit2, Trash2, Calendar, Phone, Mail, 
   MapPin, User, Briefcase, Wallet, History, MessageSquare,
-  Plus, Video, CheckCircle, Clock, RefreshCw
+  Plus, Video, CheckCircle, Clock, RefreshCw, Share2
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import LeadForm from './LeadForm';
+import QualificationForm from './QualificationForm';
 import { STAGES } from '../../data/initialData';
 
 const STAGE_BADGE = {
@@ -185,7 +186,7 @@ export default function LeadDetail() {
                 </div>
 
                 <div className="tabs" style={{ display: 'flex', gap: 32, borderBottom: '1px solid var(--border-color)', marginBottom: 8 }}>
-                  {['AI Strategy', 'Tasks', 'Webinars & Meetings', 'Notes'].map(t => (
+                  {['AI Strategy', 'Qualification', 'Tasks', 'Webinars & Meetings', 'Notes'].map(t => (
                     <button 
                       key={t} 
                       className={`tab-btn ${activeTab === t ? 'active' : t === 'Overview' ? 'hidden' : ''}`} 
@@ -379,6 +380,25 @@ export default function LeadDetail() {
                   placeholder="Write observations, preferences, or call summaries..."
                   style={{ minHeight: 400, width: '100%', lineHeight: '1.6' }}
                 />
+              </div>
+            )}
+
+            {activeTab === 'Qualification' && (
+              <div className="animate-in">
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+                  <button 
+                    className="btn btn-ghost" 
+                    style={{ fontSize: 13, gap: 8 }}
+                    onClick={() => {
+                      const url = `${window.location.protocol}//${window.location.host}/qualify/${lead.id || lead._id}`;
+                      navigator.clipboard.writeText(url);
+                      toast("Public link copied to clipboard!", "success");
+                    }}
+                  >
+                    <Share2 size={16} /> Share Public Form
+                  </button>
+                </div>
+                <QualificationForm leadId={lead.id || lead._id} toast={toast} />
               </div>
             )}
           </div>

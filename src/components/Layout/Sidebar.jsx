@@ -12,6 +12,7 @@ import { useApp } from '../../context/AppContext';
 const NAV_ITEMS = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/leads', icon: Users, label: 'Leads', badge: true },
+  { path: '/qualifications', icon: FileText, label: 'Lead Qualifications' },
   { path: '/districts', icon: MapPin, label: 'Districts' },
   { path: '/franchisees', icon: Building2, label: 'Franchisees' },
   { path: '/activations', icon: Layers, label: 'Activations' },

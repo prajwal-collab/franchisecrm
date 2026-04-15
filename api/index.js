@@ -30,7 +30,7 @@ const sendInvitationEmail = async (user) => {
           <p>You have been invited to join the EarlyJobs portal as a <strong>${user.role}</strong>.</p>
           <div style="background-color: #f5f8fa; padding: 24px; border-radius: 8px; margin: 24px 0; border: 1px dashed #cbd6e2;">
             <p style="margin: 0;">Email: ${user.email}</p>
-            <p style="margin: 5px 0 0;">Password: ${user.password || 'password123'}</p>
+            <p style="margin: 5px 0 0;">Password: ${user.password || 'Contact Admin'}</p>
           </div>
           <p>Click the button below to sign in.</p>
           <div style="text-align: center; margin-top: 32px;">
@@ -291,7 +291,7 @@ app.post('/api/users', async (req, res) => {
       name,
       email,
       role,
-      password: password || 'password123',
+      password: password || 'EJ_TEMP_PWD_' + crypto.randomBytes(4).toString('hex'),
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=FF6B00&color=fff`
     });
     await user.save();

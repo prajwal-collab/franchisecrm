@@ -460,7 +460,7 @@ const sendInvitationEmail = async (user) => {
           <div style="background-color: #f5f8fa; padding: 24px; border-radius: 8px; margin: 24px 0; border: 1px dashed #cbd6e2;">
             <p style="margin: 0; color: #516f90; font-size: 14px;">Your temporary credentials:</p>
             <p style="margin: 10px 0 0; font-weight: 700; font-size: 18px;">Email: ${user.email}</p>
-            <p style="margin: 5px 0 0; font-weight: 700; font-size: 18px;">Password: ${user.password || 'password123'}</p>
+            <p style="margin: 5px 0 0; font-weight: 700; font-size: 18px;">Password: ${user.password || 'Contact Admin'}</p>
           </div>
 
           <p>Click the button below to sign in and start managing your leads.</p>
@@ -555,7 +555,7 @@ app.post('/api/users', async (req, res) => {
       name,
       email,
       role,
-      password: password || 'password123',
+      password: password || 'EJ_TEMP_PWD_' + Math.random().toString(36).slice(-8),
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=FF6B00&color=fff`
     });
     await user.save();

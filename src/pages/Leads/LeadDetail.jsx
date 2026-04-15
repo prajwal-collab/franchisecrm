@@ -297,40 +297,74 @@ export default function LeadDetail() {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {leadTasks.length === 0 && <p className="text-muted" style={{ textAlign: 'center', padding: 20 }}>No tasks for this lead.</p>}
-                  {leadTasks.map(task => (
-                    <div key={task.id} className="glass-card" style={{ 
-                      padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 16,
-                      opacity: task.done ? 0.6 : 1, borderLeft: task.done ? '4px solid #10b981' : '1px solid var(--glass-border)'
-                    }} onClick={() => toggleTask(task.id)}>
-                      <div style={{ 
-                        width: 20, height: 20, borderRadius: 4, border: '2px solid var(--glass-border)',
-                        background: task.done ? 'var(--brand-primary)' : 'transparent',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  {leadTasks.map((task, i) => {
+                    const isOverdue = !task.done && new Date(task.dueDate) < new Date();
+                    return (
+                      <div key={task.id || task._id} className="glass-card" style={{ 
+                        padding: '16px 20px', 
+                        display: 'flex', alignItems: 'center', gap: 20,
+                        opacity: task.done ? 0.7 : 1,
+                        borderLeft: task.done ? '4px solid #10b981' : isOverdue ? '4px solid #ef4444' : '1px solid var(--glass-border)',
+                        transition: 'all 0.3s'
                       }}>
-                        {task.done && <CheckCircle size={14} color="white" />}
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div>
-                            <div style={{ fontSize: 14, fontWeight: 600, textDecoration: task.done ? 'line-through' : 'none' }}>{task.title}</div>
-                            <div className="text-muted" style={{ fontSize: 11 }}>Due: {new Date(task.dueDate).toLocaleDateString()} • {users.find(u => (u.id || u._id) === task.assignedTo)?.name || 'Unassigned'}</div>
-                          </div>
-                          <div style={{ display: 'flex', gap: 8 }} onClick={e => e.stopPropagation()}>
-                            <button onClick={() => {
-                              setEditingTask(task);
-                              setTaskFormData({ title: task.title, assignedTo: task.assignedTo, dueDate: new Date(task.dueDate).toISOString().split('T')[0] });
-                              setShowTaskModal(true);
-                            }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--brand-primary)' }}>
-                              <Edit2 size={16} />
-                            </button>
-                            <button onClick={() => { if(confirm('Delete task?')) deleteTask(task.id || task._id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#ef4444' }}>
-                              <Trash2 size={16} />
-                            </button>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                                <div style={{ 
+                                  fontSize: 15, fontWeight: 700, 
+                                  textDecoration: task.done ? 'line-through' : 'none',
+                                  color: task.done ? 'var(--text-muted)' : 'var(--text-primary)'
+                                }}>{task.title}</div>
+                                <span style={{ 
+                                  fontSize: 9, fontWeight: 800, padding: '2px 8px', borderRadius: 10, textTransform: 'uppercase',
+                                  background: task.done ? 'rgba(16, 185, 129, 0.1)' : isOverdue ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                                  color: task.done ? '#10b981' : isOverdue ? '#ef4444' : '#f59e0b',
+                                  border: '1px solid currentColor'
+                                }}>
+                                  {task.done ? 'Done' : isOverdue ? 'Overdue' : 'Pending'}
+                                </span>
+                              </div>
+                              <div className="text-muted" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 12 }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Calendar size={12} /> {new Date(task.dueDate).toLocaleDateString()}</span>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><User size={12} /> {users.find(u => (u.id || u._id) === task.assignedTo)?.name || 'Unassigned'}</span>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                              <button 
+                                onClick={() => toggleTask(task.id || task._id)}
+                                className={`btn ${task.done ? 'btn-secondary' : 'btn-primary'}`}
+                                style={{ 
+                                  padding: '6px 14px', fontSize: 11, fontWeight: 700, borderRadius: 6,
+                                  background: task.done ? 'var(--glass-border)' : '#10b981',
+                                  borderColor: task.done ? 'var(--glass-border)' : '#10b981',
+                                  color: task.done ? 'var(--text-primary)' : 'white',
+                                  minWidth: 100
+                                }}
+                              >
+                                {task.done ? 'Reopen' : 'Complete'}
+                              </button>
+
+                              <div style={{ display: 'flex', gap: 4 }}>
+                                <button onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingTask(task);
+                                  setTaskFormData({ title: task.title, assignedTo: task.assignedTo, dueDate: new Date(task.dueDate).toISOString().split('T')[0] });
+                                  setShowTaskModal(true);
+                                }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--brand-primary)' }}>
+                                  <Edit2 size={16} />
+                                </button>
+                                <button onClick={(e) => { e.stopPropagation(); if(confirm('Delete task?')) deleteTask(task.id || task._id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#ef4444' }}>
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

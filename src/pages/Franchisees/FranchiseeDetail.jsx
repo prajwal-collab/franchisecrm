@@ -281,22 +281,29 @@ export default function FranchiseeDetail() {
                         />
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <select 
-                          className="glass-input" 
-                          style={{ 
-                            padding: '6px 12px', fontSize: 12, fontWeight: 600, minWidth: 120,
-                            color: step.status === 'Done' ? '#10b981' : step.status === 'In Progress' ? '#f59e0b' : 'var(--text-muted)'
-                          }}
-                          value={step.status} 
-                          onChange={e => handleWorkflowChange(stageIdx, stepIdx, 'status', e.target.value)}
-                        >
-                          <option value="Pending">Pending</option>
-                          <option value="In Progress">In Progress</option>
-                          <option value="Done">Completed</option>
-                        </select>
-                        <button onClick={() => handleEditStep(stageIdx, stepIdx)} className="btn btn-ghost" style={{ padding: 6, minWidth: 'auto' }}><Edit2 size={14} /></button>
-                        <button onClick={() => handleDeleteStep(stageIdx, stepIdx)} className="btn btn-ghost" style={{ padding: 6, minWidth: 'auto', color: '#ef4444' }}><Trash2 size={14} /></button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ display: 'flex', background: 'rgba(0,0,0,0.02)', padding: 4, borderRadius: 10, border: '1px solid var(--glass-border)' }}>
+                          {['Pending', 'In Progress', 'Done'].map(status => (
+                            <button
+                              key={status}
+                              onClick={() => handleWorkflowChange(stageIdx, stepIdx, 'status', status)}
+                              style={{
+                                padding: '6px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: 'none', cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                background: step.status === status ? (
+                                  status === 'Done' ? '#10b981' : status === 'In Progress' ? '#f59e0b' : 'var(--text-muted)'
+                                ) : 'transparent',
+                                color: step.status === status ? 'white' : 'var(--text-muted)',
+                                boxShadow: step.status === status ? '0 2px 8px rgba(0,0,0,0.1)' : 'none'
+                              }}
+                            >
+                              {status === 'Done' ? 'Completed' : status}
+                            </button>
+                          ))}
+                        </div>
+                        <div style={{ width: 1, height: 24, background: 'var(--glass-border)', margin: '0 4px' }}></div>
+                        <button onClick={() => handleEditStep(stageIdx, stepIdx)} className="btn btn-ghost" style={{ padding: 6, minWidth: 'auto', color: 'var(--brand-primary)' }} title="Edit Step"><Edit2 size={14} /></button>
+                        <button onClick={() => handleDeleteStep(stageIdx, stepIdx)} className="btn btn-ghost" style={{ padding: 6, minWidth: 'auto', color: '#ef4444' }} title="Delete Step"><Trash2 size={14} /></button>
                       </div>
                     </div>
                   </div>

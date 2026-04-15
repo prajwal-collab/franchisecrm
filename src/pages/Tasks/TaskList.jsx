@@ -90,61 +90,85 @@ export default function TaskList() {
         {filtered.map((task, i) => {
           const isOverdue = !task.done && new Date(task.dueDate) < now;
           return (
-            <div key={task.id} className="glass-card" style={{ 
-              padding: '16px 24px', 
-              display: 'flex', alignItems: 'center', gap: 20,
+            <div key={task.id || task._id} className="glass-card" style={{ 
+              padding: '20px 24px', 
+              display: 'flex', alignItems: 'center', gap: 24,
               animationDelay: `${i * 0.05}s`,
-              opacity: task.done ? 0.6 : 1,
-              borderLeft: isOverdue ? '4px solid #ef4444' : task.done ? '4px solid #10b981' : '1px solid var(--glass-border)'
+              opacity: task.done ? 0.7 : 1,
+              borderLeft: isOverdue ? '4px solid #ef4444' : task.done ? '4px solid #10b981' : '1px solid var(--glass-border)',
+              transition: 'all 0.3s ease'
             }}>
-              <div 
-                onClick={() => toggleTask(task.id)}
-                style={{ 
-                  width: 24, height: 24, borderRadius: 6, border: '2px solid var(--glass-border)',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: task.done ? 'var(--brand-primary)' : 'transparent',
-                  borderColor: task.done ? 'var(--brand-primary)' : 'var(--glass-border)',
-                  transition: 'all 0.2s'
-                }}
-              >
-                {task.done && <Plus size={16} color="white" style={{ transform: 'rotate(45deg)' }} />}
-              </div>
-              
               <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ 
-                    fontSize: 15, fontWeight: 600, 
-                    textDecoration: task.done ? 'line-through' : 'none',
-                    color: task.done ? 'var(--text-muted)' : '#33475b'
-                  }}>{task.title}</div>
-                  <button onClick={() => deleteTask(task.id || task._id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#ef4444' }}>
-                    <Trash2 size={16} />
-                  </button>
-                  <button onClick={() => {
-                    setEditingTask(task);
-                    setNewTask({
-                      title: task.title,
-                      assignedTo: task.assignedTo,
-                      leadId: task.leadId || '',
-                      dueDate: new Date(task.dueDate).toISOString().split('T')[0]
-                    });
-                    setShowAdd(true);
-                  }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--brand-primary)' }}>
-                    <Edit2 size={16} />
-                  </button>
-                </div>
-                
-                <div style={{ display: 'flex', gap: 20, marginTop: 6 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: isOverdue ? '#ef4444' : 'var(--text-muted)' }}>
-                    <Calendar size={14} />
-                    {new Date(task.dueDate).toLocaleDateString()}
-                  </div>
-                  {(task.leadName || task.franchiseeName) && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-muted)' }}>
-                      <User size={14} />
-                      {task.leadName || task.franchiseeName}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                      <span style={{ 
+                        fontSize: 16, fontWeight: 700, 
+                        textDecoration: task.done ? 'line-through' : 'none',
+                        color: task.done ? 'var(--text-muted)' : '#33475b'
+                      }}>{task.title}</span>
+                      
+                      <span style={{ 
+                        fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.05em',
+                        background: task.done ? 'rgba(16, 185, 129, 0.1)' : isOverdue ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                        color: task.done ? '#10b981' : isOverdue ? '#ef4444' : '#f59e0b',
+                        border: '1px solid currentColor'
+                      }}>
+                        {task.done ? 'Completed' : isOverdue ? 'Overdue' : 'Pending'}
+                      </span>
                     </div>
-                  )}
+
+                    <div style={{ display: 'flex', gap: 20 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: isOverdue ? '#ef4444' : 'var(--text-muted)' }}>
+                        <Calendar size={14} />
+                        {new Date(task.dueDate).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                      </div>
+                      {(task.leadName || task.franchiseeName) && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--brand-primary)', fontWeight: 600 }}>
+                          <User size={14} />
+                          {task.leadName || task.franchiseeName}
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-muted)' }}>
+                        <Clock size={14} />
+                        Assigned to {task.assigneeName}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <button 
+                      onClick={() => toggleTask(task.id || task._id)}
+                      className={`btn ${task.done ? 'btn-secondary' : 'btn-primary'}`}
+                      style={{ 
+                        padding: '8px 16px', fontSize: 12, fontWeight: 700, borderRadius: 8,
+                        background: task.done ? 'var(--glass-border)' : '#10b981',
+                        borderColor: task.done ? 'var(--glass-border)' : '#10b981',
+                        color: task.done ? 'var(--text-primary)' : 'white',
+                        boxShadow: task.done ? 'none' : '0 4px 12px rgba(16, 185, 129, 0.2)'
+                      }}
+                    >
+                      {task.done ? 'Reopen Task' : 'Complete Task'}
+                    </button>
+
+                    <div style={{ width: 1, height: 32, background: 'var(--glass-border)', margin: '0 4px' }}></div>
+
+                    <button onClick={() => {
+                        setEditingTask(task);
+                        setNewTask({
+                          title: task.title,
+                          assignedTo: task.assignedTo,
+                          leadId: task.leadId || '',
+                          dueDate: new Date(task.dueDate).toISOString().split('T')[0]
+                        });
+                        setShowAdd(true);
+                    }} className="btn-ghost" style={{ padding: 8, color: 'var(--brand-primary)' }}>
+                      <Edit2 size={18} />
+                    </button>
+                    <button onClick={() => deleteTask(task.id || task._id)} className="btn-ghost" style={{ padding: 8, color: '#ef4444' }}>
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

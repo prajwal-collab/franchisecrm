@@ -432,26 +432,38 @@ app.post('/api/qualifications', async (req, res) => {
   try {
     const { leadId, leadData, ...data } = req.body;
     
-    let targetLeadId = leadId;
+    let targetId = leadId && leadId !== 'null' ? leadId : null;
 
-    // Automatic Matching Logic for Standalone Forms
-    if (!targetLeadId && leadData?.email) {
+    // 1. Try matching by email if leadId is missing
+    if (!targetId && leadData?.email) {
       const existingLead = await Lead.findOne({ email: leadData.email.toLowerCase() });
-      if (existingLead) {
-        targetLeadId = existingLead.id || existingLead._id;
-      }
+      if (existingLead) targetId = existingLead.id || existingLead._id;
     }
 
+    // 2. Intelligent Query Selection: Match by leadId OR email
+    let query = {};
+    if (targetId) {
+      query = { leadId: targetId };
+    } else if (leadData?.email) {
+      query = { "leadData.email": leadData.email.toLowerCase() };
+    } else {
+      // Complete standalone with no email (unlikely) - always create new
+      const newQ = new Qualification({ leadId: null, leadData, ...data });
+      await newQ.save();
+      return res.status(201).json(newQ);
+    }
+
+    // 3. Upsert based on specific identity
     const q = await Qualification.findOneAndUpdate(
-      { $or: [
-        { leadId: targetLeadId && targetLeadId !== 'null' ? targetLeadId : 'NONE' }, 
-        { "leadData.email": leadData?.email && !targetLeadId ? leadData.email : 'NONE' }
-      ]},
-      { leadId: targetLeadId, leadData, ...data },
+      query,
+      { leadId: targetId, leadData, ...data },
       { upsert: true, new: true, runValidators: true }
     );
+    
+    console.log(`[QUALIFICATION] Saved for: ${targetId || leadData?.email}`);
     res.status(201).json(q);
   } catch (err) {
+    console.error('[QUALIFICATION] Save error:', err.message);
     res.status(400).json({ error: err.message });
   }
 });

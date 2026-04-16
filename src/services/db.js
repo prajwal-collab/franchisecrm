@@ -197,9 +197,10 @@ export const qualificationsDB = {
     }
     return q;
   },
-  save: async (data) => {
+  save: async (data, requireServer = false) => {
     const res = await smartRequest('/qualifications', 'POST', data);
     if (!res) {
+      if (requireServer) throw new Error('Failed to reach server. Please check your internet connection.');
       const local = getLocal('qualifications');
       const idx = local.findIndex(item => item.leadId === data.leadId);
       if (idx !== -1) {

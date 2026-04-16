@@ -109,10 +109,13 @@ export default function QualificationForm({ leadId, leadData, toast, isPublic = 
         qualificationStatus: status.text,
         signature,
         date: new Date().toISOString()
-      });
+      }, isPublic); // Require server confirmation if being submitted as lead
+      
       toast("Qualification form saved successfully", "success");
     } catch (err) {
-      toast("Failed to save qualification form", "error");
+      console.error("Save Error:", err.message);
+      toast(err.message || "Failed to save qualification form. Please check your internet connection.", "error");
+      throw err; // Re-throw to prevent UI from showing success
     } finally {
       setSaving(false);
     }

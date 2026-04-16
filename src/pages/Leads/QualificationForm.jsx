@@ -294,7 +294,7 @@ export default function QualificationForm({ leadId, leadData, toast, isPublic = 
 
               <div style={{ textAlign: 'left', background: 'rgba(0,0,0,0.02)', padding: 20, borderRadius: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                  <AlertCircle size(14) color="var(--text-muted)" />
+                  <AlertCircle size={14} color="var(--text-muted)" />
                   <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)' }}>SCORING RULES</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -314,7 +314,7 @@ export default function QualificationForm({ leadId, leadData, toast, isPublic = 
               </div>
 
               <div style={{ marginTop: 32, padding: 24, background: 'var(--brand-primary)', borderRadius: 16, color: 'white' }}>
-                 <CheckCircle size(32) style={{ marginBottom: 16, opacity: 0.8 }} />
+                 <CheckCircle size={32} style={{ marginBottom: 16, opacity: 0.8 }} />
                  <h4 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 800 }}>Expert Analysis</h4>
                  <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, opacity: 0.9 }}>
                    The status is calculated based on commitment levels and investment trust.

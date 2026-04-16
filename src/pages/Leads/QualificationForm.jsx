@@ -295,7 +295,7 @@ export default function QualificationForm({ leadId, leadData, toast, isPublic = 
 
               <div style={{ textAlign: 'left', background: 'rgba(0,0,0,0.02)', padding: 20, borderRadius: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                  <AlertCircle size={14} color="var(--text-muted)" />
+                  <AlertCircle size={16} color="var(--text-muted)" />
                   <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)' }}>SCORING RULES</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

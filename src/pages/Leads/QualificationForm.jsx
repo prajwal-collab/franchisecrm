@@ -34,7 +34,7 @@ const FOCO_OPEN_QUESTIONS = [
   "If the unit takes longer than expected to become profitable, how will you react?"
 ];
 
-export default function QualificationForm({ leadId, leadData, toast }) {
+export default function QualificationForm({ leadId, leadData, toast, isPublic = false }) {
   const [loading, setLoading] = useState(leadId ? true : false);
   const [saving, setSaving] = useState(false);
   const [formType, setFormType] = useState('FOFO'); // FOFO or FOCO
@@ -148,7 +148,12 @@ export default function QualificationForm({ leadId, leadData, toast }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 32, alignItems: 'start' }}>
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: isPublic ? '1fr' : '1fr 320px', 
+        gap: 32, 
+        alignItems: 'start' 
+      }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
           {/* Scored Questions */}
           <section>
@@ -261,59 +266,60 @@ export default function QualificationForm({ leadId, leadData, toast }) {
           </button>
         </div>
 
-        {/* Scoring Sidebar */}
-        <div style={{ position: 'sticky', top: 32 }}>
-          <div className="glass-card" style={{ padding: 32, textAlign: 'center' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 24, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Qualification Status</div>
-            
-            <div style={{ 
-              width: 120, height: 120, borderRadius: '50%', background: 'var(--bg-page)', 
-              margin: '0 auto 24px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              position: 'relative', border: `8px solid ${status.color}`, boxShadow: `0 0 20px ${status.bg}`
-            }}>
-              <div>
-                <div style={{ fontSize: 36, fontWeight: 800, color: 'var(--text-primary)' }}>{totalScore}</div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>/ 60</div>
-              </div>
-            </div>
-
-            <div style={{ 
-              padding: '12px 20px', borderRadius: 100, background: status.bg, color: status.color, 
-              fontSize: 14, fontWeight: 800, marginBottom: 32, display: 'inline-block'
-            }}>
-              {status.text}
-            </div>
-
-            <div style={{ textAlign: 'left', background: 'rgba(0,0,0,0.02)', padding: 20, borderRadius: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                <AlertCircle size={14} color="var(--text-muted)" />
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)' }}>SCORING RULES</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Strong Fit</span>
-                  <span style={{ fontWeight: 700 }}>45–60</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Borderline</span>
-                  <span style={{ fontWeight: 700 }}>35–44</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Low Score</span>
-                  <span style={{ fontWeight: 700 }}>Below 35</span>
+        {!isPublic && (
+          <div style={{ position: 'sticky', top: 32 }}>
+            <div className="glass-card" style={{ padding: 32, textAlign: 'center' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 24, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Qualification Status</div>
+              
+              <div style={{ 
+                width: 120, height: 120, borderRadius: '50%', background: 'var(--bg-page)', 
+                margin: '0 auto 24px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                position: 'relative', border: `8px solid ${status.color}`, boxShadow: `0 0 20px ${status.bg}`
+              }}>
+                <div>
+                  <div style={{ fontSize: 36, fontWeight: 800, color: 'var(--text-primary)' }}>{totalScore}</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>/ 60</div>
                 </div>
               </div>
-            </div>
 
-            <div style={{ marginTop: 32, padding: 24, background: 'var(--brand-primary)', borderRadius: 16, color: 'white' }}>
-               <CheckCircle size={32} style={{ marginBottom: 16, opacity: 0.8 }} />
-               <h4 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 800 }}>Expert Analysis</h4>
-               <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, opacity: 0.9 }}>
-                 The status is calculated based on commitment levels and investment trust.
-               </p>
+              <div style={{ 
+                padding: '12px 20px', borderRadius: 100, background: status.bg, color: status.color, 
+                fontSize: 14, fontWeight: 800, marginBottom: 32, display: 'inline-block'
+              }}>
+                {status.text}
+              </div>
+
+              <div style={{ textAlign: 'left', background: 'rgba(0,0,0,0.02)', padding: 20, borderRadius: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                  <AlertCircle size(14) color="var(--text-muted)" />
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)' }}>SCORING RULES</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Strong Fit</span>
+                    <span style={{ fontWeight: 700 }}>45–60</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Borderline</span>
+                    <span style={{ fontWeight: 700 }}>35–44</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Low Score</span>
+                    <span style={{ fontWeight: 700 }}>Below 35</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: 32, padding: 24, background: 'var(--brand-primary)', borderRadius: 16, color: 'white' }}>
+                 <CheckCircle size(32) style={{ marginBottom: 16, opacity: 0.8 }} />
+                 <h4 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 800 }}>Expert Analysis</h4>
+                 <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, opacity: 0.9 }}>
+                   The status is calculated based on commitment levels and investment trust.
+                 </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

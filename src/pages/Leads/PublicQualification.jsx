@@ -162,6 +162,7 @@ export default function PublicQualification() {
           <div className="glass-card" style={{ padding: 40, background: 'white', borderRadius: 24, boxShadow: '0 20px 40px rgba(0,0,0,0.05)' }}>
             <QualificationForm 
               leadId={id} 
+              isPublic={true}
               leadData={id ? null : profile}
               toast={(msg, type) => {
                 toast(msg, type);

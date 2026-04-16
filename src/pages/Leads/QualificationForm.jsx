@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, AlertCircle, Save, FileText, UserCheck, ShieldCheck, PenTool } from 'lucide-react';
 import { qualificationsDB } from '../../services/db';
+import { useApp } from '../../context/AppContext';
 
 const FOFO_QUESTIONS = [
   "I am ready to treat this as a full-time business and be actively involved every single day.",
@@ -35,6 +36,7 @@ const FOCO_OPEN_QUESTIONS = [
 ];
 
 export default function QualificationForm({ leadId, leadData, toast, isPublic = false }) {
+  const { refresh } = useApp();
   const [loading, setLoading] = useState(leadId ? true : false);
   const [saving, setSaving] = useState(false);
   const [formType, setFormType] = useState('FOFO'); // FOFO or FOCO

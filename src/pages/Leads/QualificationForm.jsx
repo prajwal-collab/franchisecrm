@@ -111,6 +111,7 @@ export default function QualificationForm({ leadId, leadData, toast, isPublic = 
         date: new Date().toISOString()
       }, isPublic); // Require server confirmation if being submitted as lead
       
+      if (!isPublic) await refresh();
       toast("Qualification form saved successfully", "success");
     } catch (err) {
       console.error("Save Error:", err.message);

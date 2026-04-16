@@ -43,7 +43,8 @@ export default function AIChatWidget() {
         let errorMsg = 'API Request failed';
         try {
           const errorData = await response.json();
-          errorMsg = errorData.message || errorMsg;
+          // Support both {message: '...'} and {error: '...'} formats
+          errorMsg = errorData.message || errorData.error || errorMsg;
         } catch (pErr) {
           errorMsg = `Server Error (${response.status}): The assistant is temporarily unavailable.`;
         }

@@ -68,9 +68,13 @@ export default function LeadList() {
   useEffect(() => {
     if (editingNote) {
       const item = leads.find(l => (l.id || l._id) === editingNote);
-      setTempNote(item?.notes || '');
+      // Only set tempNote if it's currently empty or we just started editing
+      // to prevent resetting user input during a list refresh
+      setTempNote(prev => (prev === '' ? (item?.notes || '') : prev));
+    } else {
+      setTempNote('');
     }
-  }, [editingNote, leads]);
+  }, [editingNote]);
 
   const handleNoteSave = async (id, type) => {
     if (editingNote === id) {

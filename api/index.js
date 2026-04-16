@@ -416,7 +416,25 @@ app.post('/api/qualifications', async (req, res) => {
       return res.status(201).json(newQ);
     }
 
-    const q = await Qualification.findOneAndUpdate(query, { leadId: targetId, leadData, ...data }, { upsert: true, new: true, runValidators: true });
+    const q = await Qualification.findOneAndUpdate(
+      query,
+      { leadId: targetId, leadData, ...data },
+      { upsert: true, new: true, runValidators: true }
+    );
+    
+    console.log(`[QUALIFICATION] Saved for: ${targetId || leadData?.email}. Score: ${data.totalScore}`);
+
+    // 4. Auto-update lead stage to 'Qualified' if score is high (>= 45)
+    if (targetId && data.totalScore >= 45) {
+      const Lead = mongoose.model('Lead');
+      const leadToUpdate = await Lead.findOne({ $or: [{ id: targetId }, { _id: mongoose.Types.ObjectId.isValid(targetId) ? targetId : null }] });
+      if (leadToUpdate && leadToUpdate.stage !== 'Qualified') {
+        leadToUpdate.stage = 'Qualified';
+        await leadToUpdate.save();
+        console.log(`[QUALIFICATION] Lead ${targetId} automatically promoted to 'Qualified' stage.`);
+      }
+    }
+    
     res.status(201).json(q);
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
@@ -503,10 +521,16 @@ app.post('/api/ai/generate-strategy', async (req, res) => {
       })
     });
 
-    if (!response.ok) throw new Error('AI API Error');
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.error?.message || 'AI API Error');
+    }
     const data = await response.json();
     res.json({ strategy: data.candidates[0].content.parts[0].text });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { 
+    console.error('AI Strategy Error:', err.message);
+    res.status(500).json({ message: err.message }); 
+  }
 });
 
 app.post('/api/ai/chat', async (req, res) => {
@@ -533,7 +557,7 @@ app.post('/api/ai/chat', async (req, res) => {
     CRM DATA: ${JSON.stringify(crmData)}
     Provide executive, data-driven, and Encouraging insights.`;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -553,7 +577,10 @@ app.post('/api/ai/chat', async (req, res) => {
     const data = await response.json();
     const reply = data.candidates[0].content.parts[0].text;
     res.json({ reply });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { 
+    console.error('AI Chat Error:', err.message);
+    res.status(500).json({ message: err.message }); 
+  }
 });
 
 module.exports = app;

@@ -29,14 +29,22 @@ export default function LeadDetail() {
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [taskFormData, setTaskFormData] = useState({ title: '', assignedTo: '', dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0] });
-  const [aiStrategy, setAiStrategy] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [localNotes, setLocalNotes] = useState('');
+  const [hasUnsavedNotes, setHasUnsavedNotes] = useState(false);
 
   const lead = leads.find(l => l.id === id || l._id === id);
   const district = districts.find(d => (d.id || d._id) === lead?.districtId);
   const assignedUser = users.find(u => (u.id || u._id) === lead?.assignedTo);
   const leadTasks = tasks.filter(t => t.leadId === id);
   const leadMeetings = meetings.filter(m => m.leadId === id);
+
+  // Sync local notes when lead data loads or changes from server
+  React.useEffect(() => {
+    if (lead && !hasUnsavedNotes) {
+      setLocalNotes(lead.notes || '');
+    }
+  }, [lead, hasUnsavedNotes]);
 
   if (!lead) return <div className="page-body">Lead not found</div>;
 
@@ -382,14 +390,37 @@ export default function LeadDetail() {
 
             {activeTab === 'Notes' && (
               <div className="glass-card" style={{ padding: 24 }}>
-                <h4 style={{ marginBottom: 20, fontSize: 18, fontWeight: 700 }}>Lead Notes</h4>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                  <h4 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Lead Notes</h4>
+                  {hasUnsavedNotes && (
+                    <button 
+                      className="btn btn-primary animate-in fade-in" 
+                      style={{ padding: '6px 16px', fontSize: 12 }}
+                      onClick={async () => {
+                        await updateLead(lead.id || lead._id, { ...lead, notes: localNotes }, lead.stage);
+                        setHasUnsavedNotes(false);
+                        toast("Notes saved successfully", "success");
+                      }}
+                    >
+                      Save Notes
+                    </button>
+                  )}
+                </div>
                 <textarea 
                   className="glass-input" 
-                  value={lead.notes} 
-                  onChange={(e) => updateLead(lead.id || lead._id, { ...lead, notes: e.target.value }, lead.stage)}
+                  value={localNotes} 
+                  onChange={(e) => {
+                    setLocalNotes(e.target.value);
+                    setHasUnsavedNotes(true);
+                  }}
                   placeholder="Write observations, preferences, or call summaries..."
-                  style={{ minHeight: 400, width: '100%', lineHeight: '1.6' }}
+                  style={{ minHeight: 400, width: '100%', lineHeight: '1.6', border: hasUnsavedNotes ? '1px solid var(--brand-primary)' : '1px solid var(--border-color)' }}
                 />
+                {hasUnsavedNotes && (
+                  <p style={{ marginTop: 12, fontSize: 12, color: 'var(--brand-primary)', fontWeight: 600 }}>
+                    You have unsaved changes in your notes.
+                  </p>
+                )}
               </div>
             )}
 

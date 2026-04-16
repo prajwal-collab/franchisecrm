@@ -48,7 +48,10 @@ function AdminDashboard({ leads, districts, franchisees, tasks, users }) {
 
   // Charts data
   const bySource = Object.entries(
-    leads.reduce((acc, l) => { acc[l.source] = (acc[l.source] || 0) + 1; return acc; }, {})
+    leads.reduce((acc, l) => { 
+      const s = l.source || 'Direct / Other';
+      acc[s] = (acc[s] || 0) + 1; return acc; 
+    }, {})
   ).map(([name, value]) => ({ name, value }));
 
   const byStage = STAGES.map(s => ({ name: s, count: leads.filter(l => l.stage === s).length }));
@@ -83,18 +86,19 @@ function AdminDashboard({ leads, districts, franchisees, tasks, users }) {
         <div className="card">
           <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 20, color: '#33475b' }}>Pipeline Velocity</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {byStage.filter(s => s.count > 0).map(s => (
+            {byStage.map(s => (
               <div key={s.name}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 8, opacity: s.count === 0 ? 0.4 : 1 }}>
                   <span style={{ color: '#516f90', fontWeight: 600 }}>{s.name}</span>
                   <span style={{ color: 'var(--brand-primary)', fontWeight: 700 }}>{s.count}</span>
                 </div>
                 <div style={{ height: 6, background: '#f5f8fa', borderRadius: 3, overflow: 'hidden' }}>
                   <div style={{ 
                     height: '100%', 
-                    width: `${(s.count / (leads.length || 1)) * 100}%`, 
+                    width: `${(s.count / (Math.max(...byStage.map(x => x.count)) || 1)) * 100}%`, 
                     background: STAGE_COLORS[s.name] || 'var(--brand-primary)', 
-                    borderRadius: 3 
+                    borderRadius: 3,
+                    opacity: s.count === 0 ? 0.1 : 1
                   }} />
                 </div>
               </div>

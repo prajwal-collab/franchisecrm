@@ -278,6 +278,17 @@ export default function LeadForm({ lead, onClose }) {
               </div>
             </div>
           )}
+          
+          <div className="form-group" style={{ marginBottom: 32 }}>
+            <label className="form-label">Lead Notes</label>
+            <textarea 
+              className="form-input" 
+              value={formData.notes || ''} 
+              onChange={e => setFormData({...formData, notes: e.target.value})} 
+              placeholder="Add any specific context or background about this lead..."
+              style={{ minHeight: 100, lineHeight: '1.5' }}
+            />
+          </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, borderTop: '1px solid var(--border-color)', paddingTop: 24 }}>
             <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>

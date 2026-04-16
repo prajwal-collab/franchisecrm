@@ -555,6 +555,8 @@ app.post('/api/ai/chat', async (req, res) => {
     const systemPrompt = `You are the EarlyJobs CRM Insight Assistant. 
     Analyze the following CRM data to help users manage their franchise pipeline.
     CRM DATA: ${JSON.stringify(crmData)}
+    Provide executive, data-driven, and Encouraging insights.`;
+
     const modelName = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
       method: 'POST',

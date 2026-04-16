@@ -29,6 +29,7 @@ export default function LeadDetail() {
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [taskFormData, setTaskFormData] = useState({ title: '', assignedTo: '', dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0] });
+  const [aiStrategy, setAiStrategy] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [localNotes, setLocalNotes] = useState('');
   const [hasUnsavedNotes, setHasUnsavedNotes] = useState(false);

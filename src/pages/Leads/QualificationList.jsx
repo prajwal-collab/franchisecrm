@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   FileCheck, Search, Filter, UserCheck, 
   ChevronRight, ExternalLink, UserPlus, 
-  TrendingUp, TrendingDown, Minus
+  TrendingUp, TrendingDown, Minus, Share2, Clipboard
 } from 'lucide-react';
 import { qualificationsDB, leadsDB } from '../../services/db';
 import { useApp } from '../../context/AppContext';
@@ -87,6 +87,44 @@ export default function QualificationList() {
             <option value="FOFO">Active (FOFO)</option>
             <option value="FOCO">Passive (FOCO)</option>
           </select>
+        </div>
+      </div>
+
+      <div className="glass-card" style={{ padding: 24, marginBottom: 32, background: 'linear-gradient(135deg, var(--bg-card) 0%, #fff 100%)', border: '1px solid var(--brand-primary-light)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(255,107,0,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-primary)' }}>
+              <Share2 size={24} />
+            </div>
+            <div>
+              <h4 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Public Qualification Form</h4>
+              <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>Share this link with new prospects to start the assessment.</p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ 
+              background: 'var(--bg-page)', padding: '10px 16px', borderRadius: 8, border: '1px solid var(--border-color)',
+              fontSize: 12, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 10
+            }}>
+              <code>{`${window.location.protocol}//${window.location.host}/qualify`}</code>
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.protocol}//${window.location.host}/qualify`);
+                  toast("Standalone link copied!", "success");
+                }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--brand-primary)', display: 'flex' }}
+              >
+                <Clipboard size={14} />
+              </button>
+            </div>
+            <button 
+              className="btn btn-primary" 
+              style={{ fontSize: 12, minWidth: 100 }}
+              onClick={() => window.open('/qualify', '_blank')}
+            >
+              <ExternalLink size={14} /> Open Form
+            </button>
+          </div>
         </div>
       </div>
 

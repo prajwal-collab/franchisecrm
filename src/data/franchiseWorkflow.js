@@ -61,7 +61,7 @@ export const DEFAULT_WORKFLOW_TEMPLATE = [
       { id: 'step-6-3', text: 'Central team presence confirmed', status: 'Pending', notes: '', link: null },
       { id: 'step-6-4', text: 'Launch event completed', status: 'Pending', notes: '', link: null },
       { id: 'step-6-5', text: 'Photos/videos collected (for PR & future use)', status: 'Pending', notes: '', link: null },
-      { id: 'step-6-6', text: 'Feedback collected', status: 'Pending', notes: '', link: 'https://franchise.earlyjobs.in/franchise-activation-form' },
+      { id: 'step-6-6', text: 'Feedback collected', status: 'Pending', notes: '', link: 'https://franchise.earlyjobs.in/feedback-form' },
       { id: 'step-6-7', text: 'Weekly review date locked', status: 'Pending', notes: '', link: null }
     ]
   }

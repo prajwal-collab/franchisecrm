@@ -23,6 +23,8 @@ import AIChatWidget from './components/UI/AIChatWidget';
 import PublicQualification from './pages/Leads/PublicQualification';
 
 import QualificationList from './pages/Leads/QualificationList';
+import PublicOnboardingForm from './pages/Franchisees/PublicOnboardingForm';
+import OnboardingForms from './pages/Franchisees/OnboardingForms';
 
 function ProtectedApp() {
   const { currentUser } = useAuth();
@@ -43,6 +45,7 @@ function ProtectedApp() {
         <Route path="/users" element={<UserList />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/franchise-tool" element={<FranchiseTool />} />
+        <Route path="/onboarding-forms" element={<OnboardingForms />} />
         <Route path="/ai-settings" element={<AISettings />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
@@ -58,7 +61,12 @@ export default function App() {
         <AppProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/qualify" element={<PublicQualification />} />
             <Route path="/qualify/:id" element={<PublicQualification />} />
+            <Route path="/franchise-activation-form" element={<PublicOnboardingForm />} />
+            <Route path="/branding-form" element={<PublicOnboardingForm />} />
+            <Route path="/photo-submission" element={<PublicOnboardingForm />} />
+            <Route path="/feedback-form" element={<PublicOnboardingForm />} />
             <Route path="/*" element={<ProtectedApp />} />
           </Routes>
           <ToastContainer />

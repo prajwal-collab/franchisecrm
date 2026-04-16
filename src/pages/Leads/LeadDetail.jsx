@@ -93,11 +93,21 @@ export default function LeadDetail() {
               <Edit2 size={16} /> Edit Profile
             </button>
           )}
-          {can('delete') && (
+            <button 
+              className="btn btn-secondary" 
+              style={{ color: 'var(--brand-primary)', padding: 10 }} 
+              title="Share Qualification Form"
+              onClick={() => {
+                const url = `${window.location.protocol}//${window.location.host}/qualify/${lead.id || lead._id}`;
+                navigator.clipboard.writeText(url);
+                toast("Lead-specific link copied!", "success");
+              }}
+            >
+              <Share2 size={20} />
+            </button>
             <button className="btn btn-ghost" style={{ color: '#ef4444', padding: 10 }} onClick={() => { if (confirm('Delete lead?')) { deleteLead(lead.id || lead._id); navigate('/leads'); } }}>
               <Trash2 size={20} />
             </button>
-          )}
         </div>
       </div>
 

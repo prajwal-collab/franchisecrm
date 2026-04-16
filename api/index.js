@@ -509,8 +509,8 @@ app.post('/api/ai/generate-strategy', async (req, res) => {
     Format in Markdown. Keep it professional and punchy.
     `;
 
-    const apiKey = (process.env.Gemini_API_KEY || '').trim();
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const modelName = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -555,9 +555,8 @@ app.post('/api/ai/chat', async (req, res) => {
     const systemPrompt = `You are the EarlyJobs CRM Insight Assistant. 
     Analyze the following CRM data to help users manage their franchise pipeline.
     CRM DATA: ${JSON.stringify(crmData)}
-    Provide executive, data-driven, and Encouraging insights.`;
-
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const modelName = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

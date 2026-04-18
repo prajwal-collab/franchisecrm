@@ -11,7 +11,7 @@ const FORMS = [
     id: 'activation',
     title: 'Franchise Activation Form',
     desc: 'Required for STAGE 2 territory lock and document verification.',
-    path: '/franchise-activation-form',
+    url: 'https://franchise.earlyjobs.in/franchise-activation-form',
     icon: Settings,
     color: '#FF6B00'
   },
@@ -19,7 +19,7 @@ const FORMS = [
     id: 'branding',
     title: 'Branding Confirmation',
     desc: 'Submission of branding plans and office setup approval.',
-    path: '/branding-form',
+    url: 'https://franchise.earlyjobs.in/branding-form',
     icon: Image,
     color: '#0066FF'
   },
@@ -27,7 +27,7 @@ const FORMS = [
     id: 'photo',
     title: 'Photo/Video Submission',
     desc: 'Collection of launch event media and office branding photos.',
-    path: '/photo-submission',
+    url: 'https://franchise.earlyjobs.in/photo-submission',
     icon: Share2,
     color: '#10B981'
   },
@@ -35,7 +35,7 @@ const FORMS = [
     id: 'feedback',
     title: 'Final Feedback Form',
     desc: 'Collected post-launch to evaluate the onboarding experience.',
-    path: '/feedback-form',
+    url: 'https://franchise.earlyjobs.in/feedback-form',
     icon: HelpCircle,
     color: '#8B5CF6'
   }
@@ -43,10 +43,6 @@ const FORMS = [
 
 export default function OnboardingForms() {
   const { toast } = useApp();
-
-  const getFullUrl = (path) => {
-    return `${window.location.protocol}//${window.location.host}${path}`;
-  };
 
   const copyToClipboard = (text, label) => {
     navigator.clipboard.writeText(text);
@@ -68,7 +64,7 @@ export default function OnboardingForms() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: 24 }}>
         {FORMS.map(form => {
           const Icon = form.icon;
-          const url = getFullUrl(form.path);
+          const url = form.url;
           
           return (
             <div key={form.id} className="glass-card" style={{ padding: 32, display: 'flex', flexDirection: 'column', height: '100%', transition: 'transform 0.2s' }}>
@@ -104,7 +100,7 @@ export default function OnboardingForms() {
                 <button 
                   className="btn btn-secondary" 
                   style={{ flex: 1, height: 44, borderRadius: 10, fontSize: 13, fontWeight: 700 }}
-                  onClick={() => window.open(form.path, '_blank')}
+                  onClick={() => window.open(form.url, '_blank')}
                 >
                   <ExternalLink size={16} /> Preview
                 </button>

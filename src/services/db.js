@@ -217,10 +217,16 @@ export const qualificationsDB = {
     return await smartRequest(`/qualifications/convert/${id}`, 'POST');
   },
   delete: async (id) => {
+    console.log(`🗑️ Attempting to delete qualification: ${id}`);
     const success = await smartRequest(`/qualifications/${id}`, 'DELETE');
     if (success) {
+      console.log(`✅ Server deleted qualification: ${id}`);
       const records = getLocal('qualifications');
-      setLocal('qualifications', records.filter(r => (r.id || r._id) !== id));
+      const filtered = records.filter(r => (r.id || r._id) !== id);
+      setLocal('qualifications', filtered);
+      console.log(`🧹 Local storage synced. Remaining local records: ${filtered.length}`);
+    } else {
+      console.error(`❌ Server failed to delete qualification: ${id}`);
     }
     return success;
   }

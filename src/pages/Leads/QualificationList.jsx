@@ -45,14 +45,24 @@ export default function QualificationList() {
   };
 
   const handleDelete = async (q) => {
+    const qId = q._id || q.id;
+    if (!qId) {
+      toast('Invalid qualification ID', 'error');
+      return;
+    }
+    
     if (!window.confirm(`Delete qualification response for ${getLeadName(q)}?`)) return;
+    
     try {
-      const success = await qualificationsDB.delete(q._id || q.id);
+      const success = await qualificationsDB.delete(qId);
       if (success !== false) {
         toast('Qualification deleted successfully', 'success');
+        // Optimistic UI update: remove from local state immediately
+        setData(prev => prev.filter(item => (item._id || item.id) !== qId));
+        // Then refresh to be sync with server
         refreshData();
       } else {
-        toast('Failed to delete qualification', 'error');
+        toast('Failed to delete qualification from server', 'error');
       }
     } catch (err) {
       toast('Delete failed: ' + (err.message || ''), 'error');

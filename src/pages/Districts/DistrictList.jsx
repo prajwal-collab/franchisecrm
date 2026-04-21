@@ -89,8 +89,14 @@ export default function DistrictList() {
     else { setSortKey(key); setSortDir('asc'); }
   };
 
-  const handleStatusChange = (id, newStatus) => {
-    updateDistrict(id, { status: newStatus });
+  const handleStatusChange = (district, newStatus) => {
+    if (newStatus === 'Sold') {
+      setEditDistrict({ ...district, status: newStatus });
+      setShowForm(true);
+      toast('Please assign a Franchisee to mark this district as Sold', 'info');
+    } else {
+      updateDistrict(district.id || district._id, { status: newStatus });
+    }
   };
 
   const handleFileUpload = (e) => {
@@ -364,7 +370,7 @@ export default function DistrictList() {
                           className="form-input" 
                           style={{ width: '110px', fontSize: 12, padding: '4px 8px' }}
                           value={district.status}
-                          onChange={(e) => handleStatusChange(district.id || district._id, e.target.value)}
+                          onChange={(e) => handleStatusChange(district, e.target.value)}
                         >
                           {DISTRICT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>

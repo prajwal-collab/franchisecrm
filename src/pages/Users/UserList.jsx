@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 
 export default function UserList() {
-  const { can } = useAuth();
+  const { can, currentUser } = useAuth();
   const { toast } = useApp();
   const [users, setUsers] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
@@ -70,14 +70,22 @@ export default function UserList() {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
-    const success = await usersDB.delete(id);
-    if (success) {
-      setUsers(prev => prev.filter(u => (u.id || u._id) !== id));
-      toast('User deleted successfully', 'success');
-    } else {
-      toast('Failed to delete user from server. Please check your connection.', 'error');
+    try {
+      const success = await usersDB.delete(id);
+      if (success !== false) {
+        setUsers(prev => prev.filter(u => (u.id || u._id) !== id));
+        toast('User deleted successfully', 'success');
+        // Reload from server to ensure sync
+        loadUsers();
+      } else {
+        toast('Failed to delete user from server. Please check your connection.', 'error');
+      }
+    } catch (err) {
+      console.error('Delete user error:', err);
+      toast('Failed to delete user. ' + (err.message || ''), 'error');
     }
   };
+
 
   if (!can('manage_users')) return <div className="p-8 text-center">Unauthorized</div>;
 
@@ -161,7 +169,11 @@ export default function UserList() {
                   </span>
                 </td>
                 <td>
-                  <span className="badge badge-success" style={{ background: '#eafaf1', color: '#22c55e' }}>Active</span>
+                  {(user.id || user._id) === (currentUser?.id || currentUser?._id) ? (
+                    <span className="badge badge-success" style={{ background: '#eafaf1', color: '#22c55e' }}>Online</span>
+                  ) : (
+                    <span className="badge" style={{ background: '#f5f5f5', color: '#7c98b6' }}>Offline</span>
+                  )}
                 </td>
                 <td style={{ textAlign: 'right' }}>
                   <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>

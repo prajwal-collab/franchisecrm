@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   FileCheck, Search, Filter, UserCheck, 
   ChevronRight, ExternalLink, UserPlus, 
-  TrendingUp, TrendingDown, Minus, Share2, Clipboard
+  TrendingUp, TrendingDown, Minus, Share2, Clipboard, Trash2
 } from 'lucide-react';
 import { qualificationsDB, leadsDB } from '../../services/db';
 import { useApp } from '../../context/AppContext';
@@ -41,6 +41,21 @@ export default function QualificationList() {
       }
     } catch (err) {
       toast("Conversion failed", "error");
+    }
+  };
+
+  const handleDelete = async (q) => {
+    if (!window.confirm(`Delete qualification response for ${getLeadName(q)}?`)) return;
+    try {
+      const success = await qualificationsDB.delete(q._id || q.id);
+      if (success !== false) {
+        toast('Qualification deleted successfully', 'success');
+        refreshData();
+      } else {
+        toast('Failed to delete qualification', 'error');
+      }
+    } catch (err) {
+      toast('Delete failed: ' + (err.message || ''), 'error');
     }
   };
 
@@ -199,6 +214,14 @@ export default function QualificationList() {
                         <UserPlus size={14} /> Convert to Lead
                       </button>
                     )}
+                    <button 
+                      className="btn btn-ghost" 
+                      style={{ padding: '6px 10px', fontSize: 12, color: '#ef4444' }}
+                      onClick={() => handleDelete(q)}
+                      title="Delete Qualification"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </td>
               </tr>

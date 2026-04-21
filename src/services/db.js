@@ -215,6 +215,14 @@ export const qualificationsDB = {
   },
   convertToLead: async (id) => {
     return await smartRequest(`/qualifications/convert/${id}`, 'POST');
+  },
+  delete: async (id) => {
+    const success = await smartRequest(`/qualifications/${id}`, 'DELETE');
+    if (success) {
+      const records = getLocal('qualifications');
+      setLocal('qualifications', records.filter(r => (r.id || r._id) !== id));
+    }
+    return success;
   }
 };
 

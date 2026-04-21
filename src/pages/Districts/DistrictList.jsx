@@ -359,7 +359,7 @@ export default function DistrictList() {
                 </td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      {can('Admin') && (
+                      {can('edit') && (
                         <select 
                           className="form-input" 
                           style={{ width: '110px', fontSize: 12, padding: '4px 8px' }}

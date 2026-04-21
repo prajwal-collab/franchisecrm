@@ -629,3 +629,8 @@ body {
 .delay-3 { animation-delay: 0.3s; }
 .delay-4 { animation-delay: 0.4s; }
 .delay-5 { animation-delay: 0.5s; }
+
+/* Spin animation for loading indicators */
+.spin-animation {
+  animation: spin 1s linear infinite;
+}

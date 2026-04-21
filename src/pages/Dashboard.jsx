@@ -27,15 +27,38 @@ const STAGE_COLORS = {
 const SOURCE_COLORS = ['#FF6B00', '#000000', '#516F90', '#CBD6E2', '#2D3E50', '#7C98B6'];
 
 function AdminDashboard({ leads, districts, franchisees, tasks, users }) {
-  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const weekAgo = new Date(today.getTime() - 7 * 86400000);
   const monthAgo = new Date(today.getTime() - 30 * 86400000);
 
-  const leadsToday = leads.filter(l => new Date(l.createdDate) >= today).length;
-  const leadsWeek = leads.filter(l => new Date(l.createdDate) >= weekAgo).length;
-  const leadsMonth = leads.filter(l => new Date(l.createdDate) >= monthAgo).length;
+  // Parse dates robustly - handle both ISO strings, Date objects, and MongoDB dates
+  const parseDate = (d) => {
+    if (!d) return null;
+    const parsed = new Date(d);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  };
+
+  const leadsToday = leads.filter(l => {
+    const d = parseDate(l.createdDate) || parseDate(l.createdAt);
+    return d && d >= today;
+  }).length;
+  
+  const leadsWeek = leads.filter(l => {
+    const d = parseDate(l.createdDate) || parseDate(l.createdAt);
+    return d && d >= weekAgo;
+  }).length;
+  
+  const leadsMonth = leads.filter(l => {
+    const d = parseDate(l.createdDate) || parseDate(l.createdAt);
+    return d && d >= monthAgo;
+  }).length;
+  
   const closedWon = leads.filter(l => l.stage === 'Closed Won').length;
-  const convRate = leads.length ? ((closedWon / leads.length) * 100).toFixed(1) : 0;
+  const closedLost = leads.filter(l => l.stage === 'Closed Lost').length;
+  const totalClosed = closedWon + closedLost;
+  // Conversion rate = Closed Won / (Closed Won + Closed Lost) — only among deals that have reached a conclusion
+  const convRate = totalClosed > 0 ? ((closedWon / totalClosed) * 100).toFixed(1) : (leads.length > 0 ? ((closedWon / leads.length) * 100).toFixed(1) : '0.0');
   const pipelineValue = franchisees.reduce((s, f) => s + (f.committedAmount || 0), 0);
   const pendingTasks = tasks.filter(t => !t.done).length;
 
@@ -77,6 +100,26 @@ function AdminDashboard({ leads, districts, franchisees, tasks, users }) {
             </div>
             <div className="kpi-card-value">{k.value}</div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>{k.change}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Quick Stats Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, marginBottom: 24 }}>
+        {[
+          { label: 'Total Leads', val: leads.length, color: '#6366f1' },
+          { label: 'This Week', val: leadsWeek, color: '#10b981' },
+          { label: 'This Month', val: leadsMonth, color: '#f59e0b' },
+          { label: 'Won', val: closedWon, color: '#22c55e' },
+          { label: 'Lost', val: closedLost, color: '#ef4444' },
+        ].map((s, i) => (
+          <div key={i} style={{ 
+            padding: '14px 16px', borderRadius: 10, 
+            background: `${s.color}11`, border: `1px solid ${s.color}22`,
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: 22, fontWeight: 800, color: s.color }}>{s.val}</div>
+            <div style={{ fontSize: 11, color: '#516f90', fontWeight: 600, marginTop: 2 }}>{s.label}</div>
           </div>
         ))}
       </div>

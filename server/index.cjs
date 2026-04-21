@@ -502,6 +502,25 @@ app.post('/api/qualifications/convert/:id', async (req, res) => {
   }
 });
 
+app.delete('/api/qualifications/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = { $or: [{ id }] };
+    if (mongoose.Types.ObjectId.isValid(id)) query.$or.push({ _id: id });
+
+    const deleted = await Qualification.findOneAndDelete(query);
+    if (!deleted) {
+      console.log(`[DELETE] Qualification not found: ${id}`);
+    } else {
+      console.log(`[DELETE] Qualification deleted: ${id}`);
+    }
+    res.status(204).send();
+  } catch (err) {
+    console.error(`[DELETE] Qualification error: ${err.message}`);
+    res.status(400).json({ error: err.message });
+  }
+});
+
 app.delete('/api/users/:id', async (req, res) => {
   try {
     const { id } = req.params;

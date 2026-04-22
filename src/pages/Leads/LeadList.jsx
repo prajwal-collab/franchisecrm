@@ -568,6 +568,7 @@ export default function LeadList() {
                             e.stopPropagation();
                             if (window.confirm('Delete this lead?')) {
                               await deleteLead(lid);
+                              setSelected(prev => prev.filter(id => id !== lid));
                             }
                           }}>
                             <Trash2 size={14} />

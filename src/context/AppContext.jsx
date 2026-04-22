@@ -13,6 +13,7 @@ export function AppProvider({ children }) {
   const [tasks, setTasks] = useState([]);
   const [meetings, setMeetings] = useState([]);
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [isGlobalLeadFormOpen, setIsGlobalLeadFormOpen] = useState(false);
 
@@ -58,11 +59,13 @@ export function AppProvider({ children }) {
   const createLead = useCallback(async (data) => {
     const score = calculateLeadScore(data);
     const lead = await leadsDB.create({ ...data, score });
-    runLeadCreationAutomation(lead);
-    await refresh();
-    toast(`Lead "${data.firstName} ${data.lastName}" created`, 'success');
+    if (lead) {
+      setLeads(prev => [lead, ...prev]);
+      runLeadCreationAutomation(lead);
+      toast(`Lead "${data.firstName} ${data.lastName}" created`, 'success');
+    }
     return lead;
-  }, [refresh, toast]);
+  }, [toast]);
 
   const updateLead = useCallback(async (id, updates, previousStage) => {
     // If anything changes that affects score, recalculate with the full merged data
@@ -75,6 +78,8 @@ export function AppProvider({ children }) {
     const lead = await leadsDB.update(id, updates);
     if (!lead) return null;
 
+    setLeads(prev => prev.map(l => (l.id || l._id) === id ? { ...l, ...updates } : l));
+
     // Run automations when stage changes
     if (updates.stage && updates.stage !== previousStage) {
       const closerUser = users.find(u => u.role === 'Closer');
@@ -84,52 +89,62 @@ export function AppProvider({ children }) {
         toast(`🎉 Franchise closed! Franchisee record created for ${district?.name}`, 'success');
       });
     }
-    await refresh();
     return lead;
-  }, [refresh, toast, users]);
+  }, [leads, toast, users]);
 
   const deleteLead = useCallback(async (id) => {
-    await leadsDB.delete(id);
-    await refresh();
-    toast('Lead deleted', 'info');
-  }, [refresh, toast]);
+    const success = await leadsDB.delete(id);
+    if (success) {
+      setLeads(prev => prev.filter(l => (l.id || l._id) !== id));
+      toast('Lead deleted', 'info');
+    }
+  }, [toast]);
 
   const bulkUpdateLeads = useCallback(async (ids, updates) => {
     await leadsDB.bulkUpdate(ids, updates);
-    await refresh();
+    setLeads(prev => prev.map(l => ids.includes(l.id || l._id) ? { ...l, ...updates } : l));
     toast(`${ids.length} leads updated`, 'success');
-  }, [refresh, toast]);
+  }, [toast]);
 
   const bulkDeleteLeads = useCallback(async (ids) => {
-    await leadsDB.bulkDelete(ids);
-    await refresh();
-    toast(`${ids.length} leads deleted`, 'info');
-  }, [refresh, toast]);
+    const success = await leadsDB.bulkDelete(ids);
+    if (success) {
+      setLeads(prev => prev.filter(l => !ids.includes(l.id || l._id)));
+      toast(`${ids.length} leads deleted`, 'info');
+    }
+  }, [toast]);
 
   const importLeads = useCallback(async (records) => {
     const res = await leadsDB.bulkCreate(records);
-    await refresh();
     if (res) {
-      toast(`${records.length} leads imported successfully to server`, 'success');
+      const newItems = Array.isArray(res) ? res : records.map(r => ({ ...r, id: `temp_${Date.now()}_${Math.random()}` }));
+      setLeads(prev => [...newItems, ...prev]);
+      toast(`${records.length} leads imported successfully`, 'success');
     } else {
       const err = getLastError();
       toast(`Import failed: ${err || 'Server Error'}. Saved locally.`, 'warning');
+      await refresh();
     }
   }, [refresh, toast]);
 
   // ---- District operations ----
   const updateDistrict = useCallback(async (id, updates) => {
-    await districtsDB.update(id, updates);
-    await refresh();
-    toast('District updated', 'success');
-  }, [refresh, toast]);
+    const success = await districtsDB.update(id, updates);
+    if (success !== false) {
+      setDistricts(prev => prev.map(d => (d.id || d._id) === id ? { ...d, ...updates } : d));
+      toast('District updated', 'success');
+    }
+    return success;
+  }, [toast]);
 
   const createDistrict = useCallback(async (data) => {
     const d = await districtsDB.create(data);
-    await refresh();
-    toast('District created', 'success');
+    if (d) {
+      setDistricts(prev => [d, ...prev]);
+      toast('District created', 'success');
+    }
     return d;
-  }, [refresh, toast]);
+  }, [toast]);
 
   const deleteDistrict = useCallback(async (id) => {
     const isTied = franchisees.some(f => f.districtId === id);
@@ -137,11 +152,14 @@ export function AppProvider({ children }) {
       toast('Cannot delete district: A Franchise partner is currently assigned to it.', 'error');
       return false;
     }
-    await districtsDB.delete(id);
-    await refresh();
-    toast('District deleted', 'info');
-    return true;
-  }, [refresh, toast, franchisees]);
+    const success = await districtsDB.delete(id);
+    if (success) {
+      setDistricts(prev => prev.filter(d => (d.id || d._id) !== id));
+      toast('District deleted', 'info');
+      return true;
+    }
+    return false;
+  }, [toast, franchisees]);
 
   const bulkDeleteDistricts = useCallback(async (ids) => {
     const tied = ids.filter(id => franchisees.some(f => f.districtId === id));
@@ -149,25 +167,35 @@ export function AppProvider({ children }) {
       toast(`Cannot delete ${tied.length} district(s): They have active Franchise partners assigned.`, 'error');
       return false;
     }
+    
+    let success = false;
     if (!districtsDB.bulkDelete) {
       // fallback if bulkDelete not available
       for (const id of ids) await districtsDB.delete(id);
+      success = true;
     } else {
-      await districtsDB.bulkDelete(ids);
+      success = await districtsDB.bulkDelete(ids);
     }
-    await refresh();
-    toast(`${ids.length} districts deleted`, 'info');
-    return true;
-  }, [refresh, toast, franchisees, districts]);
+
+    if (success) {
+      setDistricts(prev => prev.filter(d => !ids.includes(d.id || d._id)));
+      toast(`${ids.length} districts deleted`, 'info');
+      return true;
+    }
+    return false;
+  }, [toast, franchisees]);
 
   const importDistricts = useCallback(async (records) => {
     const res = await districtsDB.bulkCreate(records);
-    await refresh();
     if (res) {
+      // If server returned records, use them, otherwise use input records with manual IDs for local fallback
+      const newItems = Array.isArray(res) ? res : records.map(r => ({ ...r, id: `temp_${Date.now()}_${Math.random()}` }));
+      setDistricts(prev => [...newItems, ...prev]);
       toast(`${records.length} districts imported`, 'success');
     } else {
       const err = getLastError();
       toast(`Import failed: ${err || 'Server Offline'}. Saved locally.`, 'warning');
+      await refresh(); // Fallback to safe refresh
     }
   }, [refresh, toast]);
 
@@ -261,9 +289,47 @@ export function AppProvider({ children }) {
 
   const deleteMeeting = useCallback(async (id) => {
     await meetingsDB.delete(id);
-    await refresh();
+    setMeetings(prev => prev.filter(m => (m.id || m._id) !== id));
     toast('Meeting deleted', 'info');
-  }, [refresh, toast]);
+  }, [toast]);
+
+  // ---- User operations ----
+  const createUser = useCallback(async (data) => {
+    const res = await usersDB.create(data);
+    if (res) {
+      setUsers(prev => [res, ...prev]);
+      if (res.inviteSent) toast(`User "${data.name}" invited successfully`, 'success');
+      else toast(`User "${data.name}" created (Invite failed)`, 'warning');
+    }
+    return res;
+  }, [toast]);
+
+  const updateUser = useCallback(async (id, updates) => {
+    const res = await usersDB.update(id, updates);
+    if (res) {
+      setUsers(prev => prev.map(u => (u.id || u._id) === id ? { ...u, ...updates } : u));
+      toast('User updated', 'success');
+    }
+    return res;
+  }, [toast]);
+
+  const deleteUser = useCallback(async (id) => {
+    const success = await usersDB.delete(id);
+    if (success) {
+      setUsers(prev => prev.filter(u => (u.id || u._id) !== id));
+      toast('User removed', 'info');
+    }
+    return success;
+  }, [toast]);
+
+  const bulkDeleteUsers = useCallback(async (ids) => {
+    const success = await usersDB.bulkDelete(ids);
+    if (success) {
+      setUsers(prev => prev.filter(u => !ids.includes(u.id || u._id)));
+      toast(`${ids.length} users removed`, 'info');
+    }
+    return success;
+  }, [toast]);
 
   return (
     <AppContext.Provider value={{
@@ -274,7 +340,9 @@ export function AppProvider({ children }) {
       updateFranchisee, createFranchisee, deleteFranchisee, bulkDeleteFranchisees, importFranchisees,
       createTask, toggleTask, deleteTask, updateTask,
       createMeeting, updateMeeting, deleteMeeting,
+      createUser, updateUser, deleteUser, bulkDeleteUsers,
       refresh,
+      loading, setLoading,
       isGlobalLeadFormOpen, setIsGlobalLeadFormOpen,
     }}>
       {children}

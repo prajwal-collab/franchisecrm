@@ -390,7 +390,8 @@ export default function DistrictList() {
                         <button className="btn btn-ghost" style={{ padding: 6, minWidth: 'auto', color: '#ef4444' }} onClick={async (e) => {
                           e.stopPropagation();
                           if (window.confirm('Delete this district?')) {
-                            await deleteDistrict(did);
+                            const success = await deleteDistrict(did);
+                            if (success) setSelected(prev => prev.filter(id => id !== did));
                           }
                         }}>
                           <Trash2 size={16} />

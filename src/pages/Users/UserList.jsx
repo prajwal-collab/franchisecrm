@@ -7,11 +7,9 @@ import { useApp } from '../../context/AppContext';
 
 export default function UserList() {
   const { can, currentUser } = useAuth();
-  const { toast } = useApp();
-  const [users, setUsers] = useState([]);
+  const { users, createUser, updateUser, deleteUser, bulkDeleteUsers, toast, loading } = useApp();
   const [showAdd, setShowAdd] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
   
@@ -31,59 +29,30 @@ export default function UserList() {
     setNewUser(prev => ({ ...prev, password: pass }));
   };
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  const loadUsers = async () => {
-    setLoading(true);
-    const data = await usersDB.getAll();
-    setUsers(data);
-    setLoading(false);
-  };
+  // Centralized user loading happens in AppContext
 
   const handleAdd = async (e) => {
     e.preventDefault();
     if (editingUser) {
-      const updated = await usersDB.update(editingUser.id || editingUser._id, newUser);
+      const updated = await updateUser(editingUser.id || editingUser._id, newUser);
       if (updated) {
         setShowAdd(false);
         setEditingUser(null);
         setNewUser({ name: '', email: '', role: 'SDR', password: '' });
-        loadUsers();
-        toast('User updated successfully', 'success');
       }
     } else {
-      const res = await usersDB.create(newUser);
+      const res = await createUser(newUser);
       if (res) {
         setShowAdd(false);
         setNewUser({ name: '', email: '', role: 'SDR', password: '' });
-        loadUsers();
-        if (res.inviteSent) {
-          toast(`Success! Invitation email sent to ${newUser.email}`, 'success');
-        } else {
-          toast(`User created, but invitation email failed. Check SMTP settings.`, 'warning');
-        }
       }
     }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
-    try {
-      const success = await usersDB.delete(id);
-      if (success !== false) {
-        setUsers(prev => prev.filter(u => (u.id || u._id) !== id));
-        toast('User deleted successfully', 'success');
-        // Reload from server to ensure sync
-        loadUsers();
-      } else {
-        toast('Failed to delete user from server. Please check your connection.', 'error');
-      }
-    } catch (err) {
-      console.error('Delete user error:', err);
-      toast('Failed to delete user. ' + (err.message || ''), 'error');
-    }
+    const success = await deleteUser(id);
+    if (success) setSelected(prev => prev.filter(uid => uid !== id));
   };
 
 
@@ -116,13 +85,9 @@ export default function UserList() {
           onDuplicate={() => toast('Cloning users is restricted.', 'error')}
           onDelete={async () => {
             if (!window.confirm(`Delete ${selected.length} users?`)) return;
-            const success = await usersDB.bulkDelete(selected);
+            const success = await bulkDeleteUsers(selected);
             if (success) {
-              setUsers(prev => prev.filter(u => !selected.includes(u.id || u._id)));
               setSelected([]);
-              toast('Users deleted successfully', 'success');
-            } else {
-              toast('Bulk delete failed. Some users might not have been removed.', 'error');
             }
           }}
           onPrint={() => window.print()}

@@ -202,19 +202,27 @@ export function AppProvider({ children }) {
   // ---- Franchisee operations ----
   const updateFranchisee = useCallback(async (id, updates) => {
     const existing = franchisees.find(f => (f.id || f._id) === id);
+    
+    // Update state optimistically to prevent focus loss in textareas
+    setFranchisees(prev => prev.map(f => (f.id || f._id) === id ? { ...f, ...updates } : f));
+    
     const f = await franchiseesDB.update(id, updates);
     
     // Trigger activation flow if status changed to Active
     if (updates.status === 'Active' && (!existing || existing.status !== 'Active')) {
       const closerUser = users.find(u => u.role === 'Closer');
       const { runFranchiseActivationAutomation } = await import('../services/automations');
-      runFranchiseActivationAutomation(f, closerUser?.id || currentUser?.id);
-      toast(`🚀 Franchise Activated! Activation tasks generated for ${f.name}`, 'success');
+      runFranchiseActivationAutomation(f || { ...existing, ...updates }, closerUser?.id || currentUser?.id);
+      toast(`🚀 Franchise Activated! Activation tasks generated for ${existing?.name || 'Partner'}`, 'success');
+      await refresh(); // Refresh for new tasks
     } else {
-      toast('Franchisee updated', 'success');
+      // For minor updates like notes, don't toast or refresh everything
+      if (!updates.notes && updates.notes !== '') {
+        toast('Franchisee updated', 'success');
+        await refresh();
+      }
     }
     
-    await refresh();
     return f;
   }, [refresh, toast, franchisees, users, currentUser]);
 

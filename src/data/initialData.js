@@ -5,7 +5,7 @@
 export const STAGES = [
   'New Lead', 'Contacted', 'Follow Up', 'Interested', 'Webinar Registered',
   'Webinar Attended', '1:1 Scheduled', 'Qualified',
-  'Negotiation', 'Closed Won', 'Closed Lost'
+  'Negotiation', 'Closed Won', 'Closed Lost', 'Unqualified Lead'
 ];
 
 export const INVESTMENT_CAPACITIES = ['<1L', '1L–3L', '3L–5L', '5L+'];

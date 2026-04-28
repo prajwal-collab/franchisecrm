@@ -22,6 +22,7 @@ const STAGE_COLORS = {
   'Negotiation': '#F97316',
   'Closed Won': '#22C55E', 
   'Closed Lost': '#EF4444',
+  'Unqualified Lead': '#94A3B8',
 };
 
 const SOURCE_COLORS = ['#FF6B00', '#000000', '#516F90', '#CBD6E2', '#2D3E50', '#7C98B6'];

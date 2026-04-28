@@ -46,13 +46,23 @@ const smartRequest = async (path, method = 'GET', body = null) => {
 
 // Generic Merging Helper
 const mergeCollections = (backend, local) => {
-  const merged = [...(backend || [])];
-  (local || []).forEach(loc => {
-    const lid = loc.id || loc._id;
-    const exists = merged.some(b => (b.id || b._id) === lid);
-    if (!exists) merged.push(loc);
+  const map = new Map();
+  
+  // Backend takes precedence
+  (backend || []).forEach(item => {
+    const id = item.id || item._id;
+    if (id) map.set(String(id), item);
   });
-  return merged;
+  
+  // Merge local if not in backend
+  (local || []).forEach(item => {
+    const id = item.id || item._id;
+    if (id && !map.has(String(id))) {
+      map.set(String(id), item);
+    }
+  });
+  
+  return Array.from(map.values());
 };
 
 // Generic LocalStorage Helper

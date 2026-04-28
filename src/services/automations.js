@@ -207,7 +207,7 @@ export function calculateLeadScore(lead) {
   const stageScores = {
     'New Lead': 5, 'Contacted': 15, 'Interested': 30, 'Webinar Registered': 40,
     'Webinar Attended': 55, '1:1 Scheduled': 65, 'Qualified': 75,
-    'Negotiation': 87, 'Closed Won': 100, 'Closed Lost': 0,
+    'Negotiation': 87, 'Closed Won': 100, 'Closed Lost': 0, 'Unqualified Lead': 0,
   };
   score += stageScores[lead.stage] || 0;
   if (lead.investmentCapacity === '5L+') score = Math.min(100, score + 10);

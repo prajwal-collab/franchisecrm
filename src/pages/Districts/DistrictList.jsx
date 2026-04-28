@@ -95,7 +95,11 @@ export default function DistrictList() {
       setShowForm(true);
       toast('Please assign a Franchisee to mark this district as Sold', 'info');
     } else {
-      updateDistrict(district.id || district._id, { status: newStatus });
+      updateDistrict(district.id || district._id, { 
+        status: newStatus,
+        soldDate: null,
+        franchiseeId: null
+      });
     }
   };
 

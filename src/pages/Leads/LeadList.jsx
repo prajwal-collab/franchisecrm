@@ -18,7 +18,7 @@ const STAGE_BADGE = {
   'New Lead': 'badge-new-lead', 'Contacted': 'badge-contacted', 'Interested': 'badge-interested',
   'Webinar Registered': 'badge-webinar-reg', 'Webinar Attended': 'badge-webinar-att',
   '1:1 Scheduled': 'badge-1-1', 'Qualified': 'badge-qualified', 'Negotiation': 'badge-negotiation',
-  'Closed Won': 'badge-closed-won', 'Closed Lost': 'badge-closed-lost',
+  'Closed Won': 'badge-closed-won', 'Closed Lost': 'badge-closed-lost', 'Unqualified Lead': 'badge-unqualified',
 };
 
 const EXPORT_COLS = [
@@ -495,7 +495,7 @@ export default function LeadList() {
                 const lid = lead._id || lead.id;
                 if (!lid) return null; // Safety check
                 return (
-                  <tr key={lid} style={{ cursor: 'pointer' }} onClick={() => lid && navigate(`/leads/${lid}`)}>
+                  <tr key={lid} style={{ cursor: 'pointer', opacity: lead.stage === 'Unqualified Lead' ? 0.5 : 1 }} onClick={() => lid && navigate(`/leads/${lid}`)}>
                     <td onClick={e => { e.stopPropagation(); toggleSelect(lid); }}>
                       {selected.includes(lid) ? <CheckSquare size={16} color="var(--brand-primary)" /> : <Square size={16} />}
                     </td>

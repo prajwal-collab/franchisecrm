@@ -64,8 +64,9 @@ function AdminDashboard({ leads, districts, franchisees, tasks, users }) {
   const pendingTasks = tasks.filter(t => !t.done).length;
 
   const kpis = [
-    { label: 'Leads Today', value: leadsToday, icon: Users, accent: 'var(--brand-primary)', change: `+${leadsWeek} this week` },
-    { label: 'Conversion Rate', value: `${convRate}%`, icon: TrendingUp, accent: '#000000', change: `${closedWon} deals closed` },
+    { label: 'Total Leads', value: leads.length, icon: Users, accent: '#6366f1', change: `+${leadsToday} today` },
+    { label: 'This Month', value: leadsMonth, icon: TrendingUp, accent: '#f59e0b', change: `+${leadsWeek} this week` },
+    { label: 'Conversion Rate', value: `${convRate}%`, icon: Target, accent: '#10b981', change: `${closedWon} Won / ${closedLost} Lost` },
     { label: 'Pipeline Val', value: `₹${(pipelineValue / 100000).toFixed(1)}L`, icon: Building2, accent: 'var(--brand-primary)', change: `${franchisees.length} active units` },
     { label: 'Pending Tasks', value: pendingTasks, icon: CheckSquare, accent: '#516F90', change: `${tasks.filter(t => !t.done && new Date(t.dueDate) < new Date()).length} overdue` },
   ];
@@ -101,26 +102,6 @@ function AdminDashboard({ leads, districts, franchisees, tasks, users }) {
             </div>
             <div className="kpi-card-value">{k.value}</div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>{k.change}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Quick Stats Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, marginBottom: 24 }}>
-        {[
-          { label: 'Total Leads', val: leads.length, color: '#6366f1' },
-          { label: 'This Week', val: leadsWeek, color: '#10b981' },
-          { label: 'This Month', val: leadsMonth, color: '#f59e0b' },
-          { label: 'Won', val: closedWon, color: '#22c55e' },
-          { label: 'Lost', val: closedLost, color: '#ef4444' },
-        ].map((s, i) => (
-          <div key={i} style={{ 
-            padding: '14px 16px', borderRadius: 10, 
-            background: `${s.color}11`, border: `1px solid ${s.color}22`,
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: 22, fontWeight: 800, color: s.color }}>{s.val}</div>
-            <div style={{ fontSize: 11, color: '#516f90', fontWeight: 600, marginTop: 2 }}>{s.label}</div>
           </div>
         ))}
       </div>

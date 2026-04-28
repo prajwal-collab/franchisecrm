@@ -8,16 +8,17 @@ const daysFromNow = (n) => new Date(Date.now() + n * 86400000).toISOString();
 const daysFromDate = (dateStr, n) => new Date(new Date(dateStr).getTime() + n * 86400000).toISOString();
 
 // ---- Stage Transition Auto-Tasks ----
-export function runStageAutomation(lead, newStage, closer, onFranchiseeCreated) {
+export async function runStageAutomation(lead, newStage, closer, onFranchiseeCreated) {
+  const lid = lead.id || lead._id;
   switch (newStage) {
     case 'Contacted':
       break; // No automation
 
     case 'Follow Up':
       if (lead.followUpDate) {
-        tasksDB.create({
+        await tasksDB.create({
           title: `Follow up with ${lead.firstName} ${lead.lastName}`,
-          leadId: lead.id || lead._id,
+          leadId: lid,
           assignedTo: lead.assignedTo,
           dueDate: new Date(lead.followUpDate).toISOString(),
         });
@@ -25,27 +26,27 @@ export function runStageAutomation(lead, newStage, closer, onFranchiseeCreated) 
       break;
 
     case 'Interested':
-      tasksDB.create({
+      await tasksDB.create({
         title: 'Schedule webinar invitation',
-        leadId: lead.id,
+        leadId: lid,
         assignedTo: lead.assignedTo,
         dueDate: daysFromNow(2),
       });
       break;
 
     case 'Webinar Registered':
-      tasksDB.create({
+      await tasksDB.create({
         title: 'Send reminder to lead about webinar',
-        leadId: lead.id,
+        leadId: lid,
         assignedTo: lead.assignedTo,
         dueDate: daysFromNow(1),
       });
       break;
 
     case 'Webinar Attended':
-      tasksDB.create({
+      await tasksDB.create({
         title: 'Schedule 1:1 follow-up call',
-        leadId: lead.id,
+        leadId: lid,
         assignedTo: lead.assignedTo,
         dueDate: daysFromNow(3),
       });
@@ -55,9 +56,9 @@ export function runStageAutomation(lead, newStage, closer, onFranchiseeCreated) 
       break;
 
     case 'Qualified':
-      tasksDB.create({
+      await tasksDB.create({
         title: 'Begin negotiation with lead',
-        leadId: lead.id,
+        leadId: lid,
         assignedTo: closer?.id || lead.assignedTo,
         dueDate: daysFromNow(5),
       });
@@ -68,7 +69,7 @@ export function runStageAutomation(lead, newStage, closer, onFranchiseeCreated) 
 
     case 'Closed Won': {
       // 1. Create Franchisee record
-      const franchisee = franchiseesDB.create({
+      const franchisee = await franchiseesDB.create({
         name: `${lead.firstName} ${lead.lastName}`,
         contactPerson: `${lead.firstName} ${lead.lastName}`,
         phone: lead.phone,
@@ -82,19 +83,20 @@ export function runStageAutomation(lead, newStage, closer, onFranchiseeCreated) 
         paymentStatus: 'Partial',
         sourceOfLead: lead.source,
         notes: lead.notes || '',
-        leadId: lead.id,
+        leadId: lid,
       });
 
       // 2. Update district status to Sold
-      if (lead.districtId) {
-        districtsDB.markSold(lead.districtId, franchisee.id);
+      if (lead.districtId && franchisee) {
+        const fid = franchisee.id || franchisee._id;
+        await districtsDB.markSold(lead.districtId, fid);
       }
 
       // 3. Task for Closer
-      tasksDB.create({
+      await tasksDB.create({
         title: 'Send onboarding pack and payment link',
-        leadId: lead.id,
-        franchiseeId: franchisee.id,
+        leadId: lid,
+        franchiseeId: franchisee?.id || franchisee?._id,
         assignedTo: closer?.id || lead.assignedTo,
         dueDate: daysFromNow(1),
       });
@@ -105,9 +107,9 @@ export function runStageAutomation(lead, newStage, closer, onFranchiseeCreated) 
     }
 
     case 'Closed Lost':
-      tasksDB.create({
+      await tasksDB.create({
         title: 'Add to nurture list, follow up in 90 days',
-        leadId: lead.id,
+        leadId: lid,
         assignedTo: lead.assignedTo,
         dueDate: daysFromNow(90),
       });
@@ -119,28 +121,28 @@ export function runStageAutomation(lead, newStage, closer, onFranchiseeCreated) 
 }
 
 // ---- Lead Creation Automation ----
-export function runLeadCreationAutomation(lead) {
+export async function runLeadCreationAutomation(lead) {
   // Assign SDR (already done in form, but create task)
-  tasksDB.create({
+  await tasksDB.create({
     title: 'Call lead within 24h',
-    leadId: lead.id,
+    leadId: lead.id || lead._id,
     assignedTo: lead.assignedTo,
     dueDate: daysFromNow(1),
   });
 }
 
 // ---- Payment Reminder Task ----
-export function createPaymentReminderTask(franchisee, closerId) {
-  tasksDB.create({
+export async function createPaymentReminderTask(franchisee, closerId) {
+  await tasksDB.create({
     title: `Remind franchisee about pending payment – ${franchisee.name}`,
-    franchiseeId: franchisee.id,
+    franchiseeId: franchisee.id || franchisee._id,
     assignedTo: closerId,
     dueDate: daysFromNow(3),
   });
 }
 
 // ---- Franchise Activation Flow ----
-export function runFranchiseActivationAutomation(franchisee, assignedTo) {
+export async function runFranchiseActivationAutomation(franchisee, assignedTo) {
   const steps = [
     { title: 'Complete Legal Paperwork & Agreement', delay: 1 },
     { title: 'Setup Sales Material & Brand Kit', delay: 2 },
@@ -149,24 +151,24 @@ export function runFranchiseActivationAutomation(franchisee, assignedTo) {
     { title: 'Setup CRM Access & Dashboard', delay: 0 }
   ];
 
-  steps.forEach(step => {
-    tasksDB.create({
+  for (const step of steps) {
+    await tasksDB.create({
       title: `${step.title} – ${franchisee.name}`,
       franchiseeId: franchisee.id || franchisee._id,
       assignedTo: assignedTo,
       dueDate: daysFromNow(step.delay),
       done: false
     });
-  });
+  }
 }
 
 // ---- Meeting Reminder Task ----
-export function createMeetingReminderTask(meeting, leadId, sdrId) {
+export async function createMeetingReminderTask(meeting, leadId, sdrId) {
   const reminderDate = daysFromDate(meeting.scheduledDateTime, -1);
-  tasksDB.create({
+  await tasksDB.create({
     title: 'Send reminder to lead about meeting tomorrow',
     leadId,
-    meetingId: meeting.id,
+    meetingId: meeting.id || meeting._id,
     assignedTo: sdrId,
     dueDate: reminderDate,
   });

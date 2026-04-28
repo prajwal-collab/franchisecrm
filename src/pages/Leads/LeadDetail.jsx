@@ -15,7 +15,7 @@ const STAGE_BADGE = {
   'New Lead': 'badge-new-lead', 'Contacted': 'badge-contacted', 'Follow Up': 'badge-warning', 'Interested': 'badge-interested',
   'Webinar Registered': 'badge-webinar-reg', 'Webinar Attended': 'badge-webinar-att',
   '1:1 Scheduled': 'badge-1-1', 'Qualified': 'badge-qualified', 'Negotiation': 'badge-negotiation',
-  'Closed Won': 'badge-closed-won', 'Closed Lost': 'badge-closed-lost',
+  'Closed Won': 'badge-closed-won', 'Closed Lost': 'badge-closed-lost', 'Unqualified Lead': 'badge-unqualified',
 };
 
 export default function LeadDetail() {

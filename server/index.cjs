@@ -114,15 +114,29 @@ app.post('/api/leads/bulk', async (req, res) => {
 });
 
 app.post('/api/leads', async (req, res) => {
-  const lead = new Lead(req.body);
-  await lead.save();
-  res.status(201).json(lead);
+  try {
+    const lead = new Lead(req.body);
+    await lead.save();
+    res.status(201).json(lead);
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({ 
+        message: 'A lead with this email or phone already exists.',
+        details: err.message 
+      });
+    }
+    res.status(400).json({ error: err.message });
+  }
 });
 
 app.put('/api/leads/:id', async (req, res) => {
   try {
-    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
+    const { id } = req.params;
+    const query = { $or: [{ id }] };
+    if (mongoose.Types.ObjectId.isValid(id)) query.$or.push({ _id: id });
+
     const updated = await Lead.findOneAndUpdate(query, req.body, { new: true });
+    if (!updated) return res.status(404).json({ message: 'Lead not found' });
     res.json(updated);
   } catch (e) {
     res.status(400).json({ error: e.message });
@@ -203,8 +217,12 @@ app.post('/api/districts', async (req, res) => {
 
 app.put('/api/districts/:id', async (req, res) => {
   try {
-    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
+    const { id } = req.params;
+    const query = { $or: [{ id }] };
+    if (mongoose.Types.ObjectId.isValid(id)) query.$or.push({ _id: id });
+
     const updated = await District.findOneAndUpdate(query, req.body, { new: true });
+    if (!updated) return res.status(404).json({ message: 'District not found' });
     res.json(updated);
   } catch (e) {
     res.status(400).json({ error: e.message });
@@ -285,7 +303,10 @@ app.post('/api/franchisees', async (req, res) => {
 
 app.put('/api/franchisees/:id', async (req, res) => {
   try {
-    const query = mongoose.Types.ObjectId.isValid(req.params.id) ? { _id: req.params.id } : { id: req.params.id };
+    const { id } = req.params;
+    const query = { $or: [{ id }] };
+    if (mongoose.Types.ObjectId.isValid(id)) query.$or.push({ _id: id });
+
     const updated = await Franchisee.findOneAndUpdate(query, req.body, { new: true });
     if (!updated) return res.status(404).json({ message: 'Franchisee not found' });
     res.json(updated);

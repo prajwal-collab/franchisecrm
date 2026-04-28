@@ -61,7 +61,7 @@ export function AppProvider({ children }) {
     const lead = await leadsDB.create({ ...data, score });
     if (lead) {
       setLeads(prev => [lead, ...prev]);
-      runLeadCreationAutomation(lead);
+      await runLeadCreationAutomation(lead);
       toast(`Lead "${data.firstName} ${data.lastName}" created`, 'success');
     }
     return lead;
@@ -83,10 +83,10 @@ export function AppProvider({ children }) {
     // Run automations when stage changes
     if (updates.stage && updates.stage !== previousStage) {
       const closerUser = users.find(u => u.role === 'Closer');
-      runStageAutomation(lead, updates.stage, closerUser, (franchisee, closedLead) => {
-        const district = districtsDB.getById(closedLead.districtId);
+      await runStageAutomation(lead, updates.stage, closerUser, (franchisee, closedLead) => {
+        const district = districts.find(d => (d.id || d._id) === closedLead.districtId);
         simulateAdminEmail(closedLead, franchisee, district);
-        toast(`🎉 Franchise closed! Franchisee record created for ${district?.name}`, 'success');
+        toast(`🎉 Franchise closed! Franchisee record created for ${district?.name || 'Assigned District'}`, 'success');
       });
     }
     return lead;
@@ -119,7 +119,8 @@ export function AppProvider({ children }) {
     if (res) {
       const newItems = Array.isArray(res) ? res : records.map(r => ({ ...r, id: `temp_${Date.now()}_${Math.random()}` }));
       setLeads(prev => [...newItems, ...prev]);
-      toast(`${records.length} leads imported successfully`, 'success');
+      const count = Array.isArray(res) ? res.length : records.length;
+      toast(`${count} leads imported successfully`, 'success');
     } else {
       const err = getLastError();
       toast(`Import failed: ${err || 'Server Error'}. Saved locally.`, 'warning');
@@ -212,7 +213,7 @@ export function AppProvider({ children }) {
     if (updates.status === 'Active' && (!existing || existing.status !== 'Active')) {
       const closerUser = users.find(u => u.role === 'Closer');
       const { runFranchiseActivationAutomation } = await import('../services/automations');
-      runFranchiseActivationAutomation(f || { ...existing, ...updates }, closerUser?.id || currentUser?.id);
+      await runFranchiseActivationAutomation(f || { ...existing, ...updates }, closerUser?.id || currentUser?.id);
       toast(`🚀 Franchise Activated! Activation tasks generated for ${existing?.name || 'Partner'}`, 'success');
       await refresh(); // Refresh for new tasks
     } else {

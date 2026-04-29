@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import {
   Users, TrendingUp, MapPin, Building2, CheckSquare,
-  Clock, AlertTriangle, ExternalLink, Plus, PlusCircle
+  Clock, AlertTriangle, ExternalLink, Plus, PlusCircle, Target
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';

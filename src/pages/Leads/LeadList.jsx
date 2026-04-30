@@ -54,6 +54,7 @@ export default function LeadList() {
   const [importSummary, setImportSummary] = useState({ total: 0, duplicates: 0, newLeads: 0, unresolvedDistricts: 0 });
   const [skipDuplicates, setSkipDuplicates] = useState(true);
   const [processedRecords, setProcessedRecords] = useState([]);
+  const [unresolvedNames, setUnresolvedNames] = useState(new Set());
   const [bulkStage, setBulkStage] = useState('');
   const [bulkAssignee, setBulkAssignee] = useState('');
   const [showBulkMenu, setShowBulkMenu] = useState(false);
@@ -190,6 +191,7 @@ export default function LeadList() {
     let dupsInFile = 0;
     let dupsWithDB = 0;
     let unresolved = 0;
+    const unresolvedSet = new Set();
     const seenInBatch = new Set();
 
     const records = importData
@@ -256,14 +258,13 @@ export default function LeadList() {
           const match = findBestMatch(rec.districtName, districts, 'name');
           if (match) {
             rec.districtId = match.target._id || match.target.id;
-            // Optional: If it was a fuzzy match, maybe add a note?
             if (!match.exact) {
-              rec.notes = (rec.notes ? rec.notes + ' ' : '') + `(District matched: ${match.target.name})`;
+              rec.notes = (rec.notes ? rec.notes + ' ' : '') + `(Matched: ${match.target.name})`;
             }
           } else {
             rec.districtId = null;
             unresolved++;
-            rec.notes = (rec.notes ? rec.notes + ' ' : '') + `(Unresolved District: ${rec.districtName})`;
+            unresolvedSet.add(rec.districtName.trim());
           }
         } else {
           rec.districtId = null;
@@ -278,6 +279,7 @@ export default function LeadList() {
       .filter(Boolean);
 
     setProcessedRecords(records);
+    setUnresolvedNames(unresolvedSet);
     setImportSummary({
       total: records.length,
       duplicates: dupsInFile + dupsWithDB,
@@ -287,8 +289,10 @@ export default function LeadList() {
     setImportStep(3);
   };
 
-  const handleImportConfirm = () => {
-    const finalRecords = skipDuplicates 
+  const handleImportConfirm = async () => {
+    const { importLeads, importDistricts, toast } = useApp();
+    
+    let finalRecords = skipDuplicates 
       ? processedRecords.filter(r => !r.isDuplicate)
       : processedRecords;
 
@@ -297,11 +301,37 @@ export default function LeadList() {
       return;
     }
 
-    importLeads(finalRecords);
+    // 1. Create missing districts if any
+    if (unresolvedNames.size > 0) {
+      const newDistrictsData = Array.from(unresolvedNames).map(name => ({
+        name,
+        status: 'Available',
+        createdDate: new Date().toISOString()
+      }));
+      
+      const createdDistricts = await importDistricts(newDistrictsData);
+      
+      if (createdDistricts) {
+        // Map new district IDs to the records
+        finalRecords = finalRecords.map(rec => {
+          if (!rec.districtId && rec.districtName) {
+            const matched = createdDistricts.find(d => 
+              d.name.toLowerCase() === rec.districtName.toLowerCase().trim()
+            );
+            if (matched) return { ...rec, districtId: matched._id || matched.id };
+          }
+          return rec;
+        });
+      }
+    }
+
+    // 2. Import Leads
+    await importLeads(finalRecords);
     setShowImport(false);
     setImportData(null);
     setImportStep(1);
     setProcessedRecords([]);
+    setUnresolvedNames(new Set());
   };
 
   return (
@@ -786,9 +816,9 @@ export default function LeadList() {
 
                   {importSummary.unresolvedDistricts > 0 && (
                     <div style={{ background: '#f0f9ff', border: '1px solid #e0f2fe', borderRadius: 8, padding: '12px 16px', marginBottom: 20, textAlign: 'left', display: 'flex', gap: 12, alignItems: 'center' }}>
-                      <AlertCircle color="#0284c7" size={20} />
+                      <Zap color="#0284c7" size={20} />
                       <div style={{ fontSize: 13, color: '#0369a1' }}>
-                        <strong>{importSummary.unresolvedDistricts} districts</strong> could not be matched. They will be imported with a note.
+                        <strong>{importSummary.unresolvedDistricts} new districts</strong> will be automatically created and linked to these leads.
                       </div>
                     </div>
                   )}

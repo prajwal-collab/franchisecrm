@@ -189,14 +189,15 @@ export function AppProvider({ children }) {
   const importDistricts = useCallback(async (records) => {
     const res = await districtsDB.bulkCreate(records);
     if (res) {
-      // If server returned records, use them, otherwise use input records with manual IDs for local fallback
       const newItems = Array.isArray(res) ? res : records.map(r => ({ ...r, id: `temp_${Date.now()}_${Math.random()}` }));
       setDistricts(prev => [...newItems, ...prev]);
       toast(`${records.length} districts imported`, 'success');
+      return newItems;
     } else {
       const err = getLastError();
       toast(`Import failed: ${err || 'Server Offline'}. Saved locally.`, 'warning');
-      await refresh(); // Fallback to safe refresh
+      await refresh();
+      return null;
     }
   }, [refresh, toast]);
 

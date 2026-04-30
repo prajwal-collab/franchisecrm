@@ -9,6 +9,7 @@ import {
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { districtsDB, exportToCSV, parseCSV, usersDB, downloadTemplate } from '../../services/db';
+import { findBestMatch } from '../../utils/stringUtils';
 import { STAGES, SOURCES, INVESTMENT_CAPACITIES } from '../../data/initialData';
 import LeadForm from './LeadForm';
 import KanbanView from './KanbanView';
@@ -50,6 +51,9 @@ export default function LeadList() {
   const [importData, setImportData] = useState(null);
   const [importMapping, setImportMapping] = useState({});
   const [importStep, setImportStep] = useState(1); // 1=upload 2=map 3=confirm
+  const [importSummary, setImportSummary] = useState({ total: 0, duplicates: 0, newLeads: 0, unresolvedDistricts: 0 });
+  const [skipDuplicates, setSkipDuplicates] = useState(true);
+  const [processedRecords, setProcessedRecords] = useState([]);
   const [bulkStage, setBulkStage] = useState('');
   const [bulkAssignee, setBulkAssignee] = useState('');
   const [showBulkMenu, setShowBulkMenu] = useState(false);
@@ -178,8 +182,15 @@ export default function LeadList() {
     reader.readAsText(file);
   };
 
-  const handleImportConfirm = () => {
+  const calculateImport = () => {
     const sdrs = users.filter(u => u.role === 'SDR');
+    const existingEmails = new Set(leads.map(l => (l.email || '').toLowerCase()).filter(Boolean));
+    const existingPhones = new Set(leads.map(l => l.phone).filter(Boolean));
+    
+    let dupsInFile = 0;
+    let dupsWithDB = 0;
+    let unresolved = 0;
+    const seenInBatch = new Set();
 
     const records = importData
       .map((row, i) => {
@@ -195,12 +206,10 @@ export default function LeadList() {
           }
         });
 
-        // Skip genuinely empty rows (no data after mapping)
         if (!hasData) return null;
 
-        // Fallbacks for required-ish fields to prevent UI breakage
+        // Identification fallbacks
         if (!rec.firstName && !rec.lastName) {
-          // Use phone or email as identifier rather than generic 'Imported'
           if (rec.phone) {
             const digits = String(rec.phone).replace(/\D/g, '');
             rec.firstName = 'Lead';
@@ -217,39 +226,82 @@ export default function LeadList() {
         if (!rec.lastName) rec.lastName = '';
         if (!rec.phone) rec.phone = '';
 
-        // Normalize phone safely
+        // Normalize phone
         if (rec.phone) {
           const digits = rec.phone.replace(/\D/g, '');
           if (digits.length === 10) rec.phone = `+91${digits}`;
           else if (digits.length === 12 && digits.startsWith('91')) rec.phone = `+${digits}`;
         }
-        // Resolve districtId from name (optional)
+
+        // Duplicate Check
+        const emailKey = (rec.email || '').toLowerCase();
+        const phoneKey = rec.phone;
+        
+        let isDup = false;
+        if ((emailKey && seenInBatch.has(emailKey)) || (phoneKey && seenInBatch.has(phoneKey))) {
+          dupsInFile++;
+          isDup = true;
+        } else if ((emailKey && existingEmails.has(emailKey)) || (phoneKey && existingPhones.has(phoneKey))) {
+          dupsWithDB++;
+          isDup = true;
+        }
+
+        if (emailKey) seenInBatch.add(emailKey);
+        if (phoneKey) seenInBatch.add(phoneKey);
+        
+        rec.isDuplicate = isDup;
+
+        // District Resolution
         if (rec.districtName) {
-          const d = districts.find(dist => 
-            dist.name.toLowerCase() === rec.districtName.toLowerCase().trim()
-          );
-          rec.districtId = d ? (d._id || d.id) : null;
+          const match = findBestMatch(rec.districtName, districts, 'name');
+          if (match) {
+            rec.districtId = match.target._id || match.target.id;
+            // Optional: If it was a fuzzy match, maybe add a note?
+            if (!match.exact) {
+              rec.notes = (rec.notes ? rec.notes + ' ' : '') + `(District matched: ${match.target.name})`;
+            }
+          } else {
+            rec.districtId = null;
+            unresolved++;
+            rec.notes = (rec.notes ? rec.notes + ' ' : '') + `(Unresolved District: ${rec.districtName})`;
+          }
         } else {
           rec.districtId = null;
         }
-        // Default stage
+
         if (!rec.stage || !STAGES.includes(rec.stage)) rec.stage = 'New Lead';
-        // Auto assign SDR
         if (!rec.assignedTo && sdrs.length) {
           rec.assignedTo = sdrs[i % sdrs.length].id || sdrs[i % sdrs.length]._id;
         }
         return rec;
       })
-      .filter(Boolean); // remove null rows
+      .filter(Boolean);
 
-    if (!records.length) {
-      toast('No valid rows found. Make sure First Name or Phone columns are mapped.', 'error');
+    setProcessedRecords(records);
+    setImportSummary({
+      total: records.length,
+      duplicates: dupsInFile + dupsWithDB,
+      newLeads: records.length - (dupsInFile + dupsWithDB),
+      unresolvedDistricts: unresolved
+    });
+    setImportStep(3);
+  };
+
+  const handleImportConfirm = () => {
+    const finalRecords = skipDuplicates 
+      ? processedRecords.filter(r => !r.isDuplicate)
+      : processedRecords;
+
+    if (!finalRecords.length) {
+      toast('No leads to import.', 'warning');
       return;
     }
-    importLeads(records);
+
+    importLeads(finalRecords);
     setShowImport(false);
     setImportData(null);
     setImportStep(1);
+    setProcessedRecords([]);
   };
 
   return (
@@ -701,12 +753,47 @@ export default function LeadList() {
               )}
 
               {importStep === 3 && (
-                <div style={{ textAlign: 'center', padding: '32px 0' }}>
-                  <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#dcfce7', color: '#166534', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+                <div style={{ textAlign: 'center', padding: '16px 0' }}>
+                  <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#f0fdf4', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
                     <CheckSquare size={32} />
                   </div>
-                  <h3 style={{ fontSize: 20, marginBottom: 8 }}>Ready to import {importData?.length} leads</h3>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Once confirmed, these leads will be added to your CRM and assigned to your team.</p>
+                  <h3 style={{ fontSize: 20, marginBottom: 12 }}>Import Summary</h3>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+                    <div style={{ padding: '16px', background: '#f8fafc', borderRadius: 8, textAlign: 'left' }}>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', marginBottom: 4 }}>Total Leads</div>
+                      <div style={{ fontSize: 24, fontWeight: 800 }}>{importSummary.total}</div>
+                    </div>
+                    <div style={{ padding: '16px', background: '#f8fafc', borderRadius: 8, textAlign: 'left' }}>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', marginBottom: 4 }}>New Leads</div>
+                      <div style={{ fontSize: 24, fontWeight: 800, color: '#16a34a' }}>{importSummary.newLeads}</div>
+                    </div>
+                  </div>
+
+                  {importSummary.duplicates > 0 && (
+                    <div style={{ background: '#fff7ed', border: '1px solid #ffedd5', borderRadius: 8, padding: '16px', marginBottom: 20, textAlign: 'left', display: 'flex', gap: 12, alignItems: 'center' }}>
+                      <AlertTriangle color="#f97316" size={24} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, color: '#9a3412', fontSize: 14 }}>{importSummary.duplicates} Duplicates Found</div>
+                        <div style={{ fontSize: 13, color: '#c2410c' }}>These records match existing leads by phone or email.</div>
+                      </div>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', background: 'white', padding: '8px 12px', borderRadius: 6, border: '1px solid #fdba74' }}>
+                        <input type="checkbox" checked={skipDuplicates} onChange={e => setSkipDuplicates(e.target.checked)} />
+                        <span style={{ fontSize: 12, fontWeight: 700 }}>Skip Them</span>
+                      </label>
+                    </div>
+                  )}
+
+                  {importSummary.unresolvedDistricts > 0 && (
+                    <div style={{ background: '#f0f9ff', border: '1px solid #e0f2fe', borderRadius: 8, padding: '12px 16px', marginBottom: 20, textAlign: 'left', display: 'flex', gap: 12, alignItems: 'center' }}>
+                      <AlertCircle color="#0284c7" size={20} />
+                      <div style={{ fontSize: 13, color: '#0369a1' }}>
+                        <strong>{importSummary.unresolvedDistricts} districts</strong> could not be matched. They will be imported with a note.
+                      </div>
+                    </div>
+                  )}
+
+                  <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Once confirmed, the selected leads will be added to your CRM.</p>
                 </div>
               )}
             </div>
@@ -716,7 +803,7 @@ export default function LeadList() {
                 {importStep === 1 ? 'Cancel' : 'Back'}
               </button>
               {importStep === 2 && (
-                <button className="btn btn-primary" onClick={() => setImportStep(3)}>Next Step</button>
+                <button className="btn btn-primary" onClick={calculateImport}>Next Step</button>
               )}
               {importStep === 3 && (
                 <button className="btn btn-primary" onClick={handleImportConfirm}>Confirm & Import</button>

@@ -32,7 +32,7 @@ const EXPORT_COLS = [
 ];
 
 export default function LeadList() {
-  const { leads, districts, users, createLead, updateLead, deleteLead, bulkUpdateLeads, bulkDeleteLeads, importLeads, refresh, toast } = useApp();
+  const { leads, districts, users, createLead, updateLead, deleteLead, bulkUpdateLeads, bulkDeleteLeads, importLeads, importDistricts, refresh, toast } = useApp();
   const { can } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef();
@@ -290,7 +290,6 @@ export default function LeadList() {
   };
 
   const handleImportConfirm = async () => {
-    const { importLeads, importDistricts, toast } = useApp();
     
     let finalRecords = skipDuplicates 
       ? processedRecords.filter(r => !r.isDuplicate)

@@ -238,7 +238,7 @@ export default function TaskList() {
                 >
                   <option value="">None</option>
                   {leads.map(l => {
-                    const dName = districts.find(d => (d.id || d._id) === l.districtId)?.name || 'Unknown';
+                    const dName = l.districtId ? districts.find(d => String(d._id) === String(l.districtId) || String(d.id) === String(l.districtId))?.name || 'Unknown' : 'Unknown';
                     return (
                       <option key={l.id || l._id} value={l.id || l._id}>
                         {l.firstName} {l.lastName} ({dName})

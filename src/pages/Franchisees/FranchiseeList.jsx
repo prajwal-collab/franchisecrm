@@ -59,7 +59,7 @@ export default function FranchiseeList() {
     if (!Array.isArray(franchisees)) return [];
     return franchisees.map(f => ({
       ...f,
-      districtName: districts.find(d => (d.id || d._id) === f.districtId)?.name || '—'
+      districtName: f.districtId ? districts.find(d => String(d._id) === String(f.districtId) || String(d.id) === String(f.districtId))?.name || '—' : '—'
     }));
   }, [franchisees, districts]);
 
@@ -151,7 +151,7 @@ export default function FranchiseeList() {
             d.name.toLowerCase().includes(obj.districtName.toLowerCase()) || 
             obj.districtName.toLowerCase().includes(d.name.toLowerCase())
           );
-          if (match) obj.districtId = match.id || match._id;
+          if (match) obj.districtId = String(match._id || match.id);
         }
 
         // Ensure name exists

@@ -16,7 +16,7 @@ export default function FranchiseeDetail() {
   const { can } = useAuth();
 
   const franchisee = franchisees.find(f => f.id === id || f._id === id);
-  const district = districts.find(d => (d.id || d._id) === franchisee?.districtId);
+  const district = franchisee?.districtId ? districts.find(d => String(d._id) === String(franchisee.districtId) || String(d.id) === String(franchisee.districtId)) : null;
 
   const [activeTab, setActiveTab] = useState('Overview');
   const [paymentAmount, setPaymentAmount] = useState('');

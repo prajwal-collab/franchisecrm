@@ -102,7 +102,12 @@ export default function LeadList() {
     if (!Array.isArray(leads)) return [];
     return leads.map(l => ({
       ...l,
-      districtName: districts.find(d => (d.id || d._id) === l.districtId)?.name || 'Pending',
+      districtName: (() => {
+        if (!l.districtId) return 'Pending';
+        const did = String(l.districtId);
+        const d = districts.find(d => String(d._id) === did || String(d.id) === did);
+        return d?.name || 'Pending';
+      })(),
       assignedToName: users.find(u => (u.id || u._id) === l.assignedTo)?.name || '—',
     }));
   }, [leads, districts, users]);
@@ -301,30 +306,44 @@ export default function LeadList() {
     }
 
     // 1. Create missing districts if any
+    let allDistricts = [...districts]; // Start with current known districts
+
     if (unresolvedNames.size > 0) {
       const newDistrictsData = Array.from(unresolvedNames).map(name => ({
-        name,
+        name: name.trim(),
         status: 'Available',
         createdDate: new Date().toISOString()
       }));
       
       const createdDistricts = await importDistricts(newDistrictsData);
       
-      if (createdDistricts) {
-        // Map new district IDs to the records
-        finalRecords = finalRecords.map(rec => {
-          if (!rec.districtId && rec.districtName) {
-            const matched = createdDistricts.find(d => 
-              d.name.toLowerCase() === rec.districtName.toLowerCase().trim()
-            );
-            if (matched) return { ...rec, districtId: matched._id || matched.id };
-          }
-          return rec;
-        });
+      if (createdDistricts && createdDistricts.length > 0) {
+        // Merge newly created districts into our working list
+        allDistricts = [...districts, ...createdDistricts];
       }
     }
 
-    // 2. Import Leads
+    // 2. Re-resolve all district IDs against the full (updated) district list
+    //    This handles both: newly created districts AND cases where fuzzy match
+    //    failed on stale state but the district actually exists in DB.
+    finalRecords = finalRecords.map(rec => {
+      // Already has a valid districtId — keep it
+      if (rec.districtId) return rec;
+
+      // Try to resolve against the full updated list
+      if (rec.districtName) {
+        const match = findBestMatch(rec.districtName, allDistricts, 'name', 0.5);
+        if (match) {
+          return {
+            ...rec,
+            districtId: match.target._id || match.target.id,
+          };
+        }
+      }
+      return rec;
+    });
+
+    // 3. Import Leads
     await importLeads(finalRecords);
     setShowImport(false);
     setImportData(null);

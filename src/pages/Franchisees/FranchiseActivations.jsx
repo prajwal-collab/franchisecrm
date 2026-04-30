@@ -41,7 +41,7 @@ export default function FranchiseActivations() {
       }
 
       const progress = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
-      const district = districts.find(d => (d.id || d._id) === f.districtId);
+      const district = f.districtId ? districts.find(d => String(d._id) === String(f.districtId) || String(d.id) === String(f.districtId)) : null;
 
       return {
         ...f,

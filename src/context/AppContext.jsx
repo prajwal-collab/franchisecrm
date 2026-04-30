@@ -84,7 +84,7 @@ export function AppProvider({ children }) {
     if (updates.stage && updates.stage !== previousStage) {
       const closerUser = users.find(u => u.role === 'Closer');
       await runStageAutomation(lead, updates.stage, closerUser, (franchisee, closedLead) => {
-        const district = districts.find(d => (d.id || d._id) === closedLead.districtId);
+        const district = closedLead.districtId ? districts.find(d => String(d._id) === String(closedLead.districtId) || String(d.id) === String(closedLead.districtId)) : null;
         simulateAdminEmail(closedLead, franchisee, district);
         toast(`🎉 Franchise closed! Franchisee record created for ${district?.name || 'Assigned District'}`, 'success');
       });

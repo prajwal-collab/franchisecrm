@@ -20,7 +20,7 @@ export default function KanbanView({ leads, districts, onLeadClick }) {
               <span className="kanban-column-count">{stageLeads.length}</span>
             </div>
             {stageLeads.map(lead => {
-              const district = districts.find(d => d.id === lead.districtId);
+              const district = lead.districtId ? districts.find(d => String(d._id) === String(lead.districtId) || String(d.id) === String(lead.districtId)) : null;
               return (
                 <div key={lead.id || lead._id} className="kanban-card" onClick={() => (lead.id || lead._id) && onLeadClick(lead.id || lead._id)}>
                   <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{lead.firstName} {lead.lastName}</div>

@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
-import { STAGES } from '../data/initialData';
+import { STAGES, SOURCES } from '../data/initialData';
 
 const STAGE_COLORS = {
   'New Lead': '#516F90', 
@@ -72,17 +72,33 @@ function AdminDashboard({ leads, districts, franchisees, tasks, users }) {
   ];
 
   // Charts data
+  // Normalize source: map any value to nearest canonical SOURCES bucket
+  const normalizeSource = (src) => {
+    if (!src) return 'Direct / Other';
+    const s = src.toLowerCase();
+    if (s.includes('expo')) return 'Expo';
+    if (s.includes('meta') || s.includes('facebook') || s.includes('fb')) return 'Meta';
+    if (s.includes('linkedin')) return 'LinkedIn';
+    if (s.includes('referral') || s.includes('refer')) return 'Referral';
+    if (s.includes('website') || s.includes('web') || s.includes('online')) return 'Website';
+    if (s.includes('legacy') || s.includes('import')) return 'Legacy Import';
+    // If it matches a known source exactly, use it
+    const exact = SOURCES.find(k => k.toLowerCase() === s);
+    if (exact) return exact;
+    return 'Direct / Other';
+  };
+
   const bySource = Object.entries(
     leads.reduce((acc, l) => { 
-      const s = l.source || 'Direct / Other';
+      const s = normalizeSource(l.source);
       acc[s] = (acc[s] || 0) + 1; return acc; 
     }, {})
-  ).map(([name, value]) => ({ name, value }));
+  ).sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }));
 
   const byStage = STAGES.map(s => ({ name: s, count: leads.filter(l => l.stage === s).length }));
   const byDistrict = Object.entries(
     leads.reduce((acc, l) => {
-      const d = districts.find(d => (d.id || d._id) === l.districtId);
+      const d = l.districtId ? districts.find(d => String(d._id) === String(l.districtId) || String(d.id) === String(l.districtId)) : null;
       const name = d?.name || 'Unknown';
       acc[name] = (acc[name] || 0) + 1; return acc;
     }, {})

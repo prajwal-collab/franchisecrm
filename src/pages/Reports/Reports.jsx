@@ -41,10 +41,29 @@ export default function Reports() {
     }));
   }, [filteredLeads]);
 
+  const normalizeSource = (src) => {
+    if (!src) return 'Direct / Other';
+    const s = src.toLowerCase();
+    if (s.includes('expo')) return 'Expo';
+    if (s.includes('meta') || s.includes('facebook') || s.includes('fb')) return 'Meta';
+    if (s.includes('linkedin')) return 'LinkedIn';
+    if (s.includes('referral') || s.includes('refer')) return 'Referral';
+    if (s.includes('website') || s.includes('web') || s.includes('online')) return 'Website';
+    if (s.includes('legacy') || s.includes('import')) return 'Legacy Import';
+    const exact = SOURCES.find(k => k.toLowerCase() === s);
+    if (exact) return exact;
+    return 'Direct / Other';
+  };
+
   const sourceData = useMemo(() => {
     const counts = {};
-    filteredLeads.forEach(l => { counts[l.source] = (counts[l.source] || 0) + 1; });
-    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+    filteredLeads.forEach(l => { 
+      const s = normalizeSource(l.source);
+      counts[s] = (counts[s] || 0) + 1; 
+    });
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, value]) => ({ name, value }));
   }, [filteredLeads]);
 
   const performanceData = useMemo(() => {
@@ -59,7 +78,7 @@ export default function Reports() {
   const districtData = useMemo(() => {
     const counts = {};
     filteredLeads.forEach(l => {
-      const d = districts.find(d => (d.id || d._id) === l.districtId);
+      const d = l.districtId ? districts.find(d => String(d._id) === String(l.districtId) || String(d.id) === String(l.districtId)) : null;
       const name = d?.name || 'Unknown';
       counts[name] = (counts[name] || 0) + 1;
     });

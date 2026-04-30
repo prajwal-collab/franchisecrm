@@ -35,7 +35,7 @@ export default function LeadDetail() {
   const [hasUnsavedNotes, setHasUnsavedNotes] = useState(false);
 
   const lead = leads.find(l => l.id === id || l._id === id);
-  const district = districts.find(d => (d.id || d._id) === lead?.districtId);
+  const district = lead?.districtId ? districts.find(d => String(d._id) === String(lead.districtId) || String(d.id) === String(lead.districtId)) : null;
   const assignedUser = users.find(u => (u.id || u._id) === lead?.assignedTo);
   const leadTasks = tasks.filter(t => t.leadId === id);
   const leadMeetings = meetings.filter(m => m.leadId === id);

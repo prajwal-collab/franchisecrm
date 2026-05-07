@@ -817,6 +817,11 @@ Your goal is to help users manage their franchise pipeline with clear, professio
 - If listing stats, use tables or bullet points.
 - Highlights important names or numbers in **bold**.
 
+### EXPORT CAPABILITY:
+- If the user asks for an Excel or CSV file of the leads you are discussing, you MUST include the following tag at the end of your response: 
+  ACTION: EXPORT_LEADS: [list of lead IDs or 'ALL']
+  Example: "I've prepared the list for you. ACTION: EXPORT_LEADS: [123, 456]"
+
 ### CRM DATA:
 ${JSON.stringify(crmData)}
 

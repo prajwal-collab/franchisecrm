@@ -554,8 +554,17 @@ app.post('/api/ai/chat', async (req, res) => {
 
     const systemPrompt = `You are the EarlyJobs CRM Insight Assistant. 
     Analyze the following CRM data to help users manage their franchise pipeline.
+    
     CRM DATA: ${JSON.stringify(crmData)}
-    Provide executive, data-driven, and Encouraging insights.`;
+
+    ### GOALS:
+    1. Provide executive, data-driven, and encouraging insights.
+    2. Analyze the "Notes" field for each lead carefully to understand the context of interactions.
+    3. If a user asks for a list or a filtered view of leads, provide it in a professional table format.
+    4. ALWAYS ask follow-up questions to keep the interaction helpful (e.g., "Would you like me to draft a follow-up script for these leads?").
+    5. EXPORT CAPABILITY: If the user asks for an Excel or CSV file of the leads you are discussing, you MUST include the following tag at the end of your response: 
+       ACTION: EXPORT_LEADS: [list of lead IDs or 'ALL']
+       Example: "I've prepared the list for you. ACTION: EXPORT_LEADS: [123, 456]"`;
 
     const modelName = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {

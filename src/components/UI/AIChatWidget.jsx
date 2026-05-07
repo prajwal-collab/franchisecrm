@@ -1,8 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Bot, User, Loader2, Sparkles } from 'lucide-react';
+import { X, Send, Bot, User, Loader2, Sparkles, Download, FileSpreadsheet } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { useApp } from '../../context/AppContext';
+import { exportToCSV } from '../../services/db';
+
+const EXPORT_COLS = [
+  { key: 'firstName', label: 'First Name' }, { key: 'lastName', label: 'Last Name' },
+  { key: 'phone', label: 'Phone' }, { key: 'email', label: 'Email' },
+  { key: 'profession', label: 'Profession' }, { key: 'investmentCapacity', label: 'Investment Capacity' },
+  { key: 'source', label: 'Source' }, { key: 'stage', label: 'Stage' },
+  { key: 'score', label: 'Score' }, { key: 'notes', label: 'Notes' },
+  { key: 'createdDate', label: 'Created Date' },
+];
 
 export default function AIChatWidget() {
+  const { leads } = useApp();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     { role: 'assistant', content: "Hi! I'm your CRM Insight AI. Ask me anything about your current leads, districts, and franchise performance." }
@@ -57,8 +69,29 @@ export default function AIChatWidget() {
       } catch (pErr) {
         throw new Error('Invalid response from server');
       }
+
+      let reply = data.reply;
+      let exportAction = null;
+
+      // Check for export action tag
+      const exportMatch = reply.match(/ACTION: EXPORT_LEADS: (\[.*?\]|ALL)/);
+      if (exportMatch) {
+        try {
+          const rawData = exportMatch[1];
+          if (rawData === 'ALL') {
+            exportAction = leads;
+          } else {
+            const ids = JSON.parse(rawData.replace(/'/g, '"'));
+            exportAction = leads.filter(l => ids.includes(l.id) || ids.includes(l._id));
+          }
+          // Remove tag from display
+          reply = reply.replace(/ACTION: EXPORT_LEADS: (\[.*?\]|ALL)/, '').trim();
+        } catch (e) {
+          console.error('Failed to parse export action:', e);
+        }
+      }
       
-      setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: reply, exportData: exportAction }]);
     } catch (err) {
       console.error(err);
       setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ **AI Error:** ${err.message || 'Connection failed'}. Please check your configuration.` }]);
@@ -189,6 +222,25 @@ export default function AIChatWidget() {
                     >
                       {msg.content}
                     </ReactMarkdown>
+                  )}
+
+                  {msg.exportData && (
+                    <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                      <button 
+                        onClick={() => {
+                          const data = msg.exportData.map(l => ({ 
+                            ...l, 
+                            createdDate: l.createdDate ? new Date(l.createdDate).toLocaleDateString('en-IN') : '—' 
+                          }));
+                          exportToCSV(data, `ai_filtered_leads_${Date.now()}.csv`, EXPORT_COLS);
+                        }}
+                        className="btn btn-primary btn-sm"
+                        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#10b981', borderColor: '#10b981' }}
+                      >
+                        <FileSpreadsheet size={14} />
+                        Download Export ({msg.exportData.length} Leads)
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
